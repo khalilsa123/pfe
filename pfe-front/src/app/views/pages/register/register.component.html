@@ -1,0 +1,81 @@
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white text-center">
+          <h2>Inscription</h2>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <div *ngIf="isSignUpFailed" class="alert alert-danger">
+              {{ errorMessage }}
+            </div>
+
+            <div class="form-floating mb-3">
+              <input type="text" id="username" class="form-control"
+                     formControlName="username" placeholder="Nom d'utilisateur">
+              <label for="username">Nom d'utilisateur</label>
+              <div *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
+                   class="invalid-feedback d-block">
+                Le nom d'utilisateur est requis.
+              </div>
+            </div>
+
+            <div class="form-floating mb-3">
+              <input type="text" id="firstname" class="form-control"
+                     formControlName="firstname" placeholder="Prénom">
+              <label for="firstname">Prénom</label>
+              <div *ngIf="registerForm.get('firstname')?.invalid && registerForm.get('firstname')?.touched"
+                   class="invalid-feedback d-block">
+                Le prénom est requis.
+              </div>
+            </div>
+            
+            
+
+            <div class="form-floating mb-3">
+              <input type="text" id="lastname" class="form-control"
+                     formControlName="lastname" placeholder="Nom de famille">
+              <label for="lastname">Nom de famille</label>
+              <div *ngIf="registerForm.get('lastname')?.invalid && registerForm.get('lastname')?.touched"
+                   class="invalid-feedback d-block">
+                Le nom de famille est requis.
+              </div>
+            </div>
+
+            <div class="form-floating mb-3">
+              <input type="password" id="password" class="form-control"
+                     formControlName="password" placeholder="Mot de passe">
+              <label for="password">Mot de passe</label>
+              <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+                   class="invalid-feedback d-block">
+                Le mot de passe doit contenir au moins 6 caractères.
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="role" class="form-label">Rôle</label>
+              <select id="role" class="form-select" formControlName="role">
+                <option value="OPERATEUR">Opérateur</option>
+                <option value="SUPERVISEUR">Superviseur</option>
+                <option value="ADMIN">Administrateur</option>
+              </select>
+              <div *ngIf="registerForm.get('role')?.invalid && registerForm.get('role')?.touched"
+                   class="invalid-feedback d-block">
+                Vous devez choisir un rôle.
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg" [disabled]="isSubmitting">
+                <span *ngIf="!isSubmitting">S'inscrire</span>
+                <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span *ngIf="isSubmitting">&nbsp;Inscription...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

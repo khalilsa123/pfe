@@ -1,0 +1,23 @@
+/* full‑screen gradient */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+  }
+  .login-background {
+    background: url('/assets/back_login.jpg') no‑repeat center center fixed;
+    background-size: cover;
+  }
+  
+  /* remove default card borders */
+  c-card,
+  c-card-header,
+  c-card-body {
+    border: none !important;
+  }
+  
+  /* optional: make the floating SVG icons a tad smaller */
+  form svg[cIcon] {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+  }
+  

@@ -1,0 +1,71 @@
+<div class="login-background min-vh-100 d-flex align-items-center justify-content-center position-relative">
+  <c-container breakpoint="sm">
+    <c-row class="justify-content-center">
+      <c-col sm="8" md="6" lg="4">
+        <c-card class="shadow-lg rounded-lg overflow-hidden">
+          
+          <!-- Header avec logo Onetech -->
+          <c-card-header class="bg-transparent border-0 text-center py-4">
+            <img src="assets/onetech_logo.png" alt="Onetech Logo" height="60">
+          </c-card-header>
+
+          <!-- Body de la carte correctement ouvert ici -->
+          <c-card-body class="p-5">
+            <h1 class="h4 text-center mb-4">Login</h1>
+            
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+              
+              <!-- Username -->
+              <div class="form-floating mb-3">
+                <input
+                  id="username"    
+                  formControlName="username"
+                  type="text"
+                  class="form-control form-control-lg"
+                  placeholder="Username"
+                />
+                <label for="username">
+                  <svg cIcon name="cilUser" class="me-2"></svg>
+                  Username
+                </label>
+              </div>
+
+              <!-- Password -->
+              <div class="form-floating mb-4">
+                <input
+                  id="password"
+                  formControlName="password"
+                  type="password"
+                  class="form-control form-control-lg"
+                  placeholder="Password"
+                />
+                <label for="password">
+                  <svg cIcon name="cilLockLocked" class="me-2"></svg>
+                  Password
+                </label>
+              </div>
+
+              <!-- Message d'erreur -->
+              <div *ngIf="errorMessage" class="alert alert-danger small mb-3">
+                {{ errorMessage }}
+              </div>
+
+              <!-- Bouton Login -->
+              <div class="d-grid">
+                <button
+                  cButton
+                  type="submit"
+                  size="lg"
+                  color="success"
+                >
+                  Login
+                </button>
+              </div>
+            </form>
+          </c-card-body>
+
+        </c-card> <!-- fermeture correcte -->
+      </c-col>
+    </c-row>
+  </c-container>
+</div>

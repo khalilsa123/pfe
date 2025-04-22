@@ -1,0 +1,83 @@
+<div class="container">
+  <h1>Dashboard Opérateur</h1>
+  <button class="btn btn-primary mb-3" (click)="addComptage()">
+    Ajouter un Comptage
+  </button>
+
+  <table class="table table-striped" *ngIf="comptages.length">
+    <thead>
+      <tr>
+        <th>ID</th><th>Emplacement</th><th>Référence</th>
+        <th>Lot</th><th>Sous‑lot</th><th>Type</th>
+        <th>Poids</th><th>Quantité</th><th>#Cptg</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let comptage of comptages">
+        <td>{{ comptage.id }}</td>
+        <td>{{ comptage.emplacement }}</td>
+        <td>{{ comptage.reference }}</td>
+        <td>{{ comptage.numLot }}</td>
+        <td>{{ comptage.numSousLot }}</td>
+        <td>{{ comptage.typeMatiere }}</td>
+        <td>{{ comptage.poids }}</td>
+        <td>{{ comptage.quantiteTotale }}</td>
+        <td>{{ comptage.numComptage }}</td>
+        <td>
+          <button 
+            class="btn btn-sm btn-warning" 
+            (click)="editComptage(comptage)">
+            Modifier
+          </button>
+          <button 
+            class="btn btn-sm btn-danger" 
+            (click)="deleteComptage(comptage.id!)">
+            Supprimer
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+
+<!--
+
+
+<div class="container">
+  <h1>Dashboard Opérateur</h1>
+  <button (click)={addComptage()}>Ajouter un Comptage</button>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Emplacement</th>
+        <th>Référence</th>
+        <th>Num Lot</th>
+        <th>Num Sous Lot</th>
+        <th>Type Matière</th>
+        <th>Poids</th>
+        <th>Quantité Totale</th>
+        <th>Num Comptage</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let comptage of comptages">
+        <td>{{ comptage.id }}</td>
+        <td>{{ comptage.emplacement }}</td>
+        <td>{{ comptage.reference }}</td>
+        <td>{{ comptage.numLot }}</td>
+        <td>{{ comptage.numSousLot }}</td>
+        <td>{{ comptage.typeMatiere }}</td>
+        <td>{{ comptage.poids }}</td>
+        <td>{{ comptage.quantiteTotale }}</td>
+        <td>{{ comptage.numComptage }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+-->
