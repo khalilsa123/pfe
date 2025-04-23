@@ -1,0 +1,107 @@
+// Couleurs personnalisées
+$sidebar-bg:    #607c88e8;   // pastel mint
+$sidebar-text:  #9e9e9e7a;
+$btn-scanner-bg:      #007bff;
+$btn-ajouter-bg:      #28a745;
+$btn-modifier-bg:     #ffc107;
+$btn-supprimer-bg:    #dc3545;
+$btn-profile-bg:      #17a2b8;  // turquoise Profil / Déco
+$btn-text-default:    #000;
+
+// Mixin pour boutons
+@mixin btn-custom-styles($bg, $text: #fff) {
+  background-color: $bg;
+  color: $text !important;
+  border: none !important;
+  &:hover { background-color: darken($bg,10%); }
+}
+
+// Classes de boutons
+.btn-scanner   { @include btn-custom-styles($btn-scanner-bg,    $btn-text-default); }
+.btn-ajouter   { @include btn-custom-styles($btn-ajouter-bg,    $btn-text-default); }
+.btn-modifier  { @include btn-custom-styles($btn-modifier-bg,   $btn-text-default); }
+.btn-supprimer { @include btn-custom-styles($btn-supprimer-bg,  #fff); }
+.btn-profile   { @include btn-custom-styles($btn-profile-bg,    #fff); }
+
+.wrapper {
+  display: flex;
+  height: 100%;
+  font-family: Arial, sans-serif;
+  background: #f5f7fa;
+}
+
+.sidebar {
+  width: 200px;
+  background: $sidebar-bg;
+  color: $sidebar-text;
+  padding: 1rem;
+
+  h3 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(248,249,250,0.3);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: .5rem;
+  }
+
+  .profile-panel {
+    margin-top: 1rem;
+    background: rgba(248,249,250,0.1);
+    border: 1px solid rgba(248,249,250,0.3);
+    border-radius: 4px;
+    p {
+      margin: .3rem 0;
+      font-size: 0.85rem;
+    }
+  }
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  margin-top: 10px;
+}
+
+.od-form {
+  background: #fff;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    label {
+      font-size: 0.8rem;
+      margin-bottom: 0.2rem;
+    }
+    .form-control {
+      width: 120px;
+    }
+  }
+  button { height: 32px; }
+}
+
+.table-responsive {
+  background: #fff;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+
+  table {
+    margin-bottom: 0;
+    th, td {
+      vertical-align: middle;
+      font-size: 0.85rem;
+    }
+    .btn-sm {
+      padding: 0.2rem 0.4rem;
+      font-size: 0.75rem;
+    }
+  }
+}

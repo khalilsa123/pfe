@@ -38,6 +38,11 @@
               "src/assets"
             ],
             "styles": [
+             
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+            
+              "node_modules/@coreui/coreui/dist/css/coreui.min.css",
+            
               "src/scss/styles.scss"
             ],
             "scripts": [],
@@ -106,6 +111,8 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/@coreui/coreui/dist/css/coreui.min.css",
               "src/scss/styles.scss"
             ],
             "scripts": []

@@ -1,36 +1,37 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Comptage } from '../models/comptage.model';
+import { Comptage }  from '../models/comptage.model';
 
 @Injectable({ providedIn: 'root' })
 export class OperatorService {
-  // Si tu mets en place un proxy, tu peux juste laisser '/api/operateurs'
   private baseUrl = 'http://localhost:8080/api/operateurs';
 
   constructor(private http: HttpClient) { }
 
-  getComptages(operateurId: number): Observable<Comptage[]> {
-    return this.http.get<Comptage[]>(`${this.baseUrl}/${operateurId}/comptage`);
+  getComptages(opId: number): Observable<Comptage[]> {
+    return this.http.get<Comptage[]>(
+      `${this.baseUrl}/${opId}/comptage`
+    );
   }
 
-  addComptage(comptage: Comptage): Observable<Comptage> {
+  addComptage(opId: number, c: Comptage): Observable<Comptage> {
     return this.http.post<Comptage>(
-      `${this.baseUrl}/${comptage.operateurId}/comptage`,
-      comptage
+      `${this.baseUrl}/${opId}/comptage`,
+      c
     );
   }
 
-  editComptage(operateurId: number, comptage: Comptage): Observable<Comptage> {
+  editComptage(opId: number, c: Comptage): Observable<Comptage> {
     return this.http.put<Comptage>(
-      `${this.baseUrl}/${operateurId}/comptage/${comptage.id}`,
-      comptage
+      `${this.baseUrl}/${opId}/comptage/${c.id}`,
+      c
     );
   }
 
-  deleteComptage(operateurId: number, comptageId: number): Observable<void> {
+  deleteComptage(opId: number, cId: number): Observable<void> {
     return this.http.delete<void>(
-      `${this.baseUrl}/${operateurId}/comptage/${comptageId}`
+      `${this.baseUrl}/${opId}/comptage/${cId}`
     );
   }
 }

@@ -10,7 +10,6 @@ import { AppComponent }                 from './app.component';
 
 import { RegisterComponent }            from './views/pages/register/register.component';
 import { LoginComponent }               from './views/pages/login/login.component';
-import { OperatorDashboardComponent }   from './views/operator-dashboard/operator-dashboard.component';
 
 // CoreUI (optional)
 import { ButtonModule }                 from '@coreui/angular';
@@ -23,7 +22,6 @@ import { AuthInterceptor }              from './services/auth.interceptor';
     AppComponent,
     RegisterComponent,
     LoginComponent,
-    OperatorDashboardComponent,
     // … autres composants
   ],
   imports: [
