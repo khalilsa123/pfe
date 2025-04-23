@@ -2,7 +2,7 @@ package com.example.loginpfe.controller;
 import com.example.loginpfe.Repository.UserRepository;
 import com.example.loginpfe.Service.EmailService;
 import com.example.loginpfe.Service.JwtService;
-import com.example.loginpfe.Service.PasswordGenerator;
+//import com.example.loginpfe.Service.PasswordGenerator;
 import com.example.loginpfe.Service.UserService;
 import com.example.loginpfe.dto.ChangePasswordRequest;
 import com.example.loginpfe.dto.NewPasswordRequest;
@@ -52,16 +52,16 @@ public class PasswordController {
         }
 
         // Generate a random password
-        String newPassword = PasswordGenerator.generateRandomPassword(12); // Password length
+       // String newPassword = PasswordGenerator.generateRandomPassword(12); // Password length
 
         // Update the password in the database
-        userService.updatePassword(email, newPassword);
+       // userService.updatePassword(email, newPassword);
 
         // Send an email with the new password
         String subject = "Password Reset";
-        String message = "Your new password is: " + newPassword + "\n\n"
-                + "Please change this password after logging in.";
-        emailService.sendEmail(email, subject, message);
+       // String message = "Your new password is: " + newPassword + "\n\n"
+               // + "Please change this password after logging in.";
+      //  emailService.sendEmail(email, subject, message);
 
         return "An email with a new password has been sent to your address.";
     }

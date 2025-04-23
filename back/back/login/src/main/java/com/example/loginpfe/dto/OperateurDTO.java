@@ -1,4 +1,4 @@
-package com.example.loginpfe.dto;
+/**package com.example.loginpfe.dto;
 
 public class OperateurDTO {
     private Long id;
@@ -28,3 +28,4 @@ public class OperateurDTO {
     public String getMatricule() { return matricule; }
     public void setMatricule(String matricule) { this.matricule = matricule; }
 }
+*/

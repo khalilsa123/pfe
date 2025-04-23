@@ -1,4 +1,4 @@
-package com.example.loginpfe.entity;
+/**package com.example.loginpfe.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -82,4 +82,4 @@ public class Operateur {
     public void incrementerComptage() {
         this.nombreComptagesEffectues++;
     }
-}
+}*/

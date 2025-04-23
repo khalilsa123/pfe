@@ -1,4 +1,4 @@
-package com.example.loginpfe.Service;
+/**package com.example.loginpfe.Service;
 
 import com.example.loginpfe.entity.Operateur;
 import com.example.loginpfe.exceptions.OperateurNotFoundException;
@@ -66,3 +66,4 @@ public class OperateurService {
         return getOperateurById(id).getNombreComptagesEffectues();
     }
 }
+*/

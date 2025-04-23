@@ -1,4 +1,4 @@
-
+/**
 package com.example.loginpfe.Repository;
 
 import com.example.loginpfe.entity.Operateur;
@@ -9,3 +9,4 @@ public interface OperateurRepository extends JpaRepository<Operateur, Long> {
     List<Operateur> findByActifTrue();
     boolean existsByMatricule(String matricule);
 }
+*/

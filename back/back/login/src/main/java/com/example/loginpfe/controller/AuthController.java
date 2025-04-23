@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/auth")        // ← was "/auth"
 public class AuthController {
@@ -65,5 +67,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }
     }
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> listByRole(@RequestParam("role") String role) {
+        // Convert the incoming string to your enum:
+        User.Role r = User.Role.valueOf(role);
+        List<User> users = userRepository.findByRole(r);
+        return ResponseEntity.ok(users);
 
-}
+}}

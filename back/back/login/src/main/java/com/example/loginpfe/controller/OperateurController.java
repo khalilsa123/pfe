@@ -1,4 +1,4 @@
-
+/**
 package com.example.loginpfe.controller;
 
 import com.example.loginpfe.dto.OperateurDTO;
@@ -22,9 +22,7 @@ public class OperateurController {
         this.operateurService = operateurService;
     }
 
-    // --- Gestion des opérateurs ---
 
-    /** Création d’un opérateur (SUPERVISEUR/ADMIN) */
     @PostMapping
     public ResponseEntity<OperateurDTO> creerOperateur(@RequestBody OperateurDTO dto) {
         Operateur o = new Operateur();
@@ -41,7 +39,7 @@ public class OperateurController {
         return new ResponseEntity<>(out, HttpStatus.CREATED);
     }
 
-    /** Récupérer un opérateur par son ID */
+
     @GetMapping("/{id}")
     public ResponseEntity<OperateurDTO> getOperateur(@PathVariable Long id) {
         Operateur o = operateurService.getOperateurById(id);
@@ -49,7 +47,6 @@ public class OperateurController {
         return ResponseEntity.ok(dto);
     }
 
-    /** Lister tous les opérateurs actifs */
     @GetMapping
     public ResponseEntity<List<OperateurDTO>> listerOperateurs() {
         List<OperateurDTO> dtos = operateurService
@@ -61,7 +58,7 @@ public class OperateurController {
     }
 
     // NOTE : tous les endpoints “/comptage” ont été déplacés dans ComptageController
-}
+}*/
 /**package com.example.loginpfe.controller;
 
 import com.example.loginpfe.dto.OperateurDTO;

@@ -1,4 +1,4 @@
-package com.example.loginpfe.Service;
+/**package com.example.loginpfe.Service;
 
 import org.springframework.stereotype.Component;
 
@@ -17,4 +17,4 @@ public class PasswordGenerator {
         }
         return password.toString();
     }
-}
+}*/
