@@ -1,27 +1,26 @@
-// Couleurs personnalisées
-$sidebar-bg:    #607c88e8;   // pastel mint
-$sidebar-text:  #9e9e9e7a;
-$btn-scanner-bg:      #007bff;
-$btn-ajouter-bg:      #28a745;
-$btn-modifier-bg:     #ffc107;
-$btn-supprimer-bg:    #dc3545;
-$btn-profile-bg:      #17a2b8;  // turquoise Profil / Déco
-$btn-text-default:    #000;
+// Couleurs
+$sidebar-bg:       #607c88e8;
+$sidebar-text:     #9e9e9e7a;
+$btn-scanner-bg:   #007bff;
+$btn-ajouter-bg:   #28a745;
+$btn-modifier-bg:  #ffc107;
+$btn-supprimer-bg: #dc3545;
+$btn-profile-bg:   #17a2b8;
+$btn-text-default: #000;
 
-// Mixin pour boutons
 @mixin btn-custom-styles($bg, $text: #fff) {
   background-color: $bg;
   color: $text !important;
   border: none !important;
-  &:hover { background-color: darken($bg,10%); }
+  &:hover { background-color: darken($bg, 10%); }
 }
 
-// Classes de boutons
-.btn-scanner   { @include btn-custom-styles($btn-scanner-bg,    $btn-text-default); }
-.btn-ajouter   { @include btn-custom-styles($btn-ajouter-bg,    $btn-text-default); }
-.btn-modifier  { @include btn-custom-styles($btn-modifier-bg,   $btn-text-default); }
-.btn-supprimer { @include btn-custom-styles($btn-supprimer-bg,  #fff); }
-.btn-profile   { @include btn-custom-styles($btn-profile-bg,    #fff); }
+// Classes boutons
+.btn-scanner   { @include btn-custom-styles($btn-scanner-bg,   $btn-text-default); }
+.btn-ajouter   { @include btn-custom-styles($btn-ajouter-bg,   $btn-text-default); }
+.btn-modifier  { @include btn-custom-styles($btn-modifier-bg,  $btn-text-default); }
+.btn-supprimer { @include btn-custom-styles($btn-supprimer-bg); }
+.btn-profile   { @include btn-custom-styles($btn-profile-bg); }
 
 .wrapper {
   display: flex;
@@ -40,24 +39,16 @@ $btn-text-default:    #000;
     margin-top: 0;
     font-size: 1.1rem;
     border-bottom: 1px solid rgba(248,249,250,0.3);
-    padding-bottom: 0.5rem;
+    padding-bottom: .5rem;
     margin-bottom: 1rem;
   }
-
-  .btn {
-    width: 100%;
-    margin-bottom: .5rem;
-  }
-
+  .btn { width: 100%; margin-bottom: 0.5rem; }
   .profile-panel {
     margin-top: 1rem;
     background: rgba(248,249,250,0.1);
     border: 1px solid rgba(248,249,250,0.3);
     border-radius: 4px;
-    p {
-      margin: .3rem 0;
-      font-size: 0.85rem;
-    }
+    p { margin: 0.3rem 0; font-size: 0.85rem; }
   }
 }
 
@@ -76,13 +67,8 @@ $btn-text-default:    #000;
   .form-group {
     display: flex;
     flex-direction: column;
-    label {
-      font-size: 0.8rem;
-      margin-bottom: 0.2rem;
-    }
-    .form-control {
-      width: 120px;
-    }
+    label { font-size: 0.8rem; margin-bottom: 0.2rem; }
+    .form-control { width: 120px; }
   }
   button { height: 32px; }
 }
@@ -99,9 +85,6 @@ $btn-text-default:    #000;
       vertical-align: middle;
       font-size: 0.85rem;
     }
-    .btn-sm {
-      padding: 0.2rem 0.4rem;
-      font-size: 0.75rem;
-    }
+    .btn-sm { padding: 0.2rem 0.4rem; font-size: 0.75rem; }
   }
 }

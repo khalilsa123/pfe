@@ -3,76 +3,116 @@
     <div class="col-lg-6">
       <div class="card shadow-sm">
         <div class="card-header bg-primary text-white text-center">
-          <h2>Inscription</h2>
+          <h2>Ajouter un utilisateur</h2>
         </div>
         <div class="card-body">
           <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
             <div *ngIf="isSignUpFailed" class="alert alert-danger">
               {{ errorMessage }}
             </div>
 
+            <!-- Username -->
             <div class="form-floating mb-3">
-              <input type="text" id="username" class="form-control"
-                     formControlName="username" placeholder="Nom d'utilisateur">
-              <label for="username">Nom d'utilisateur</label>
-              <div *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
-                   class="invalid-feedback d-block">
-                Le nom d'utilisateur est requis.
+              <input
+                type="text"
+                id="username"
+                class="form-control"
+                formControlName="username"
+                placeholder="Nom d’utilisateur">
+              <label for="username">Nom d’utilisateur</label>
+              <div
+                *ngIf="registerForm.get('username')?.invalid &&
+                       registerForm.get('username')?.touched"
+                class="invalid-feedback d-block">
+                Le nom d’utilisateur est requis.
               </div>
             </div>
 
+            <!-- Prénom -->
             <div class="form-floating mb-3">
-              <input type="text" id="firstname" class="form-control"
-                     formControlName="firstname" placeholder="Prénom">
+              <input
+                type="text"
+                id="firstname"
+                class="form-control"
+                formControlName="firstname"
+                placeholder="Prénom">
               <label for="firstname">Prénom</label>
-              <div *ngIf="registerForm.get('firstname')?.invalid && registerForm.get('firstname')?.touched"
-                   class="invalid-feedback d-block">
+              <div
+                *ngIf="registerForm.get('firstname')?.invalid &&
+                       registerForm.get('firstname')?.touched"
+                class="invalid-feedback d-block">
                 Le prénom est requis.
               </div>
             </div>
-            
-            
 
+            <!-- Nom de famille -->
             <div class="form-floating mb-3">
-              <input type="text" id="lastname" class="form-control"
-                     formControlName="lastname" placeholder="Nom de famille">
+              <input
+                type="text"
+                id="lastname"
+                class="form-control"
+                formControlName="lastname"
+                placeholder="Nom de famille">
               <label for="lastname">Nom de famille</label>
-              <div *ngIf="registerForm.get('lastname')?.invalid && registerForm.get('lastname')?.touched"
-                   class="invalid-feedback d-block">
+              <div
+                *ngIf="registerForm.get('lastname')?.invalid &&
+                       registerForm.get('lastname')?.touched"
+                class="invalid-feedback d-block">
                 Le nom de famille est requis.
               </div>
             </div>
 
+            <!-- Mot de passe -->
             <div class="form-floating mb-3">
-              <input type="password" id="password" class="form-control"
-                     formControlName="password" placeholder="Mot de passe">
+              <input
+                type="password"
+                id="password"
+                class="form-control"
+                formControlName="password"
+                placeholder="Mot de passe">
               <label for="password">Mot de passe</label>
-              <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
-                   class="invalid-feedback d-block">
+              <div
+                *ngIf="registerForm.get('password')?.invalid &&
+                       registerForm.get('password')?.touched"
+                class="invalid-feedback d-block">
                 Le mot de passe doit contenir au moins 6 caractères.
               </div>
             </div>
 
+            <!-- Sélecteur de rôle dynamique -->
             <div class="mb-4">
               <label for="role" class="form-label">Rôle</label>
               <select id="role" class="form-select" formControlName="role">
-                <option value="OPERATEUR">Opérateur</option>
-                <option value="SUPERVISEUR">Superviseur</option>
-                <option value="ADMIN">Administrateur</option>
+                <option *ngFor="let r of rolesAvailable" [value]="r">
+                  {{ r === 'OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
+                </option>
               </select>
-              <div *ngIf="registerForm.get('role')?.invalid && registerForm.get('role')?.touched"
-                   class="invalid-feedback d-block">
+              <div
+                *ngIf="registerForm.get('role')?.invalid &&
+                       registerForm.get('role')?.touched"
+                class="invalid-feedback d-block">
                 Vous devez choisir un rôle.
               </div>
             </div>
 
+            <!-- Bouton d’ajout -->
             <div class="d-grid">
-              <button type="submit" class="btn btn-primary btn-lg" [disabled]="isSubmitting">
-                <span *ngIf="!isSubmitting">S'inscrire</span>
-                <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span *ngIf="isSubmitting">&nbsp;Inscription...</span>
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg"
+                [disabled]="isSubmitting">
+                <ng-container *ngIf="!isSubmitting">Ajouter</ng-container>
+                <ng-container *ngIf="isSubmitting">
+                  <span
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"></span>
+                  &nbsp;Ajout…
+                </ng-container>
               </button>
             </div>
+
           </form>
         </div>
       </div>

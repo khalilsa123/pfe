@@ -1,6 +1,6 @@
 // app.routes.ts
 import { Routes } from '@angular/router';
-import { DashboardComponent } from './views/dashboard/dashboard.component';
+//import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { Page404Component } from './views/pages/page404/page404.component';
 import { Page500Component } from './views/pages/page500/page500.component';
 import { LoginComponent } from './views/pages/login/login.component';
@@ -16,7 +16,7 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    component: DashboardComponent, // Directement le composant sans layout
+    //component: DashboardComponent, // Directement le composant sans layout
     data: { title: 'Tableau de bord' }
   },
   {

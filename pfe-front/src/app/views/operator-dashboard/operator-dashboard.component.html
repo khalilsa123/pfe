@@ -1,144 +1,186 @@
 <div class="wrapper">
 
-  <!-- Sidebar -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <h3>Menu</h3>
-    <button class="btn btn-profile mb-2" (click)="showProfile = !showProfile">
+
+    <!-- Profil & Déco -->
+    <button class="btn btn-profile mb-2 w-100"
+            (click)="showProfile = !showProfile">
       {{ showProfile ? 'Masquer Profil' : 'Profil' }}
     </button>
-    <button class="btn btn-profile mb-4" (click)="logout()">
+    <button class="btn btn-profile mb-4 w-100"
+            (click)="logout()">
       Déconnexion
     </button>
     <div *ngIf="showProfile" class="profile-panel px-3 py-2 text-light">
       <p><strong>ID :</strong> {{ user?.id }}</p>
-      <p><strong>Nom :</strong> {{ user?.firstname }}</p>
-      <p><strong>Prénom :</strong> {{ user?.lastname }}</p>
+      <p><strong>Nom :</strong> {{ user?.lastname }}</p>
+      <p><strong>Prénom :</strong> {{ user?.firstname }}</p>
       <p><strong>Username :</strong> {{ user?.username }}</p>
       <p><strong>Rôle :</strong> {{ user?.role }}</p>
     </div>
+
+    <!-- Basculer vers gestion Utilisateurs (pas pour OPERATEUR) -->
+    <button *ngIf="user?.role !== 'OPERATEUR'"
+            class="btn btn-profile mb-4 w-100"
+            (click)="toggleUsersMenu()">
+      {{ showUsersMenu ? 'Masquer Utilisateurs' : 'Utilisateurs' }}
+    </button>
+    <div *ngIf="showUsersMenu" class="mb-4">
+      <button class="btn btn-profile mb-2 w-100"
+              (click)="loadUsers('OPERATEUR')">
+        Liste Opérateurs
+      </button>
+      <button *ngIf="user?.role==='ADMIN'"
+              class="btn btn-profile w-100"
+              (click)="loadUsers('SUPERVISEUR')">
+        Liste Superviseurs
+      </button>
+    </div>
   </aside>
 
-  <!-- Main content -->
+  <!-- MAIN CONTENT -->
   <main class="main-content">
 
-    <!-- Formulaire compact -->
-    <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4"
-          #f="ngForm"
-          (ngSubmit)="onSubmit()">
+    <!-- — ZONE COMPTAGES — -->
+    <section *ngIf="!showUsersMenu">
+      <!-- Formulaire d’ajout / édition -->
+      <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4"
+            #f="ngForm" (ngSubmit)="onSubmit()">
 
-      <button type="button"
-              class="btn btn-scanner btn-sm"
-              (click)="scanQr()">
-        Scanner QR
+        <button type="button" class="btn btn-scanner btn-sm"
+                (click)="scanQr()">
+          Scanner QR
+        </button>
+
+        <div class="form-group">
+          <label>Référence*</label>
+          <input name="reference" class="form-control form-control-sm" required
+                 [(ngModel)]="newComptage.reference">
+        </div>
+        <div class="form-group">
+          <label>Lot*</label>
+          <input name="numLot" class="form-control form-control-sm" required
+                 [(ngModel)]="newComptage.numLot">
+        </div>
+        <div class="form-group">
+          <label>Sous-lot*</label>
+          <input name="numSousLot" class="form-control form-control-sm" required
+                 [(ngModel)]="newComptage.numSousLot">
+        </div>
+        <div class="form-group">
+          <label>Qté Totale*</label>
+          <input type="number" min="0" name="quantiteTotale"
+                 class="form-control form-control-sm" required
+                 [(ngModel)]="newComptage.quantiteTotale">
+        </div>
+        <div class="form-group">
+          <label>Emplacement (opt.)</label>
+          <input name="emplacement" class="form-control form-control-sm"
+                 [(ngModel)]="newComptage.emplacement">
+        </div>
+        <div class="form-group">
+          <label>Poids (g)*</label>
+          <input type="number" min="0" name="poids"
+                 class="form-control form-control-sm" required
+                 [(ngModel)]="newComptage.poids">
+        </div>
+        <div class="form-group">
+          <label>Numéro comptage*</label>
+          <select name="numComptage"
+                  class="form-control form-control-sm" required
+                  [(ngModel)]="newComptage.numComptage">
+            <option [ngValue]="1">1</option>
+            <option [ngValue]="2">2</option>
+            <option [ngValue]="3">3</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-ajouter btn-sm"
+                [disabled]="f.invalid">
+          {{ editing ? 'Enregistrer' : 'Ajouter' }}
+        </button>
+      </form>
+
+      <!-- Tableau des comptages -->
+      <div class="table-responsive mb-5">
+        <table class="table table-hover table-striped table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Réf.</th><th>Lot</th><th>Sous-lot</th>
+              <th>Qté</th><th>Empl.</th><th>Poids</th>
+              <th>Numéro comptage</th><th>Date</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of comptages">
+              <td>{{ c.reference }}</td>
+              <td>{{ c.numLot }}</td>
+              <td>{{ c.numSousLot }}</td>
+              <td>{{ c.quantiteTotale }}</td>
+              <td>{{ c.emplacement||'–' }}</td>
+              <td>{{ c.poids }}</td>
+              <td>{{ c.numComptage }}</td>
+              <td>{{ c.timestamp|date:'short' }}</td>
+              <td>
+                <button class="btn btn-modifier btn-sm me-1"
+                        (click)="editComptage(c)">✎</button>
+                <button class="btn btn-supprimer btn-sm"
+                        (click)="delete(c)">🗑</button>
+              </td>
+            </tr>
+            <tr *ngIf="!comptages.length">
+              <td colspan="9" class="text-center py-3">Aucun comptage</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- — ZONE UTILISATEURS — -->
+    <section *ngIf="showUsersMenu">
+      <h2 class="mb-3">
+        Liste des
+        {{ currentUsersRole==='OPERATEUR' ? 'Opérateurs' : 'Superviseurs' }}
+      </h2>
+
+      <!-- Bouton création utilisateur -->
+      <button class="btn btn-ajouter mb-3"
+              (click)="goToRegister(currentUsersRole!)">
+        + Créer
+        {{ currentUsersRole==='OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
       </button>
 
-      <div class="form-group">
-        <label>Référence*</label>
-        <input name="reference"
-               class="form-control form-control-sm"
-               required
-               [(ngModel)]="newComptage.reference">
+      <div class="table-responsive">
+        <table class="table table-striped table-sm">
+          <thead>
+            <tr>
+              <th>ID</th><th>Username</th><th>Nom</th><th>Prénom</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>{{ u.id }}</td>
+              <td>{{ u.username }}</td>
+              <td>{{ u.lastname }}</td>
+              <td>{{ u.firstname }}</td>
+              <td>
+                <button *ngIf="canChangePassword(u)"
+                        class="btn btn-modifier btn-sm me-1"
+                        (click)="changePassword(u)">🔑</button>
+                <button *ngIf="canDeleteUser(u)"
+                        class="btn btn-supprimer btn-sm"
+                        (click)="deleteUser(u)">🗑</button>
+              </td>
+            </tr>
+            <tr *ngIf="!users.length">
+              <td colspan="5" class="text-center py-3">Aucun utilisateur</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <div class="form-group">
-        <label>Lot*</label>
-        <input name="numLot"
-               class="form-control form-control-sm"
-               required
-               [(ngModel)]="newComptage.numLot">
-      </div>
-
-      <div class="form-group">
-        <label>Sous-lot*</label>
-        <input name="numSousLot"
-               class="form-control form-control-sm"
-               required
-               [(ngModel)]="newComptage.numSousLot">
-      </div>
-
-      <div class="form-group">
-        <label>Qté Totale*</label>
-        <input type="number" min="0"
-               name="quantiteTotale"
-               class="form-control form-control-sm"
-               required
-               [(ngModel)]="newComptage.quantiteTotale">
-      </div>
-
-      <div class="form-group">
-        <label>Emplacement (opt.)</label>
-        <input name="emplacement"
-               class="form-control form-control-sm"
-               [(ngModel)]="newComptage.emplacement">
-      </div>
-
-      <div class="form-group">
-        <label>Poids (g)*</label>
-        <input type="number" min="0"
-               name="poids"
-               class="form-control form-control-sm"
-               required
-               [(ngModel)]="newComptage.poids">
-      </div>
-
-      <div class="form-group">
-        <label># Comptage*</label>
-        <select name="numComptage"
-                class="form-control form-control-sm"
-                required
-                [(ngModel)]="newComptage.numComptage">
-          <option [ngValue]="1">1</option>
-          <option [ngValue]="2">2</option>
-          <option [ngValue]="3">3</option>
-        </select>
-      </div>
-
-      <button type="submit"
-              class="btn btn-ajouter btn-sm"
-              [disabled]="f.invalid">
-        {{ editing ? 'Enregistrer' : 'Ajouter' }}
-      </button>
-    </form>
-
-    <!-- Tableau -->
-    <div class="table-responsive">
-      <table class="table table-hover table-striped table-sm mb-0">
-        <thead class="thead-light">
-          <tr>
-            <th>Réf.</th><th>Lot</th><th>Sous-lot</th>
-            <th>Qté</th><th>Empl.</th><th>Poids</th>
-            <th>#Cptg</th><th>Date</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let c of comptages">
-            <td>{{ c.reference }}</td>
-            <td>{{ c.numLot }}</td>
-            <td>{{ c.numSousLot }}</td>
-            <td>{{ c.quantiteTotale }}</td>
-            <td>{{ c.emplacement || '–' }}</td>
-            <td>{{ c.poids }}</td>
-            <td>{{ c.numComptage }}</td>
-            <td>{{ c.timestamp | date:'short' }}</td>
-            <td>
-              <button class="btn btn-modifier btn-sm me-1"
-                      (click)="editComptage(c)">
-                Modifier ✎
-              </button>
-              <button class="btn btn-supprimer btn-sm"
-                      (click)="delete(c)">
-                Supprimer 🗑
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="!comptages.length">
-            <td colspan="9" class="text-center py-3">
-              Aucun comptage pour le moment.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    </section>
 
   </main>
 </div>

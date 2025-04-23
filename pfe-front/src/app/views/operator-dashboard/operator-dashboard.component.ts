@@ -1,11 +1,11 @@
-// src/app/views/pages/operator-dashboard/operator-dashboard.component.ts
-import { Component, OnInit }            from '@angular/core';
-import { CommonModule }                 from '@angular/common';
-import { FormsModule }                  from '@angular/forms';
-import { OperatorService }              from '../../services/operator.service';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { OperatorService } from '../../services/operator.service';
 import { AuthentificationnServiceService } from '../../services/authentificationn.service';
-import { Comptage }                     from '../../models/comptage.model';
-import { User }                         from '../../models/user.model';
+import { Comptage } from '../../models/comptage.model';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-operator-dashboard',
@@ -15,101 +15,136 @@ import { User }                         from '../../models/user.model';
   styleUrls: ['./operator-dashboard.component.scss']
 })
 export class OperatorDashboardComponent implements OnInit {
-  user: User | null              = null;
-  showProfile                    = false;
-  comptages: Comptage[]          = [];
+  user?: User;
+  showProfile = false;
+  showUsersMenu = false;
+  currentUsersRole?: 'OPERATEUR' | 'SUPERVISEUR';
+  users: User[] = [];
+  comptages: Comptage[] = [];
   newComptage: Partial<Comptage> = {};
-  editing                        = false;
+  editing = false;
 
   constructor(
     private authSrv: AuthentificationnServiceService,
-    private opSrv:   OperatorService
+    private opSrv: OperatorService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.user = this.authSrv.getCurrentUser();
+    this.user = this.authSrv.getCurrentUser()!;
     if (!this.user) {
-      window.location.href = '/login';
+      this.router.navigate(['/login']);
       return;
     }
     this.loadComptages();
   }
 
-  logout(): void {
-    this.authSrv.logout();
-    window.location.href = '/login';
+  // -- UTILISATEURS --
+  toggleUsersMenu() {
+    this.showUsersMenu = !this.showUsersMenu;
   }
 
-  private loadComptages(): void {
-    if (!this.user) return;
-    this.opSrv.getComptages(this.user.id!).subscribe({
+  loadUsers(role: 'OPERATEUR' | 'SUPERVISEUR') {
+    this.currentUsersRole = role;
+    this.authSrv.getUsersByRole(role).subscribe({
+      next: list => this.users = list,
+      error: (err: any) => console.error('Erreur chargement utilisateurs', err)
+    });
+  }
+
+  goToRegister(role: 'OPERATEUR' | 'SUPERVISEUR') {
+    this.router.navigate(['/register'], { queryParams: { role } });
+  }
+
+  canChangePassword(u: User) {
+    if (!this.user) return false;
+    return u.role === 'OPERATEUR'
+      ? (this.user.role === 'SUPERVISEUR' || this.user.role === 'ADMIN')
+      : this.user.role === 'ADMIN';
+  }
+
+  changePassword(u: User) {
+    const pwd = prompt(`Nouveau mot de passe pour ${u.username}`, '');
+    if (!pwd) return;
+    this.authSrv.updatePassword(u.id!, { password: pwd }).subscribe({
+      next: () => alert('Mot de passe mis à jour'),
+      error: (err: any) => console.error('Erreur mise à jour pwd', err)
+    });
+  }
+
+  canDeleteUser(u: User) {
+    if (!this.user) return false;
+    return u.role === 'OPERATEUR'
+      ? (this.user.role === 'SUPERVISEUR' || this.user.role === 'ADMIN')
+      : this.user.role === 'ADMIN';
+  }
+
+  deleteUser(u: User) {
+    if (!confirm(`Supprimer ${u.username} ?`)) return;
+    this.authSrv.deleteUser(u.id!).subscribe({
+      next: () => this.loadUsers(this.currentUsersRole!),
+      error: (err: any) => console.error('Erreur suppression utilisateur', err)
+    });
+  }
+
+  logout() {
+    this.authSrv.logout();
+    this.router.navigate(['/login']);
+  }
+
+  // -- COMPTAGES --
+  private loadComptages() {
+    this.opSrv.getComptages(this.user!.id!).subscribe({
       next: data => {
-        this.comptages = data.sort((a,b) =>
-          new Date(b.timestamp!).getTime()
-          - new Date(a.timestamp!).getTime()
+        this.comptages = data.sort((a, b) =>
+          +new Date(b.timestamp!) - +new Date(a.timestamp!)
         );
       },
-      error: err => console.error('Erreur chargement', err)
+      error: (err: any) => console.error('Erreur chargement comptages', err)
     });
   }
 
-  scanQr(): void {
-    const scan = prompt('Collez le code QR (ref$lot$sousLot$qtTotale)');
-    if (!scan) return;
-    const [ref, lot, sl, qt] = scan.split('$');
-    this.newComptage = {
-      reference:      ref,
-      numLot:         lot,
-      numSousLot:     sl,
-      quantiteTotale: Math.max(0, Number(qt)),
-      emplacement:    '',
-      typeMatiere:    '',
-      poids:          0,
-      numComptage:    1
-    };
-    this.editing = false;
+  scanQr() {
+    // implémentation QR selon besoin
   }
 
+  /** Ajout ou mise à jour */
   onSubmit(): void {
-    if (!this.user) return;
-    const now = new Date().toISOString();
-    const payload: Comptage = {
-      id:             this.editing ? this.newComptage.id : undefined,
-      operateurId:    this.user.id!,
-      reference:      this.newComptage.reference!,
-      numLot:         this.newComptage.numLot!,
-      numSousLot:     this.newComptage.numSousLot!,
-      quantiteTotale: this.newComptage.quantiteTotale!,
-      emplacement:    this.newComptage.emplacement || '',
-      typeMatiere:    this.newComptage.typeMatiere || '',
-      poids:          this.newComptage.poids!,
-      numComptage:    this.newComptage.numComptage!,
-      timestamp:      now
-    };
-    const obs = this.editing
-      ? this.opSrv.editComptage(this.user.id!, payload)
-      : this.opSrv.addComptage(this.user.id!, payload);
-    obs.subscribe({
-      next: () => { this.loadComptages(); this.resetForm(); },
-      error: err => console.error(this.editing ? 'Erreur modif' : 'Erreur ajout', err)
-    });
+    if (this.editing) {
+      // UPDATE
+      this.opSrv.editComptage(this.user!.id!, this.newComptage as Comptage).subscribe({
+        next: () => {
+          this.editing = false;
+          this.newComptage = {};
+          this.loadComptages();
+        },
+        error: (err: any) => console.error('Erreur mise à jour', err)
+      });
+    } else {
+      // CREATE
+      this.opSrv.addComptage(this.user!.id!, this.newComptage as Comptage).subscribe({
+        next: () => {
+          this.newComptage = {};
+          this.loadComptages();
+        },
+        error: (err: any) => console.error('Erreur création', err)
+      });
+    }
   }
 
+  /** Prépare l'édition */
   editComptage(c: Comptage): void {
-    this.newComptage = { ...c };
     this.editing = true;
+    this.newComptage = { ...c };
   }
 
+  /** Suppression */
   delete(c: Comptage): void {
-    if (!this.user || !confirm('Supprimer ce comptage ?')) return;
-    this.opSrv.deleteComptage(this.user.id!, c.id!).subscribe({
+    if (!c.id) return;
+    if (!confirm('Supprimer ce comptage ?')) return;
+    this.opSrv.deleteComptage(this.user!.id!, c.id).subscribe({
       next: () => this.loadComptages(),
-      error: err => console.error('Erreur suppression', err)
+      error: (err: any) => console.error('Erreur suppression', err)
     });
-  }
-
-  private resetForm(): void {
-    this.newComptage = {};
-    this.editing = false;
   }
 }
