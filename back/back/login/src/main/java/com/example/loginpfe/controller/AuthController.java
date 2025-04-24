@@ -1,14 +1,12 @@
+// src/main/java/com/example/loginpfe/controller/AuthController.java
 package com.example.loginpfe.controller;
 
-
 import com.example.loginpfe.Repository.UserRepository;
+import com.example.loginpfe.Service.UserService;
 import com.example.loginpfe.Service.JwtService;
-import com.example.loginpfe.dto.AuthResponse;
-import com.example.loginpfe.dto.ComptageDTO;
 import com.example.loginpfe.dto.RegisterRequest;
-import com.example.loginpfe.entity.Comptage;
+import com.example.loginpfe.dto.AuthResponse;
 import com.example.loginpfe.entity.User;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,62 +14,64 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/auth")        // ← was "/auth"
+@RequestMapping("/auth")
 public class AuthController {
 
-    private  UserRepository userRepository;
-    private  JwtService jwtService;
-    private  PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final UserService userService;
+    private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthController(UserRepository userRepository, JwtService jwtService, PasswordEncoder passwordEncoder) {
+    public AuthController(UserRepository userRepository,
+                          UserService userService,
+                          JwtService jwtService,
+                          PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.userService = userService;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
-    @CrossOrigin(origins = "localhost:4200")
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest user) {
-        try {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            User user2 = new User();
-            user2.setUsername(user.getUsername());
-            user2.setPassword(user.getPassword());
-            user2.setFirstname(user.getFirstname());
-            user2.setLastname(user.getLastname());
-            user2.setRole(user.getRole());
-            user2.setEmail("khalilsaidnai"); // Utilisation de l'email fourni
-
-            User savedUser = userRepository.save(user2);
-            return ResponseEntity.ok(savedUser);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error during registration");
-        }
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        request.setPassword(passwordEncoder.encode(request.getPassword()));
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(request.getPassword());
+        user.setFirstname(request.getFirstname());
+        user.setLastname(request.getLastname());
+        user.setRole(request.getRole());
+       // user.setEmail(request.getEmail());
+        User saved = userRepository.save(user);
+        return ResponseEntity.ok(saved);
     }
-    @CrossOrigin(origins = "localhost:4200")
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user) {
-
-        User dbUser = userRepository.findByUsername(user.getUsername())
+    public ResponseEntity<?> login(@RequestBody User creds) {
+        User dbUser = userRepository.findByUsername(creds.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (passwordEncoder.matches(user.getPassword(), dbUser.getPassword())) {
-
-            AuthResponse authResponse = jwtService.generateToken(dbUser);
-            return ResponseEntity.ok(authResponse);
-        } else {
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        if (!passwordEncoder.matches(creds.getPassword(), dbUser.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid credentials");
         }
+        AuthResponse token = jwtService.generateToken(dbUser);
+        return ResponseEntity.ok(token);
     }
+
     @GetMapping("/users")
     public ResponseEntity<List<User>> listByRole(@RequestParam("role") String role) {
-        // Convert the incoming string to your enum:
-        User.Role r = User.Role.valueOf(role);
+        User.Role r = User.Role.valueOf(role.toUpperCase());
         List<User> users = userRepository.findByRole(r);
         return ResponseEntity.ok(users);
+    }
 
-}}
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // NOTE: Password update moved to PasswordController to avoid duplicate mappings
+}

@@ -1,106 +1,86 @@
+// src/main/java/com/example/loginpfe/controller/PasswordController.java
 package com.example.loginpfe.controller;
+
 import com.example.loginpfe.Repository.UserRepository;
-import com.example.loginpfe.Service.EmailService;
-import com.example.loginpfe.Service.JwtService;
-//import com.example.loginpfe.Service.PasswordGenerator;
-import com.example.loginpfe.Service.UserService;
-import com.example.loginpfe.dto.ChangePasswordRequest;
-import com.example.loginpfe.dto.NewPasswordRequest;
 import com.example.loginpfe.entity.User;
+import com.example.loginpfe.entity.User.Role;
+import com.example.loginpfe.dto.ChangePasswordRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(origins = "http://localhost:4200")
 public class PasswordController {
-    @Autowired
-    private JwtService jwtService;
+
+    private final UserRepository userRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired
-    UserRepository userRepository ;
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private EmailService emailService;
-    @PutMapping("/modifier/{email}")
-    public ResponseEntity<String> changePassword(
-            @PathVariable String email,
-            @RequestBody ChangePasswordRequest changePasswordRequest) {
-
-        boolean isChanged = userService.changePassword(email,
-                changePasswordRequest.getOldPassword(),
-                changePasswordRequest.getNewPassword());
-
-        if (isChanged) {
-            return ResponseEntity.status(HttpStatus.OK).body("Password changed successfully");
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid email or old password");
-        }
-    }
-    @PostMapping("/reset-password/{email}")
-    public String resetPassword(@PathVariable String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        if (!user.isPresent()) {
-            return "No user found with this email.";
-        }
-
-        // Generate a random password
-       // String newPassword = PasswordGenerator.generateRandomPassword(12); // Password length
-
-        // Update the password in the database
-       // userService.updatePassword(email, newPassword);
-
-        // Send an email with the new password
-        String subject = "Password Reset";
-       // String message = "Your new password is: " + newPassword + "\n\n"
-               // + "Please change this password after logging in.";
-      //  emailService.sendEmail(email, subject, message);
-
-        return "An email with a new password has been sent to your address.";
+    public PasswordController(UserRepository userRepository,
+                              org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    @PostMapping("/reset-password1/{email}")
-    public String resetPassword1(@PathVariable String email) {
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
+    /**
+     * Change password with role-based permissions:
+     * - SUPERVISEUR can update OPERATEUR passwords
+     * - ADMIN can update SUPERVISEUR and OPERATEUR passwords
+     */
+    @PutMapping("/users/{id}/password")
+    public ResponseEntity<Void> changePassword(
+            @PathVariable("id") Long targetId,
+            @RequestBody ChangePasswordRequest body,
+            Principal principal
+    ) {
+        // Get current user from JWT principal
+        User currentUser = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Invalid authenticated user"));
 
-            // Générer un token
-            String token = String.valueOf(jwtService.generateToken(user));
-            LocalDateTime tokenExpiration = LocalDateTime.now().plusMinutes(2);
-            user.setResetToken(token);
-            user.setTokenExpiration(tokenExpiration);
-            userRepository.save(user);
+        // Load target user
+        User targetUser = userRepository.findById(targetId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Target user not found"));
 
-            // Afficher l'utilisateur pour vérifier que le token est bien défini
-            System.out.println("User after saving: " + user);
+        Role currRole = currentUser.getRole();
+        Role targetRole = targetUser.getRole();
 
-            // Envoyer l'e-mail
-            String resetLink = "http://localhost:3000/reset-password1?token=" + token;
-            emailService.sendEmail2(email, resetLink);
-
-            return "Un lien de réinitialisation a été envoyé à votre email.";
-        } else {
-            return "No user found with this email.";
+        // Permission checks
+        if (currRole == Role.SUPERVISEUR) {
+            if (targetRole != Role.OPERATEUR) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Superviseur can only update opérateur passwords"
+                );
+            }
+        }
+        else if (currRole == Role.ADMIN) {
+            if (targetRole != Role.OPERATEUR && targetRole != Role.SUPERVISEUR) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Admin can only update opérateur or superviseur passwords"
+                );
+            }
+        }
+        else {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Opérateur cannot update other users' passwords"
+            );
         }
 
+        // Update and save
+        targetUser.setPassword(passwordEncoder.encode(body.getNewPassword()));
+        userRepository.save(targetUser);
+
+        return ResponseEntity.ok().build();
     }
-
-
-    @PostMapping("/new-password")
-    public ResponseEntity<String> setNewPassword(@RequestBody NewPasswordRequest request) {
-        userService.updatePassword1(request);
-        return ResponseEntity.ok("Mot de passe mis à jour avec succès.");
-    }
-
-
-
 }
 

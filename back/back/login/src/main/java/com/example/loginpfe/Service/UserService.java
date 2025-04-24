@@ -1,63 +1,51 @@
+// src/main/java/com/example/loginpfe/Service/UserService.java
 package com.example.loginpfe.Service;
 
 import com.example.loginpfe.Repository.UserRepository;
-import com.example.loginpfe.dto.NewPasswordRequest;
 import com.example.loginpfe.entity.User;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import java.util.Optional;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public boolean changePassword(String email, String oldPassword, String newPassword) {
-        Optional<User> userOptional = userRepository.findByEmail(email); // Utilisez findByEmail au lieu de findById
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            if (passwordEncoder.matches(oldPassword, user.getPassword())) {
-                user.setPassword(passwordEncoder.encode(newPassword));
-                userRepository.save(user);
-                return true;
-            }
-        }
-        return false;
-    }
-    public void updatePassword(String email, String newPassword) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setPassword(passwordEncoder.encode(newPassword));
-            userRepository.save(user);
-        } else {
-            throw new RuntimeException("Utilisateur non trouvé");
-        }
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-
-    public void updatePassword1(NewPasswordRequest request) {
-        System.out.println("request:" + request);
-        String token = request.getToken();
-        System.out.println("token " + token);
-        Optional<User> optionalUser = userRepository.findByResetToken(token);
-
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            // Encodez le nouveau mot de passe
-            String encodedPassword = passwordEncoder.encode(request.getNewPassword());
-            user.setPassword(encodedPassword);
-
-            // Réinitialisez le token
-            user.setResetToken(null); // Suppression du token après utilisation
-            userRepository.save(user); // Sauvegarder les changements
-        } else {
-            throw new RuntimeException("Invalid token or user not found");
+    /**
+     * Delete a user by ID
+     */
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
+        userRepository.deleteById(id);
+    }
+
+    /**
+     * Change password by user ID, verifying old password and setting new password
+     */
+    public boolean changePasswordById(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"));
+
+        // Verify old password
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            return false;
+        }
+
+        // Encode and set new password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return true;
     }
 }

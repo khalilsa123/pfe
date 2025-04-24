@@ -1,23 +1,11 @@
+// src/main/java/com/example/loginpfe/dto/ChangePasswordRequest.java
 package com.example.loginpfe.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
 
-@Getter
-@Setter
 public class ChangePasswordRequest {
-    private String oldPassword;
+    @NotBlank
     private String newPassword;
-    public ChangePasswordRequest() {}
-
-    // Getters et setters
-    public String getOldPassword() {
-        return oldPassword;
-    }
-
-    public void setOldPassword(String oldPassword) {
-        this.oldPassword = oldPassword;
-    }
 
     public String getNewPassword() {
         return newPassword;
@@ -26,5 +14,4 @@ public class ChangePasswordRequest {
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
     }
-
 }
