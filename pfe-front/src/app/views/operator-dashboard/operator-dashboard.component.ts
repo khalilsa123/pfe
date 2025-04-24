@@ -18,6 +18,7 @@ export class OperatorDashboardComponent implements OnInit {
   user?: User;
   showProfile = false;
   showUsersMenu = false;
+  showInventoryManagement = false; // Nouveau flag pour afficher/masquer la gestion des inventaires
   currentUsersRole?: 'OPERATEUR' | 'SUPERVISEUR';
   users: User[] = [];
   comptages: Comptage[] = [];
@@ -36,16 +37,15 @@ export class OperatorDashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.loadComptages();
+    // Nous ne chargeons plus les comptages au démarrage car le panneau d'inventaire est caché
   }
 
   // -- UTILISATEURS --
-  toggleUsersMenu() {
-    this.showUsersMenu = !this.showUsersMenu;
-  }
-
   loadUsers(role: 'OPERATEUR' | 'SUPERVISEUR') {
     this.currentUsersRole = role;
+    this.showUsersMenu = true;
+    this.showInventoryManagement = false; // Masque la gestion d'inventaire quand on affiche les utilisateurs
+    
     this.authSrv.getUsersByRole(role).subscribe({
       next: list => this.users = list,
       error: (err: any) => console.error('Erreur chargement utilisateurs', err)
@@ -93,6 +93,16 @@ export class OperatorDashboardComponent implements OnInit {
   }
 
   // -- COMPTAGES --
+  // Méthode pour activer le panneau de gestion d'inventaire
+  toggleInventoryManagement() {
+    this.showInventoryManagement = !this.showInventoryManagement;
+    this.showUsersMenu = false; // Masque la liste des utilisateurs
+    
+    if (this.showInventoryManagement) {
+      this.loadComptages(); // Charge les comptages seulement quand on a besoin
+    }
+  }
+  
   private loadComptages() {
     this.opSrv.getComptages(this.user!.id!).subscribe({
       next: data => {
@@ -104,12 +114,26 @@ export class OperatorDashboardComponent implements OnInit {
     });
   }
 
-  scanQr() {
-    // implémentation QR selon besoin
-  }
-
   /** Ajout ou mise à jour */
   onSubmit(): void {
+    // Si référence est fournie, on tente de remplir automatiquement les autres champs
+    // Cette logique serait à personnaliser selon votre système
+    if (this.newComptage.reference && !this.editing) {
+      // Exemple: si la référence a un format spécifique, on extrait des informations
+      // Format hypothétique: REF-LOT-SOUSLOT-QTE
+      const refParts = this.newComptage.reference.split('-');
+      if (refParts.length >= 4) {
+        this.newComptage.numLot = refParts[1];
+        this.newComptage.numSousLot = refParts[2];
+        this.newComptage.quantiteTotale = parseInt(refParts[3], 10);
+      } else {
+        // Valeurs par défaut si le format ne correspond pas
+        this.newComptage.numLot = 'Auto';
+        this.newComptage.numSousLot = 'Auto';
+        this.newComptage.quantiteTotale = 1;
+      }
+    }
+
     if (this.editing) {
       // UPDATE
       this.opSrv.editComptage(this.user!.id!, this.newComptage as Comptage).subscribe({

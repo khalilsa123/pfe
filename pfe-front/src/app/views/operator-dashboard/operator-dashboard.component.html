@@ -1,186 +1,221 @@
 <div class="wrapper">
-
   <!-- SIDEBAR -->
   <aside class="sidebar">
+    <!-- Logo added at the top of sidebar -->
+    <div class="logo-container">
+      <img src="assets/onetech_logo.jpg" alt="OneTech Tunisia" class="logo">
+    </div>
+    
     <h3>Menu</h3>
 
-    <!-- Profil & Déco -->
-    <button class="btn btn-profile mb-2 w-100"
-            (click)="showProfile = !showProfile">
-      {{ showProfile ? 'Masquer Profil' : 'Profil' }}
+    <!-- Bouton Gestion des Inventaires déplacé dans le menu -->
+    <button class="btn btn-menu mb-2 w-100"
+            (click)="showInventoryManagement = !showInventoryManagement">
+      <i class="fas fa-boxes me-2"></i>
+      {{ showInventoryManagement ? 'Masquer Inventaire' : 'Gestion des Inventaires' }}
     </button>
-    <button class="btn btn-profile mb-4 w-100"
-            (click)="logout()">
-      Déconnexion
-    </button>
-    <div *ngIf="showProfile" class="profile-panel px-3 py-2 text-light">
-      <p><strong>ID :</strong> {{ user?.id }}</p>
-      <p><strong>Nom :</strong> {{ user?.lastname }}</p>
-      <p><strong>Prénom :</strong> {{ user?.firstname }}</p>
-      <p><strong>Username :</strong> {{ user?.username }}</p>
-      <p><strong>Rôle :</strong> {{ user?.role }}</p>
-    </div>
 
-    <!-- Basculer vers gestion Utilisateurs (pas pour OPERATEUR) -->
-    <button *ngIf="user?.role !== 'OPERATEUR'"
-            class="btn btn-profile mb-4 w-100"
-            (click)="toggleUsersMenu()">
-      {{ showUsersMenu ? 'Masquer Utilisateurs' : 'Utilisateurs' }}
-    </button>
-    <div *ngIf="showUsersMenu" class="mb-4">
-      <button class="btn btn-profile mb-2 w-100"
+    <!-- Boutons utilisateurs selon le rôle -->
+    <ng-container *ngIf="user?.role !== 'OPERATEUR'">
+      <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
+              class="btn btn-menu mb-2 w-100"
               (click)="loadUsers('OPERATEUR')">
+        <i class="fas fa-users me-2"></i>
         Liste Opérateurs
       </button>
-      <button *ngIf="user?.role==='ADMIN'"
-              class="btn btn-profile w-100"
+      <button *ngIf="user?.role === 'ADMIN'"
+              class="btn btn-menu w-100"
               (click)="loadUsers('SUPERVISEUR')">
+        <i class="fas fa-user-shield me-2"></i>
         Liste Superviseurs
       </button>
-    </div>
+    </ng-container>
   </aside>
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
-
-    <!-- — ZONE COMPTAGES — -->
-    <section *ngIf="!showUsersMenu">
-      <!-- Formulaire d’ajout / édition -->
-      <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4"
-            #f="ngForm" (ngSubmit)="onSubmit()">
-
-        <button type="button" class="btn btn-scanner btn-sm"
-                (click)="scanQr()">
-          Scanner QR
+    <!-- Barre supérieure avec profile et déconnexion -->
+    <div class="top-bar">
+      <h2 class="app-title">Système d'Inventaire OneTech</h2>
+      <div class="user-profile-container">
+        <button class="btn btn-profile-dropdown" (click)="showProfile = !showProfile">
+          <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
+          <i class="fas fa-chevron-down ms-2"></i>
         </button>
-
-        <div class="form-group">
-          <label>Référence*</label>
-          <input name="reference" class="form-control form-control-sm" required
-                 [(ngModel)]="newComptage.reference">
+        <div *ngIf="showProfile" class="profile-dropdown">
+          <div class="profile-info">
+            <p><strong>Nom :</strong> {{ user?.lastname }}</p>
+            <p><strong>Prénom :</strong> {{ user?.firstname }}</p>
+            <p><strong>Username :</strong> {{ user?.username }}</p>
+            <p><strong>Rôle :</strong> {{ user?.role }}</p>
+          </div>
+          <button class="btn btn-logout w-100"
+                  (click)="logout()">
+            <i class="fas fa-sign-out-alt me-2"></i>
+            Déconnexion
+          </button>
         </div>
-        <div class="form-group">
-          <label>Lot*</label>
-          <input name="numLot" class="form-control form-control-sm" required
-                 [(ngModel)]="newComptage.numLot">
-        </div>
-        <div class="form-group">
-          <label>Sous-lot*</label>
-          <input name="numSousLot" class="form-control form-control-sm" required
-                 [(ngModel)]="newComptage.numSousLot">
-        </div>
-        <div class="form-group">
-          <label>Qté Totale*</label>
-          <input type="number" min="0" name="quantiteTotale"
-                 class="form-control form-control-sm" required
-                 [(ngModel)]="newComptage.quantiteTotale">
-        </div>
-        <div class="form-group">
-          <label>Emplacement (opt.)</label>
-          <input name="emplacement" class="form-control form-control-sm"
-                 [(ngModel)]="newComptage.emplacement">
-        </div>
-        <div class="form-group">
-          <label>Poids (g)*</label>
-          <input type="number" min="0" name="poids"
-                 class="form-control form-control-sm" required
-                 [(ngModel)]="newComptage.poids">
-        </div>
-        <div class="form-group">
-          <label>Numéro comptage*</label>
-          <select name="numComptage"
-                  class="form-control form-control-sm" required
-                  [(ngModel)]="newComptage.numComptage">
-            <option [ngValue]="1">1</option>
-            <option [ngValue]="2">2</option>
-            <option [ngValue]="3">3</option>
-          </select>
-        </div>
-
-        <button type="submit" class="btn btn-ajouter btn-sm"
-                [disabled]="f.invalid">
-          {{ editing ? 'Enregistrer' : 'Ajouter' }}
-        </button>
-      </form>
-
-      <!-- Tableau des comptages -->
-      <div class="table-responsive mb-5">
-        <table class="table table-hover table-striped table-sm mb-0">
-          <thead>
-            <tr>
-              <th>Réf.</th><th>Lot</th><th>Sous-lot</th>
-              <th>Qté</th><th>Empl.</th><th>Poids</th>
-              <th>Numéro comptage</th><th>Date</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let c of comptages">
-              <td>{{ c.reference }}</td>
-              <td>{{ c.numLot }}</td>
-              <td>{{ c.numSousLot }}</td>
-              <td>{{ c.quantiteTotale }}</td>
-              <td>{{ c.emplacement||'–' }}</td>
-              <td>{{ c.poids }}</td>
-              <td>{{ c.numComptage }}</td>
-              <td>{{ c.timestamp|date:'short' }}</td>
-              <td>
-                <button class="btn btn-modifier btn-sm me-1"
-                        (click)="editComptage(c)">✎</button>
-                <button class="btn btn-supprimer btn-sm"
-                        (click)="delete(c)">🗑</button>
-              </td>
-            </tr>
-            <tr *ngIf="!comptages.length">
-              <td colspan="9" class="text-center py-3">Aucun comptage</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
-    </section>
+    </div>
 
-    <!-- — ZONE UTILISATEURS — -->
-    <section *ngIf="showUsersMenu">
-      <h2 class="mb-3">
-        Liste des
-        {{ currentUsersRole==='OPERATEUR' ? 'Opérateurs' : 'Superviseurs' }}
-      </h2>
-
-      <!-- Bouton création utilisateur -->
-      <button class="btn btn-ajouter mb-3"
-              (click)="goToRegister(currentUsersRole!)">
-        + Créer
-        {{ currentUsersRole==='OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
-      </button>
-
-      <div class="table-responsive">
-        <table class="table table-striped table-sm">
-          <thead>
-            <tr>
-              <th>ID</th><th>Username</th><th>Nom</th><th>Prénom</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let u of users">
-              <td>{{ u.id }}</td>
-              <td>{{ u.username }}</td>
-              <td>{{ u.lastname }}</td>
-              <td>{{ u.firstname }}</td>
-              <td>
-                <button *ngIf="canChangePassword(u)"
-                        class="btn btn-modifier btn-sm me-1"
-                        (click)="changePassword(u)">🔑</button>
-                <button *ngIf="canDeleteUser(u)"
-                        class="btn btn-supprimer btn-sm"
-                        (click)="deleteUser(u)">🗑</button>
-              </td>
-            </tr>
-            <tr *ngIf="!users.length">
-              <td colspan="5" class="text-center py-3">Aucun utilisateur</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
+    <!-- CONTENU PRINCIPAL - vide par défaut -->
+    <div class="content-area">
+      <!-- — ZONE COMPTAGES — -->
+      <section *ngIf="showInventoryManagement">
+        <div class="section-header">
+          <h2>Gestion des Inventaires</h2>
+        </div>
+        
+        <!-- Formulaire d'ajout / édition -->
+        <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4"
+              #f="ngForm" (ngSubmit)="onSubmit()">
+  
+          <div class="form-row">
+            <!-- Seulement le champ référence est visible -->
+            <div class="form-group">
+              <label>Référence*</label>
+              <input name="reference" class="form-control form-control-sm" required
+                    [(ngModel)]="newComptage.reference">
+            </div>
+            
+            <!-- Champs invisibles (mais toujours dans le modèle) -->
+            <input type="hidden" name="numLot" [(ngModel)]="newComptage.numLot">
+            <input type="hidden" name="numSousLot" [(ngModel)]="newComptage.numSousLot">
+            <input type="hidden" name="quantiteTotale" [(ngModel)]="newComptage.quantiteTotale">
+            
+            <!-- Autres champs restants -->
+            <div class="form-group">
+              <label>Emplacement (opt.)</label>
+              <input name="emplacement" class="form-control form-control-sm"
+                    [(ngModel)]="newComptage.emplacement">
+            </div>
+            <div class="form-group">
+              <label>Poids (g)*</label>
+              <input type="number" min="0" name="poids"
+                    class="form-control form-control-sm" required
+                    [(ngModel)]="newComptage.poids">
+            </div>
+            <div class="form-group">
+              <label>Numéro comptage*</label>
+              <select name="numComptage"
+                      class="form-control form-control-sm" required
+                      [(ngModel)]="newComptage.numComptage">
+                <option [ngValue]="1">1</option>
+                <option [ngValue]="2">2</option>
+                <option [ngValue]="3">3</option>
+              </select>
+            </div>
+          </div>
+  
+          <button type="submit" class="btn btn-ajouter btn-sm"
+                  [disabled]="f.invalid">
+            <i class="fas fa-plus-circle"></i> {{ editing ? 'Enregistrer' : 'Ajouter' }}
+          </button>
+        </form>
+  
+        <!-- Tableau des comptages -->
+        <div class="table-container">
+          <div class="table-header">
+            <h4>Liste des comptages</h4>
+          </div>
+          <div class="table-responsive mb-5">
+            <table class="table table-hover table-striped table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Réf.</th>
+                  <th>Lot</th>
+                  <th>Sous-lot</th>
+                  <th>Qté</th>
+                  <th>Empl.</th>
+                  <th>Poids</th>
+                  <th>Numéro comptage</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of comptages">
+                  <td>{{ c.reference }}</td>
+                  <td>{{ c.numLot }}</td>
+                  <td>{{ c.numSousLot }}</td>
+                  <td>{{ c.quantiteTotale }}</td>
+                  <td>{{ c.emplacement||'–' }}</td>
+                  <td>{{ c.poids }}</td>
+                  <td>{{ c.numComptage }}</td>
+                  <td>{{ c.timestamp|date:'short' }}</td>
+                  <td class="actions-cell">
+                    <button class="btn btn-modifier btn-sm me-1"
+                            (click)="editComptage(c)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-supprimer btn-sm"
+                            (click)="delete(c)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="!comptages.length">
+                  <td colspan="9" class="text-center py-3">Aucun comptage</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+  
+      <!-- — ZONE UTILISATEURS — -->
+      <section *ngIf="showUsersMenu">
+        <div class="section-header">
+          <h2>
+            Liste des
+            {{ currentUsersRole==='OPERATEUR' ? 'Opérateurs' : 'Superviseurs' }}
+          </h2>
+          <!-- Bouton création utilisateur -->
+          <button class="btn btn-ajouter"
+                  (click)="goToRegister(currentUsersRole!)">
+            <i class="fas fa-user-plus"></i> Créer
+            {{ currentUsersRole==='OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
+          </button>
+        </div>
+  
+        <div class="table-container">
+          <div class="table-responsive">
+            <table class="table table-striped table-sm">
+              <thead>
+                <tr>
+                  <!-- ID column removed as requested -->
+                  <th>Username</th>
+                  <th>Nom</th>
+                  <th>Prénom</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let u of users">
+                  <td>{{ u.username }}</td>
+                  <td>{{ u.lastname }}</td>
+                  <td>{{ u.firstname }}</td>
+                  <td class="actions-cell">
+                    <button *ngIf="canChangePassword(u)"
+                            class="btn btn-modifier btn-sm me-1"
+                            (click)="changePassword(u)">
+                      <i class="fas fa-key"></i>
+                    </button>
+                    <button *ngIf="canDeleteUser(u)"
+                            class="btn btn-supprimer btn-sm"
+                            (click)="deleteUser(u)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="!users.length">
+                  <td colspan="4" class="text-center py-3">Aucun utilisateur</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 </div>

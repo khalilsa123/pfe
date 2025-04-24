@@ -1,23 +1,178 @@
-/* full‑screen gradient */
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
-  }
-  .login-background {
-    background: url('/assets/back_login.jpg') no‑repeat center center fixed;
-    background-size: cover;
+/* OneTech Tunisia Color Palette - Same as dashboard */
+:root {
+  --onetech-blue: #0074B5;
+  --onetech-dark-blue: #00538C;
+  --onetech-light-blue: #E3F1F9;
+  --onetech-orange: #FF6D0A;
+  --onetech-gray: #565656;
+  --onetech-light-gray: #F2F2F2;
+  --onetech-white: #FFFFFF;
+}
+
+/* Login Background */
+.login-background {
+  background: url('/assets/back_login.jpg') no-repeat center center;
+  background-size: cover;
+  position: relative;
+}
+
+/* Semi-transparent overlay for better readability */
+.login-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 83, 140, 0.85) 0%, rgba(0, 116, 181, 0.75) 100%);
+  z-index: 1;
+}
+
+/* Card positioning above overlay */
+c-container, c-row, c-col, c-card {
+  position: relative;
+  z-index: 2;
+}
+
+/* Login Card Styling */
+.login-card {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 8px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+  border: none !important;
+  backdrop-filter: blur(5px);
+}
+
+/* Logo Styling */
+.login-logo {
+  height: 80px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  padding: 5px;
+  background-color: var(--onetech-white);
+}
+
+/* Title Styling */
+.onetech-title {
+  color: var(--onetech-dark-blue);
+  font-size: 1.6rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+/* Divider with text */
+.login-title-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+  
+  &:before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: #e0e0e0;
+    z-index: 1;
   }
   
-  /* remove default card borders */
-  c-card,
-  c-card-header,
+  span {
+    position: relative;
+    display: inline-block;
+    padding: 0 1rem;
+    background-color: var(--onetech-white);
+    color: var(--onetech-gray);
+    font-size: 1.1rem;
+    z-index: 2;
+    font-weight: 500;
+  }
+}
+
+/* Input Field Styling */
+.form-floating {
+  .form-control {
+    border: 1px solid #d8dee3;
+    border-radius: 5px;
+    padding: 1rem 0.75rem;
+    transition: all 0.2s ease;
+    
+    &:focus {
+      border-color: var(--onetech-blue);
+      box-shadow: 0 0 0 2px rgba(0, 116, 181, 0.2);
+    }
+  }
+  
+  label {
+    padding-left: 0.75rem;
+    color: var(--onetech-gray);
+    
+    i {
+      color: var(--onetech-blue);
+    }
+  }
+}
+
+/* Alert Styling */
+.alert-danger {
+  background-color: #FEE2E2;
+  color: #9B2C2C;
+  border-left: 4px solid #F56565;
+  border-radius: 4px;
+}
+
+/* Button Styling - Match dashboard */
+.btn-login {
+  background-color: var(--onetech-orange) !important;
+  color: var(--onetech-white) !important;
+  border: none !important;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    background-color: darken(#FF6D0A, 8%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Footer styling */
+c-card-footer {
+  color: var(--onetech-gray);
+}
+
+/* Icon sizing */
+form i.fas {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle; 
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .login-card {
+    margin: 1rem;
+  }
+  
   c-card-body {
-    border: none !important;
+    padding: 1.5rem !important;
   }
   
-  /* optional: make the floating SVG icons a tad smaller */
-  form svg[cIcon] {
-    width: 1em;
-    height: 1em;
-    vertical-align: middle;
+  .onetech-title {
+    font-size: 1.3rem;
   }
-  
+}

@@ -1,6 +1,6 @@
 // src/app/views/pages/register/register.component.ts
 import { Component, OnInit } from '@angular/core';
-import { CommonModule }       from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthentificationnServiceService } from '../../../services/authentificationn.service';
@@ -24,7 +24,8 @@ export class RegisterComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthentificationnServiceService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {}
 
   ngOnInit(): void {
@@ -74,5 +75,10 @@ export class RegisterComponent implements OnInit {
         }
       })
       .add(() => this.isSubmitting = false);
+  }
+  
+  // Ajout de la méthode goBack pour le bouton retour
+  goBack(): void {
+    this.location.back();
   }
 }

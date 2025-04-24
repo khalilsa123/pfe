@@ -1,0 +1,210 @@
+/* OneTech Tunisia Color Palette - Same as dashboard */
+:root {
+    --onetech-blue: #0074B5;
+    --onetech-dark-blue: #00538C;
+    --onetech-light-blue: #E3F1F9;
+    --onetech-orange: #FF6D0A;
+    --onetech-gray: #565656;
+    --onetech-light-gray: #F2F2F2;
+    --onetech-white: #FFFFFF;
+  }
+  
+  /* Register Background */
+  .register-background {
+    background: url('/assets/back_login.jpg') no-repeat center center;
+    background-size: cover;
+    position: relative;
+  }
+  
+  /* Semi-transparent overlay for better readability */
+  .register-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0, 83, 140, 0.85) 0%, rgba(0, 116, 181, 0.75) 100%);
+    z-index: 1;
+  }
+  
+  .container {
+    position: relative;
+    z-index: 2;
+  }
+  
+  /* Register Card Styling */
+  .register-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 8px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+    border: none !important;
+    backdrop-filter: blur(5px);
+  }
+  
+  /* Logo Styling */
+  .register-logo {
+    height: 80px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    padding: 5px;
+    background-color: var(--onetech-white);
+  }
+  
+  /* Title Styling */
+  .onetech-title {
+    color: var(--onetech-dark-blue);
+    font-size: 1.6rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+  }
+  
+  /* Divider with text */
+  .register-title-divider {
+    position: relative;
+    text-align: center;
+    margin: 1.5rem 0;
+    
+    &:before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: #e0e0e0;
+      z-index: 1;
+    }
+    
+    span {
+      position: relative;
+      display: inline-block;
+      padding: 0 1rem;
+      background-color: var(--onetech-white);
+      color: var(--onetech-gray);
+      font-size: 1.1rem;
+      z-index: 2;
+      font-weight: 500;
+    }
+  }
+  
+  /* Input Group Styling */
+  .input-group {
+    position: relative;
+    border-radius: 5px;
+    overflow: hidden;
+    
+    .input-group-text {
+      background-color: var(--onetech-light-blue);
+      border: 1px solid #d8dee3;
+      border-right: none;
+      color: var(--onetech-blue);
+      padding: 0.75rem;
+    }
+    
+    .form-control, .form-select {
+      border: 1px solid #d8dee3;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      height: auto;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        border-color: var(--onetech-blue);
+        box-shadow: 0 0 0 2px rgba(0, 116, 181, 0.2);
+        z-index: 3; /* Ensures the focus border is visible */
+      }
+      
+      &::placeholder {
+        color: var(--onetech-gray);
+        opacity: 0.7;
+      }
+    }
+  }
+  
+  /* Error message styling */
+  .error-message {
+    color: #d63031;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    padding-left: 0.5rem;
+  }
+  
+  /* Alert Styling */
+  .alert-danger {
+    background-color: #FEE2E2;
+    color: #9B2C2C;
+    border-left: 4px solid #F56565;
+    border-radius: 4px;
+  }
+  
+  /* Button Styling - Match dashboard */
+  .btn-register {
+    background-color: var(--onetech-orange) !important;
+    color: var(--onetech-white) !important;
+    border: none !important;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      background-color: #e86000 !important; /* Darkened orange */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+  }
+  
+  /* Secondary button styling */
+  .btn-outline-secondary {
+    color: var(--onetech-dark-blue) !important;
+    border-color: var(--onetech-dark-blue) !important;
+    background-color: transparent !important;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background-color: rgba(0, 83, 140, 0.1) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  /* Icon styling */
+  .fas {
+    width: 1em;
+    height: 1em;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .register-card {
+      margin: 1rem;
+    }
+    
+    .card-body {
+      padding: 1.5rem !important;
+    }
+    
+    .onetech-title {
+      font-size: 1.3rem;
+    }
+    
+    .row {  
+      flex-direction: column;
+    }
+  }
