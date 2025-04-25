@@ -1,44 +1,32 @@
-// src/app/app.module.ts
-import { NgModule }                     from '@angular/core';
-import { BrowserModule }                from '@angular/platform-browser';
-import { CommonModule }                 from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+// src/app/services/auth.interceptor.ts
+import { Injectable } from '@angular/core';
+import {
+  HttpInterceptor,
+  HttpRequest,
+  HttpHandler,
+  HttpEvent
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
 
-import { AppRoutingModule }             from './app-routing.module';
-import { AppComponent }                 from './app.component';
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  intercept(
+    request: HttpRequest<any>,
+    next: HttpHandler
+  ): Observable<HttpEvent<any>> {
+    // 1) retrieve the JWT from localStorage
+    const token = localStorage.getItem('jwt');
 
-import { RegisterComponent }            from './views/pages/register/register.component';
-import { LoginComponent }               from './views/pages/login/login.component';
-
-// CoreUI (optional)
-import { ButtonModule }                 from '@coreui/angular';
-import { IconModule }                   from '@coreui/icons-angular';
-
-import { AuthInterceptor }              from './services/auth.interceptor';
-
-@NgModule({
-  declarations: [
-    AppComponent,
-    RegisterComponent,
-    LoginComponent,
-    // … autres composants
-  ],
-  imports: [
-    BrowserModule,
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    AppRoutingModule,
-    ButtonModule,
-    IconModule
-  ],
-  providers: [
-    {
-      provide: HTTP_INTERCEPTORS,useClass: AuthInterceptor,multi: true
+    // 2) if it exists, clone the request and add the Authorization header
+    if (token) {
+      request = request.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
+      });
     }
-  ],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
+
+    // 3) pass the (possibly modified) request on
+    return next.handle(request);
+  }
+}

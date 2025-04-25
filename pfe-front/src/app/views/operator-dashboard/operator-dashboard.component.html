@@ -10,21 +10,74 @@
 
     <!-- Bouton Gestion des Inventaires déplacé dans le menu -->
     <button class="btn btn-menu mb-2 w-100"
-            (click)="showInventoryManagement = !showInventoryManagement">
+            [class.active]="activeButton === 'inventory'" 
+            (click)="toggleInventoryManagement()">
       <i class="fas fa-boxes me-2"></i>
       {{ showInventoryManagement ? 'Masquer Inventaire' : 'Gestion des Inventaires' }}
     </button>
+
+    <!-- Menu déroulant pour les comptages -->
+    <div class="dropdown-menu-container">
+      <button class="btn btn-menu mb-2 w-100"
+              [class.active]="activeButton === 'counting'" 
+              (click)="toggleCountingDropdown()">
+        <i class="fas fa-list-ol me-2"></i>
+        Comptages
+        <i class="fas fa-chevron-down ms-auto" [class.rotated]="showCountingDropdown"></i>
+      </button>
+      
+      <!-- Sous-menu pour les comptages -->
+      <div class="submenu" [class.show]="showCountingDropdown">
+        <button class="btn btn-submenu w-100"
+                [class.active]="showAllCounting"
+                (click)="showCountingList('all')">
+          <i class="fas fa-list me-2"></i>
+          Liste Comptages Totaux
+        </button>
+        
+        <button class="btn btn-submenu w-100"
+                [class.active]="showCountingType1"
+                (click)="showCountingList(1)">
+          <i class="fas fa-list-ol me-2"></i>
+          Liste Comptages Numéro 1
+        </button>
+        
+        <button class="btn btn-submenu w-100"
+                [class.active]="showCountingType2"
+                (click)="showCountingList(2)">
+          <i class="fas fa-list-ol me-2"></i>
+          Liste Comptages Numéro 2
+        </button>
+        
+        <button class="btn btn-submenu w-100"
+                [class.active]="showCountingType3"
+                (click)="showCountingList(3)">
+          <i class="fas fa-list-ol me-2"></i>
+          Liste Comptages Numéro 3
+        </button>
+        
+        <!-- Bouton 3ème comptage ajouté ici -->
+        <button class="btn btn-submenu w-100"
+                *ngIf="user?.role === 'ADMIN' || user?.role === 'SUPERVISEUR'"
+                (click)="showCountingList(3)">
+          <i class="fas fa-sync-alt me-2"></i>
+          3ᵉ comptage
+        </button>
+      </div>
+    </div>
 
     <!-- Boutons utilisateurs selon le rôle -->
     <ng-container *ngIf="user?.role !== 'OPERATEUR'">
       <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
               class="btn btn-menu mb-2 w-100"
+              [class.active]="activeButton === 'users' && currentUsersRole === 'OPERATEUR'"
               (click)="loadUsers('OPERATEUR')">
         <i class="fas fa-users me-2"></i>
         Liste Opérateurs
       </button>
       <button *ngIf="user?.role === 'ADMIN'"
               class="btn btn-menu w-100"
+              [class.active]="activeButton === 'users' && currentUsersRole === 'SUPERVISEUR'"
               (click)="loadUsers('SUPERVISEUR')">
         <i class="fas fa-user-shield me-2"></i>
         Liste Superviseurs
@@ -38,7 +91,10 @@
     <div class="top-bar">
       <h2 class="app-title">Système d'Inventaire OneTech</h2>
       <div class="user-profile-container">
-        <button class="btn btn-profile-dropdown" (click)="showProfile = !showProfile">
+        <button class="btn btn-profile-dropdown" [class.active]="showProfile" (click)="showProfile = !showProfile">
+          <div class="avatar-circle">
+            <span class="initials">{{ getUserInitials() }}</span>
+          </div>
           <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
           <i class="fas fa-chevron-down ms-2"></i>
         </button>
@@ -146,15 +202,77 @@
                   <td class="actions-cell">
                     <button class="btn btn-modifier btn-sm me-1"
                             (click)="editComptage(c)">
-                      <i class="fas fa-edit"></i>
+                      <i class="fas fa-edit">modifier</i>
                     </button>
                     <button class="btn btn-supprimer btn-sm"
                             (click)="delete(c)">
-                      <i class="fas fa-trash"></i>
+                      <i class="fas fa-trash">supprimer</i>
                     </button>
                   </td>
                 </tr>
                 <tr *ngIf="!comptages.length">
+                  <td colspan="9" class="text-center py-3">Aucun comptage</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ZONE LISTE COMPTAGES (NOUVELLE) -->
+      <section *ngIf="showAllCounting || showCountingType1 || showCountingType2 || showCountingType3">
+        <div class="section-header">
+          <h2>
+            {{ getCountingListTitle() }}
+          </h2>
+          
+          <div class="d-flex gap-2">
+            <!-- Bouton de tri par date -->
+            <button class="btn btn-info"
+                    (click)="toggleSortOrder()">
+              <i class="fas me-1" [ngClass]="sortAscending ? 'fa-sort-amount-up' : 'fa-sort-amount-down'"></i>
+              {{ sortAscending ? 'Tri croissant' : 'Tri décroissant' }}
+            </button>
+            
+            <!-- Bouton "Troisième comptage" visible seulement pour ADMIN/SUPERVISEUR -->
+            <button *ngIf="user?.role === 'ADMIN' || user?.role === 'SUPERVISEUR'" 
+                    class="btn btn-primary" 
+                    (click)="showCountingList(3)">
+              <i class="fas fa-sync-alt me-2"></i>
+              3ᵉ comptage
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Réf.</th>
+                  <th>Lot</th>
+                  <th>Sous-lot</th>
+                  <th>Qté</th>
+                  <th>Empl.</th>
+                  <th>Poids</th> <!-- Ajout de la colonne Poids -->
+                  <th>Numéro comptage</th>
+                  <th>Date</th>
+                  <th>Opérateur</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of filteredComptages">
+                  <td>{{ c.reference }}</td>
+                  <td>{{ c.numLot }}</td>
+                  <td>{{ c.numSousLot }}</td>
+                  <td>{{ c.quantiteTotale }}</td>
+                  <td>{{ c.emplacement||'–' }}</td>
+                  <td>{{ c.poids }}</td>
+                  <td>{{ c.numComptage }}</td>
+                  <td>{{ c.timestamp|date:'short' }}</td>
+                  <td>{{ c.operatorName || c.operatorId }}</td>
+                </tr>
+                <tr *ngIf="!filteredComptages.length">
                   <td colspan="9" class="text-center py-3">Aucun comptage</td>
                 </tr>
               </tbody>
@@ -173,7 +291,7 @@
           <!-- Bouton création utilisateur -->
           <button class="btn btn-ajouter"
                   (click)="goToRegister(currentUsersRole!)">
-            <i class="fas fa-user-plus"></i> Créer
+            <i class="fas fa-user-plus">Créer</i> Créer
             {{ currentUsersRole==='OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
           </button>
         </div>
@@ -199,12 +317,12 @@
                     <button *ngIf="canChangePassword(u)"
                             class="btn btn-modifier btn-sm me-1"
                             (click)="changePassword(u)">
-                      <i class="fas fa-key"></i>
+                      <i class="fas fa-key">modifier le mode passe</i>
                     </button>
                     <button *ngIf="canDeleteUser(u)"
                             class="btn btn-supprimer btn-sm"
                             (click)="deleteUser(u)">
-                      <i class="fas fa-trash"></i>
+                      <i class="fas fa-trash">supprimer</i>
                     </button>
                   </td>
                 </tr>
