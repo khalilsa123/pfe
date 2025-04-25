@@ -4,25 +4,27 @@ import com.example.loginpfe.entity.Comptage;
 import com.example.loginpfe.Repository.ComptageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @Transactional
 public class ComptageService {
+
     private final ComptageRepository comptageRepository;
 
     public ComptageService(ComptageRepository comptageRepository) {
         this.comptageRepository = comptageRepository;
     }
 
-    // Ajouter un nouveau comptage
+    /** Crée un nouveau comptage (opérateur renseigné en amont) */
     public Comptage ajouterComptage(Comptage comptage) {
         comptage.setTimestamp(LocalDateTime.now());
         return comptageRepository.save(comptage);
     }
 
-    // Modifier un comptage existant
+    /** Modifie un comptage existant */
     public Comptage modifierComptage(Long id, Comptage newData) {
         return comptageRepository.findById(id)
                 .map(c -> {
@@ -40,15 +42,21 @@ public class ComptageService {
                 .orElseThrow(() -> new RuntimeException("Comptage non trouvé avec id: " + id));
     }
 
-    // Supprimer un comptage
+    /** Supprime un comptage */
     public void supprimerComptage(Long id) {
         if (!comptageRepository.existsById(id)) {
             throw new RuntimeException("Comptage non trouvé avec id: " + id);
+        }
+        comptageRepository.deleteById(id);
+    }
 
-        }comptageRepository.deleteById(id);}
-
-    // Afficher tous les comptages pour un opérateur donné
+    /** Tous les comptages d’un opérateur */
     public List<Comptage> afficherComptagesParOperateur(Long operateurId) {
         return comptageRepository.findByOperateurId(operateurId);
+    }
+
+    /** **NOUVEAU** : liste **tous** les comptages en base */
+    public List<Comptage> findAll() {
+        return comptageRepository.findAll();
     }
 }

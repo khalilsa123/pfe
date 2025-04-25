@@ -1,9 +1,7 @@
 package com.example.loginpfe.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,7 +10,8 @@ public class Comptage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(name = "operateur_username")
+    private String operateurUsername;
     // Identifiant de l'opérateur qui effectue le comptage
     private Long operateurId;
 
@@ -80,4 +79,11 @@ public class Comptage {
 
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public String getOperateurUsername() {
+        return operateurUsername;
+    }
+
+    public void setOperateurUsername(String operateurUsername) {
+        this.operateurUsername = operateurUsername;
+    }
 }
