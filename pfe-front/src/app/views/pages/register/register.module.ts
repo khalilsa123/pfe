@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RegisterComponent } from './register.component';
 import { ButtonModule, CardModule, FormModule, GridModule } from '@coreui/angular';
 
+
 @NgModule({
   declarations: [RegisterComponent],
   imports: [

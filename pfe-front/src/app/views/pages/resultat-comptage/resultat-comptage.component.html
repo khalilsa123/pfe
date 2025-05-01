@@ -1,0 +1,301 @@
+<div class="resultat-comptage-container">
+  
+  <div class="section-header d-flex justify-content-between align-items-center mb-4">
+    <h2>Résultats de Comptage</h2>
+    <div class="d-flex gap-2">
+      <!-- Boutons de navigation -->
+      <button class="btn btn-stats" (click)="showStatistics()">
+        <i class="fas fa-chart-pie me-2"></i>Statistiques d'Avancement
+      </button>
+      <!-- Imprimer Button with Dropdown -->
+      <div class="dropdown">
+        <button class="btn btn-print dropdown-toggle" type="button" id="imprimerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-file-excel me-2"></i>Imprimer
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="imprimerDropdown">
+          <li><a class="dropdown-item" href="#" (click)="showPreview('all'); $event.preventDefault()">Tous les comptages</a></li>
+          <li><a class="dropdown-item" href="#" (click)="showPreview('valid'); $event.preventDefault()">Validés</a></li>
+          <li><a class="dropdown-item" href="#" (click)="showPreview('needsThird'); $event.preventDefault()">Besoin 3e Comptage</a></li>
+          <li><a class="dropdown-item" href="#" (click)="showPreview('incomplete'); $event.preventDefault()">Incomplets</a></li>
+          <li><a class="dropdown-item" href="#" (click)="showPreview('comptage1'); $event.preventDefault()">Comptage 1</a></li>
+          <li><a class="dropdown-item" href="#" (click)="showPreview('comptage2'); $event.preventDefault()">Comptage 2</a></li>
+          <li><a class="dropdown-item" href="#" (click)="showPreview('comptage3'); $event.preventDefault()">Comptage 3</a></li>
+          <li><a class="dropdown-item" href="#" (click)="showPreview('comptageFinal'); $event.preventDefault()">Comptage Final</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li class="dropdown-item">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" [(ngModel)]="includeOperatorNames" id="includeOperatorNamesMain">
+              <label class="form-check-label" for="includeOperatorNamesMain">
+                Inclure le nom des opérateurs
+              </label>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et options de tri -->
+  <div class="filters-container mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" class="form-control" placeholder="Rechercher par référence..." 
+                 [(ngModel)]="searchTerm" (input)="applyFilters()">
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div class="d-flex justify-content-end gap-2">
+          <div class="btn-group">
+            <button type="button" class="btn btn-filter" (click)="filterByStatus('all')"
+                    [class.active]="currentStatusFilter === 'all'">
+              Tous
+            </button>
+            <button type="button" class="btn btn-filter" (click)="filterByStatus('valid')"
+                    [class.active]="currentStatusFilter === 'valid'">
+              Valides
+            </button>
+            <button type="button" class="btn btn-filter" (click)="filterByStatus('invalid')"
+                    [class.active]="currentStatusFilter === 'invalid'">
+              Invalides
+            </button>
+            <button type="button" class="btn btn-filter" (click)="filterByStatus('needsThird')"
+                    [class.active]="currentStatusFilter === 'needsThird'">
+              Besoin 3e Comptage
+            </button>
+          </div>
+          <button class="btn btn-sort" (click)="toggleSortOrder()">
+            <i class="fas" [ngClass]="sortAscending ? 'fa-sort-amount-up' : 'fa-sort-amount-down'"></i>
+            {{ sortAscending ? 'Date ↑' : 'Date ↓' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des résultats -->
+  <div class="table-container">
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Référence</th>
+            <th>Lot</th>
+            <th>Sous-lot</th>
+            <th class="comptage-col">
+              <div class="comptage-header">
+                <span>1er Comptage</span>
+                <div class="comptage-subheader">
+                  <span>Opérateur</span>
+                  <span>Poids</span>
+                </div>
+              </div>
+            </th>
+            <th class="comptage-col">
+              <div class="comptage-header">
+                <span>2e Comptage</span>
+                <div class="comptage-subheader">
+                  <span>Opérateur</span>
+                  <span>Poids</span>
+                </div>
+              </div>
+            </th>
+            <th class="comptage-col">
+              <div class="comptage-header">
+                <span>3e Comptage</span>
+                <div class="comptage-subheader">
+                  <span>Opérateur</span>
+                  <span>Poids</span>
+                </div>
+              </div>
+            </th>
+            <th>Résultat</th>
+            <th>Poids Final</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let result of filteredResults" 
+              [ngClass]="{'valid-row': result.status === 'valid', 
+                          'invalid-row': result.status === 'invalid',
+                          'needs-third-row': result.status === 'needsThird',
+                          'incomplete-row': result.status === 'incomplete'}">
+            <td>{{ extractReference(result.reference) }}</td>
+            <td>{{ result.lot }}</td>
+            <td>{{ result.sousLot }}</td>
+            
+            <!-- 1er Comptage -->
+            <td class="comptage-data" *ngIf="result.comptage1">
+              <div class="comptage-info">
+                <span class="operator-name">{{ result.comptage1.operatorName }}</span>
+                <span class="weight">{{ result.comptage1.poids }} g</span>
+              </div>
+            </td>
+            <td class="comptage-data missing-data" *ngIf="!result.comptage1">
+              <div class="comptage-info">
+                <span class="operator-name">-</span>
+                <span class="weight">-</span>
+              </div>
+            </td>
+            
+            <!-- 2e Comptage -->
+            <td class="comptage-data" *ngIf="result.comptage2">
+              <div class="comptage-info">
+                <span class="operator-name">{{ result.comptage2.operatorName }}</span>
+                <span class="weight">{{ result.comptage2.poids }} g</span>
+              </div>
+            </td>
+            <td class="comptage-data missing-data" *ngIf="!result.comptage2">
+              <div class="comptage-info">
+                <span class="operator-name">-</span>
+                <span class="weight">-</span>
+              </div>
+            </td>
+            
+            <!-- 3e Comptage -->
+            <td class="comptage-data" *ngIf="result.comptage3">
+              <div class="comptage-info">
+                <span class="operator-name">{{ result.comptage3.operatorName }}</span>
+                <span class="weight">{{ result.comptage3.poids }} g</span>
+              </div>
+            </td>
+            <td class="comptage-data missing-data" *ngIf="!result.comptage3">
+              <div class="comptage-info">
+                <span class="operator-name">-</span>
+                <span class="weight">-</span>
+              </div>
+            </td>
+            
+            <!-- Résultat -->
+            <td>
+              <div class="status-badge" [ngClass]="getStatusClass(result.status)">
+                {{ getStatusText(result.status) }}
+                <span *ngIf="result.status === 'valid' && result.difference" class="difference">
+                  (Diff: {{ result.difference | number:'1.2-2' }}%)
+                </span>
+              </div>
+            </td>
+            
+            <!-- Poids Final -->
+            <td class="poids-final">
+              <span *ngIf="result.status === 'valid' || result.status === 'validWithThird'">
+                {{ result.poidsFinal }} g
+              </span>
+              <span *ngIf="result.status === 'needsThird'" class="awaiting-text">
+                En attente du 3e comptage
+              </span>
+              <span *ngIf="result.status === 'incomplete'" class="awaiting-text">
+                Comptage incomplet
+              </span>
+              <span *ngIf="result.status === 'invalid'" class="invalid-text">
+                Comptage invalide
+              </span>
+            </td>
+            
+            <td>{{ result.lastUpdate | date:'dd/MM/yyyy HH:mm' }}</td>
+            
+            <!-- Actions -->
+            <td>
+              <button *ngIf="result.status === 'needsThird' && canDoThirdCount" 
+                      class="btn btn-do-count btn-sm"
+                      (click)="doThirdCount(result)">
+                <i class="fas fa-plus-circle me-1"></i>Faire 3e comptage
+              </button>
+              <button *ngIf="result.status === 'validWithThird' && isAdmin" 
+                      class="btn btn-validate btn-sm"
+                      (click)="validateFinalCount(result)">
+                <i class="fas fa-check-circle me-1"></i>Valider
+              </button>
+            </td>
+          </tr>
+          
+          <tr *ngIf="filteredResults.length === 0">
+            <td colspan="10" class="text-center py-3">
+              <div class="no-results">
+                <i class="fas fa-search mb-2"></i>
+                <p>Aucun résultat trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour les statistiques -->
+<div class="modal fade" id="statisticsModal" tabindex="-1" aria-hidden="true" #statisticsModal>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Statistiques d'Avancement</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <app-statistics-dashboard></app-statistics-dashboard>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal pour les options d'export (removed since we're using preview modal) -->
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true" #previewModal>
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Aperçu avant exportation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-table mb-4">
+          <h6>Aperçu des données</h6>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Type de comptage</th>
+                  <th>Référence</th>
+                  <th>Lot</th>
+                  <th>Sous-lot</th>
+                  <th>Poids (g)</th>
+                  <th>Opérateur</th>
+                  <th *ngIf="selectedExportType !== 'comptageFinal'">Date</th>
+                  <th *ngIf="selectedExportType === 'all' || selectedExportType === 'valid' || selectedExportType === 'invalid' || selectedExportType === 'needsThird' || selectedExportType === 'incomplete'">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let entry of previewResults">
+                  <td>{{ entry.type }}</td>
+                  <td>{{ entry.reference }}</td>
+                  <td>{{ entry.lot }}</td>
+                  <td>{{ entry.sousLot }}</td>
+                  <td>{{ entry.poids }}</td>
+                  <td>{{ entry.operator }}</td>
+                  <td *ngIf="selectedExportType !== 'comptageFinal'">{{ entry.date }}</td>
+                  <td *ngIf="selectedExportType === 'all' || selectedExportType === 'valid' || selectedExportType === 'invalid' || selectedExportType === 'needsThird' || selectedExportType === 'incomplete'">
+                    {{ entry.status || '-' }}
+                  </td>
+                </tr>
+                <tr *ngIf="previewResults.length === 0">
+                  <td [attr.colspan]="selectedExportType === 'comptageFinal' ? 6 : (selectedExportType === 'comptage1' || selectedExportType === 'comptage2' || selectedExportType === 'comptage3') ? 7 : 8" class="text-center py-3">
+                    <div class="no-results">
+                      <i class="fas fa-search mb-2"></i>
+                      <p>Aucun résultat à afficher</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-warning" (click)="exportToExcel()">Générer Excel</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+@import 'variables';
+@import 'theme';
+@import 'fixes';
+@import 'scss/styles';    // force it to load src/scss/_styles.scss or styles.scss
+@import 'scrollbar';
+@import 'charts';
+@import 'custom';
+@import 'examples';
+/* src/styles.scss */
+:root {
+    --onetech-blue: #0074B5;
+    --onetech-dark-blue: #00538C;
+    --onetech-light-blue: #E3F1F9;
+    --onetech-orange: #FF6D0A;
+    --onetech-gray: #565656;
+    --onetech-light-gray: #F2F2F2;
+    --onetech-white: #FFFFFF;
+  } 
+  
+  // and your other global @imports…
+  

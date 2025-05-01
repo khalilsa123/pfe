@@ -8,12 +8,20 @@
     
     <h3>Menu</h3>
 
-    <!-- Bouton Gestion des Inventaires déplacé dans le menu -->
+    <!-- Bouton Gestion des Inventaires -->
     <button class="btn btn-menu mb-2 w-100"
             [class.active]="activeButton === 'inventory'" 
             (click)="toggleInventoryManagement()">
       <i class="fas fa-boxes me-2"></i>
       {{ showInventoryManagement ? 'Masquer Inventaire' : 'Gestion des Inventaires' }}
+    </button>
+
+    <!-- Bouton pour les Résultats de Comptage -->
+    <button class="btn btn-menu mb-2 w-100"
+            [class.active]="activeButton === 'results'" 
+            (click)="goToResultsPage()">
+      <i class="fas fa-chart-bar me-2"></i>
+      Résultats de Comptage
     </button>
 
     <!-- Menu déroulant pour les comptages -->
@@ -39,29 +47,21 @@
                 [class.active]="showCountingType1"
                 (click)="showCountingList(1)">
           <i class="fas fa-list-ol me-2"></i>
-          Liste Comptages Numéro 1
+          Premier Comptage
         </button>
         
         <button class="btn btn-submenu w-100"
                 [class.active]="showCountingType2"
                 (click)="showCountingList(2)">
           <i class="fas fa-list-ol me-2"></i>
-          Liste Comptages Numéro 2
+          Deuxième Comptage
         </button>
         
         <button class="btn btn-submenu w-100"
                 [class.active]="showCountingType3"
                 (click)="showCountingList(3)">
           <i class="fas fa-list-ol me-2"></i>
-          Liste Comptages Numéro 3
-        </button>
-        
-        <!-- Bouton 3ème comptage ajouté ici -->
-        <button class="btn btn-submenu w-100"
-                *ngIf="user?.role === 'ADMIN' || user?.role === 'SUPERVISEUR'"
-                (click)="showCountingList(3)">
-          <i class="fas fa-sync-alt me-2"></i>
-          3ᵉ comptage
+          Troisième Comptage
         </button>
       </div>
     </div>
@@ -114,9 +114,9 @@
       </div>
     </div>
 
-    <!-- CONTENU PRINCIPAL - vide par défaut -->
+    <!-- CONTENU PRINCIPAL -->
     <div class="content-area">
-      <!-- — ZONE COMPTAGES — -->
+      <!-- ZONE COMPTAGES -->
       <section *ngIf="showInventoryManagement">
         <div class="section-header">
           <h2>Gestion des Inventaires</h2>
@@ -124,46 +124,42 @@
         
         <!-- Formulaire d'ajout / édition -->
         <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4"
-              #f="ngForm" (ngSubmit)="onSubmit()">
+              #f="ngForm" >
   
           <div class="form-row">
-            <!-- Seulement le champ référence est visible -->
-            <div class="form-group">
+            <!-- Champ pour référence -->
+            <div class="form-group reference-field">
               <label>Référence*</label>
               <input name="reference" class="form-control form-control-sm" required
-                    [(ngModel)]="newComptage.reference">
+                     [(ngModel)]="newComptage.reference">
+              <span class="reference-format">Format: ref$qte$lot$sous_lot</span>
             </div>
             
-            <!-- Champs invisibles (mais toujours dans le modèle) -->
-            <input type="hidden" name="numLot" [(ngModel)]="newComptage.numLot">
-            <input type="hidden" name="numSousLot" [(ngModel)]="newComptage.numSousLot">
-            <input type="hidden" name="quantiteTotale" [(ngModel)]="newComptage.quantiteTotale">
-            
-            <!-- Autres champs restants -->
+            <!-- Autres champs -->
             <div class="form-group">
               <label>Emplacement (opt.)</label>
               <input name="emplacement" class="form-control form-control-sm"
-                    [(ngModel)]="newComptage.emplacement">
+                     [(ngModel)]="newComptage.emplacement">
             </div>
             <div class="form-group">
               <label>Poids (g)*</label>
               <input type="number" min="0" name="poids"
-                    class="form-control form-control-sm" required
-                    [(ngModel)]="newComptage.poids">
+                     class="form-control form-control-sm" required
+                     [(ngModel)]="newComptage.poids">
             </div>
             <div class="form-group">
-              <label>Numéro comptage*</label>
+              <label>Type de comptage*</label>
               <select name="numComptage"
                       class="form-control form-control-sm" required
                       [(ngModel)]="newComptage.numComptage">
-                <option [ngValue]="1">1</option>
-                <option [ngValue]="2">2</option>
-                <option [ngValue]="3">3</option>
+                <option [ngValue]="1">Premier Comptage</option>
+                <option [ngValue]="2">Deuxième Comptage</option>
+                <option [ngValue]="3">Troisième Comptage</option>
               </select>
             </div>
           </div>
   
-          <button type="submit" class="btn btn-ajouter btn-sm"
+          <button type="button" (click)="onSubmit()" class="btn btn-ajouter btn-sm"
                   [disabled]="f.invalid">
             <i class="fas fa-plus-circle"></i> {{ editing ? 'Enregistrer' : 'Ajouter' }}
           </button>
@@ -172,7 +168,7 @@
         <!-- Tableau des comptages -->
         <div class="table-container">
           <div class="table-header">
-            <h4>Liste des comptages</h4>
+            <h4>Mes comptages</h4>
           </div>
           <div class="table-responsive mb-5">
             <table class="table table-hover table-striped table-sm mb-0">
@@ -184,33 +180,37 @@
                   <th>Qté</th>
                   <th>Empl.</th>
                   <th>Poids</th>
-                  <th>Numéro comptage</th>
+                  <th>Type de comptage</th>
                   <th>Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let c of comptages">
-                  <td>{{ c.reference }}</td>
-                  <td>{{ c.numLot }}</td>
-                  <td>{{ c.numSousLot }}</td>
-                  <td>{{ c.quantiteTotale }}</td>
+                <tr *ngFor="let c of userComptages">
+                  <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
+                  <td>{{ parseReference(c.reference).lot }}</td>
+                  <td>{{ parseReference(c.reference).sousLot }}</td>
+                  <td>{{ parseReference(c.reference).qte }}</td>
                   <td>{{ c.emplacement||'–' }}</td>
                   <td>{{ c.poids }}</td>
-                  <td>{{ c.numComptage }}</td>
+                  <td>
+                    <span class="comptage-type" [ngClass]="'comptage-type-' + c.numComptage">
+                      {{ getComptageTypeName(c.numComptage) }}
+                    </span>
+                  </td>
                   <td>{{ c.timestamp|date:'short' }}</td>
                   <td class="actions-cell">
                     <button class="btn btn-modifier btn-sm me-1"
                             (click)="editComptage(c)">
-                      <i class="fas fa-edit">modifier</i>
+                      <i class="fas fa-edit"></i> modifier
                     </button>
                     <button class="btn btn-supprimer btn-sm"
                             (click)="delete(c)">
-                      <i class="fas fa-trash">supprimer</i>
+                      <i class="fas fa-trash"></i> supprimer
                     </button>
                   </td>
                 </tr>
-                <tr *ngIf="!comptages.length">
+                <tr *ngIf="!userComptages.length">
                   <td colspan="9" class="text-center py-3">Aucun comptage</td>
                 </tr>
               </tbody>
@@ -219,7 +219,7 @@
         </div>
       </section>
 
-      <!-- ZONE LISTE COMPTAGES (NOUVELLE) -->
+      <!-- ZONE LISTE COMPTAGES -->
       <section *ngIf="showAllCounting || showCountingType1 || showCountingType2 || showCountingType3">
         <div class="section-header">
           <h2>
@@ -233,14 +233,6 @@
               <i class="fas me-1" [ngClass]="sortAscending ? 'fa-sort-amount-up' : 'fa-sort-amount-down'"></i>
               {{ sortAscending ? 'Tri croissant' : 'Tri décroissant' }}
             </button>
-            
-            <!-- Bouton "Troisième comptage" visible seulement pour ADMIN/SUPERVISEUR -->
-            <button *ngIf="user?.role === 'ADMIN' || user?.role === 'SUPERVISEUR'" 
-                    class="btn btn-primary" 
-                    (click)="showCountingList(3)">
-              <i class="fas fa-sync-alt me-2"></i>
-              3ᵉ comptage
-            </button>
           </div>
         </div>
 
@@ -254,21 +246,25 @@
                   <th>Sous-lot</th>
                   <th>Qté</th>
                   <th>Empl.</th>
-                  <th>Poids</th> <!-- Ajout de la colonne Poids -->
-                  <th>Numéro comptage</th>
+                  <th>Poids</th>
+                  <th>Type de comptage</th>
                   <th>Date</th>
                   <th>Opérateur</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let c of filteredComptages">
-                  <td>{{ c.reference }}</td>
-                  <td>{{ c.numLot }}</td>
-                  <td>{{ c.numSousLot }}</td>
-                  <td>{{ c.quantiteTotale }}</td>
+                  <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
+                  <td>{{ parseReference(c.reference).lot }}</td>
+                  <td>{{ parseReference(c.reference).sousLot }}</td>
+                  <td>{{ parseReference(c.reference).qte }}</td>
                   <td>{{ c.emplacement||'–' }}</td>
                   <td>{{ c.poids }}</td>
-                  <td>{{ c.numComptage }}</td>
+                  <td>
+                    <span class="comptage-type" [ngClass]="'comptage-type-' + c.numComptage">
+                      {{ getComptageTypeName(c.numComptage) }}
+                    </span>
+                  </td>
                   <td>{{ c.timestamp|date:'short' }}</td>
                   <td>{{ c.operatorName || c.operatorId }}</td>
                 </tr>
@@ -281,7 +277,7 @@
         </div>
       </section>
   
-      <!-- — ZONE UTILISATEURS — -->
+      <!-- ZONE UTILISATEURS -->
       <section *ngIf="showUsersMenu">
         <div class="section-header">
           <h2>
@@ -291,7 +287,7 @@
           <!-- Bouton création utilisateur -->
           <button class="btn btn-ajouter"
                   (click)="goToRegister(currentUsersRole!)">
-            <i class="fas fa-user-plus">Créer</i> Créer
+            <i class="fas fa-user-plus"></i> Créer
             {{ currentUsersRole==='OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
           </button>
         </div>
@@ -301,7 +297,6 @@
             <table class="table table-striped table-sm">
               <thead>
                 <tr>
-                  <!-- ID column removed as requested -->
                   <th>Username</th>
                   <th>Nom</th>
                   <th>Prénom</th>
@@ -317,12 +312,12 @@
                     <button *ngIf="canChangePassword(u)"
                             class="btn btn-modifier btn-sm me-1"
                             (click)="changePassword(u)">
-                      <i class="fas fa-key">modifier le mode passe</i>
+                      <i class="fas fa-key"></i> modifier le mot de passe
                     </button>
                     <button *ngIf="canDeleteUser(u)"
                             class="btn btn-supprimer btn-sm"
                             (click)="deleteUser(u)">
-                      <i class="fas fa-trash">supprimer</i>
+                      <i class="fas fa-trash"></i> supprimer
                     </button>
                   </td>
                 </tr>

@@ -1,32 +1,46 @@
-// src/app/services/auth.interceptor.ts
-import { Injectable } from '@angular/core';
-import {
-  HttpInterceptor,
-  HttpRequest,
-  HttpHandler,
-  HttpEvent
-} from '@angular/common/http';
-import { Observable } from 'rxjs';
+// src/app/app.module.ts
 
-@Injectable()
-export class AuthInterceptor implements HttpInterceptor {
-  intercept(
-    request: HttpRequest<any>,
-    next: HttpHandler
-  ): Observable<HttpEvent<any>> {
-    // 1) retrieve the JWT from localStorage
-    const token = localStorage.getItem('jwt');
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
-    // 2) if it exists, clone the request and add the Authorization header
-    if (token) {
-      request = request.clone({
-        setHeaders: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-    }
+import { AppRoutingModule } from './app-routing.module';  // votre module de routes
+import { AppComponent } from './app.component';
 
-    // 3) pass the (possibly modified) request on
-    return next.handle(request);
-  }
-}
+// Pages
+import { LoginComponent } from './views/pages/login/login.component';
+import { RegisterComponent } from './views/pages/register/register.component';
+import { Page404Component } from './views/pages/page404/page404.component';
+import { Page500Component } from './views/pages/page500/page500.component';
+import { ResultatComptageComponent } from './views/pages/resultat-comptage/resultat-comptage.component';
+
+// Dashboard opérateur
+import { OperatorDashboardComponent } from './views/operator-dashboard/operator-dashboard.component';
+// Si vous avez un module dédié, vous pouvez à la place importer :
+// import { OperatorDashboardModule } from './views/operator-dashboard/operator-dashboard.module';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    RegisterComponent,
+    Page404Component,
+    Page500Component,
+    ResultatComptageComponent,
+    OperatorDashboardComponent,
+  ],
+  imports: [
+    BrowserModule,         // Directives de base et bootstrap
+    AppRoutingModule,      // Routage de l’application
+    HttpClientModule,      // Pour HttpClient dans vos services
+    FormsModule,           // Pour [(ngModel)] et formulaires template-driven
+    // OperatorDashboardModule, // décommentez si vous utilisez un module de fonctionnalité
+  ],
+  providers: [
+    // Vos services sont en général fournis via `providedIn: 'root'`, 
+    // vous n’avez donc rien à ajouter ici sauf cas particulier.
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }

@@ -9,5 +9,7 @@ export interface Comptage {
   poids: number;
   quantiteTotale: number;
   numComptage: number;
-  timestamp:       string;   // → utilisé pour la colonne « Date »
+  timestamp:       string;  
+
+  operatorName?: string;    // → utilisé pour la colonne « Date »
 }

@@ -1,11 +1,12 @@
 // app.routes.ts
 import { Routes } from '@angular/router';
+import { ResultatComptageComponent } from './views/pages/resultat-comptage/resultat-comptage.component';
 //import { DashboardComponent } from './views/dashboard/dashboard.component';
 import { Page404Component } from './views/pages/page404/page404.component';
 import { Page500Component } from './views/pages/page500/page500.component';
 import { LoginComponent } from './views/pages/login/login.component';
 import { RegisterComponent } from './views/pages/register/register.component';
-import { OperatorDashboardRoutingModule } from './views/operator-dashboard/operator-dashboard-routing.module';
+///import { OperatorDashboardRoutingModule } from './views/operator-dashboard/operator-dashboard-routing.module';
 import { OperatorDashboardComponent } from './views/operator-dashboard/operator-dashboard.component';
 
 export const routes: Routes = [
@@ -33,8 +34,13 @@ export const routes: Routes = [
   {
     path: '404',
     component: Page404Component,
-    data: { title: 'Page non trouvée' }
-  },
+    data: { title: 'Page non trouvée' } },
+{
+  path: 'resultats-comptage',
+  component: ResultatComptageComponent,
+  data: { title: 'Résultats de Comptage' }
+},
+ 
   {
     path: 'operator-dashboard',
     component: OperatorDashboardComponent,

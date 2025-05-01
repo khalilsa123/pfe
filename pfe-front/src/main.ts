@@ -18,11 +18,11 @@ bootstrapApplication(AppComponent, {
 
     // Provide HttpClient and wire up DI-based interceptors
     provideHttpClient(
-      withInterceptorsFromDi()
-    ),
+      withInterceptorsFromDi()    
+    ),   
 
     // Register your JWT/Auth interceptor
-    {
+    {     
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
       multi: true

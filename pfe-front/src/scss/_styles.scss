@@ -1,0 +1,62 @@
+:root {
+  --onetech-blue: #0074B5;
+  --onetech-dark-blue: #00538C;
+  --onetech-light-blue: #E3F1F9;
+  --onetech-orange: #FF6D0A;
+  --onetech-gray: #565656;
+  --onetech-light-gray: #F2F2F2;
+  --onetech-white: #FFFFFF;
+}
+
+/* Styles de base pour les tableaux */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 12px 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: bold;
+}
+
+/* Styles pour les boutons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-filter {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-filter:hover, .btn-filter.active {
+  background-color: #0074B5;
+  color: white;
+}
+
+/* Style pour la recherche */
+.filters-container {
+  background-color: #f8fafc;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+}

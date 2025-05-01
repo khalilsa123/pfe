@@ -114,6 +114,35 @@
                 </div>
               </div>
 
+              <!-- Confirmation du mot de passe -->
+              <div class="mb-4">
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-lock"></i>
+                  </span>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    class="form-control"
+                    formControlName="confirmPassword"
+                    placeholder="Confirmer le mot de passe">
+                </div>
+                <div
+                  *ngIf="registerForm.get('confirmPassword')?.invalid &&
+                         registerForm.get('confirmPassword')?.touched"
+                  class="error-message">
+                  <i class="fas fa-info-circle me-1"></i>
+                  La confirmation du mot de passe est requise.
+                </div>
+                <div
+                  *ngIf="registerForm.errors?.['passwordMismatch'] &&
+                         registerForm.get('confirmPassword')?.touched"
+                  class="error-message">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Les mots de passe ne correspondent pas.
+                </div>
+              </div>
+
               <!-- Sélecteur de rôle -->
               <div class="mb-4">
                 <div class="input-group">

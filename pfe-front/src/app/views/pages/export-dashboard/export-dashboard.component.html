@@ -1,0 +1,117 @@
+<!-- export-dashboard.component.html -->
+<div class="export-container">
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
+      </div>
+      <p>Préparation de l'export...</p>
+    </div>
+  
+    <div *ngIf="!isLoading" class="export-content">
+      <div class="export-options">
+        <h3>Type de comptage à exporter</h3>
+  
+        <div class="form-check mb-3">   
+          <input class="form-check-input" type="radio" name="exportType" id="exportType1"
+                 [(ngModel)]="exportType" value="comptage1">
+          <label class="form-check-label" for="exportType1">
+            Premier Comptage
+          </label>
+        </div>
+        
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="radio" name="exportType" id="exportType2"
+                 [(ngModel)]="exportType" value="comptage2">
+          <label class="form-check-label" for="exportType2">
+            Deuxième Comptage
+          </label>
+        </div>
+        
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="radio" name="exportType" id="exportType3"
+                 [(ngModel)]="exportType" value="comptage3">
+          <label class="form-check-label" for="exportType3">
+            Troisième Comptage
+          </label>
+        </div>
+        
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="radio" name="exportType" id="exportTypeF"
+                 [(ngModel)]="exportType" value="final">
+          <label class="form-check-label" for="exportTypeF">
+            <strong>Résultat Final</strong>
+          </label>
+        </div>
+        
+        <h3>Options d'export</h3>
+        
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="includeInvalid"
+                 [(ngModel)]="includeInvalid">
+          <label class="form-check-label" for="includeInvalid">
+            Inclure les comptages invalides
+          </label>
+        </div>
+        
+        <div class="form-check mb-4">
+          <input class="form-check-input" type="checkbox" id="includeOperator"
+                 [(ngModel)]="includeOperator">
+          <label class="form-check-label" for="includeOperator">
+            Inclure le nom des opérateurs
+          </label>
+        </div>
+        
+        <div class="filename-container mb-4">
+          <label for="filename" class="form-label">Nom du fichier</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="filename"
+                   [(ngModel)]="filename">
+            <span class="input-group-text">.xlsx</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="preview-container">
+        <h3>Aperçu</h3>
+        <div class="preview-table-container">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Lot</th>
+                <th>Sous-lot</th>
+                <th>Poids (g)</th>
+                <th *ngIf="includeOperator">Opérateur</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of previewData">
+                <td>{{ item.reference }}</td>
+                <td>{{ item.lot }}</td>
+                <td>{{ item.sousLot }}</td>
+                <td>{{ item.poids }}</td>
+                <td *ngIf="includeOperator">{{ item.operateur }}</td>
+              </tr>
+              <tr *ngIf="previewData.length === 0">
+                <td colspan="5" class="text-center py-3">
+                  Aucune donnée disponible pour ce type d'export
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="export-count">
+            {{ previewData.length }} élément(s) à exporter
+          </div>
+          <button class="btn btn-export"
+                  [disabled]="previewData.length === 0"
+                  (click)="exportToExcel()">
+            <i class="fas fa-file-excel me-2"></i> Générer Excel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  

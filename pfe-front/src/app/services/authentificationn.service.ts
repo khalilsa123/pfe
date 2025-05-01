@@ -55,7 +55,7 @@ export class AuthentificationnServiceService {
 
   getCurrentUser(): User | null {
     const json = localStorage.getItem('currentUser');
-    return json ? JSON.parse(json) as User : null;
+    return json ? JSON.parse(json) as User : null;    
   }
 
   logout(): void {

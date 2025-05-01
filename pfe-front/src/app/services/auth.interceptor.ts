@@ -1,37 +1,30 @@
-// src/app/services/auth.interceptor.ts
+// src/app/auth.interceptor.ts
 import { Injectable } from '@angular/core';
-import {
-  HttpInterceptor,
-  HttpRequest,
-  HttpHandler,
-  HttpEvent
-} from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { Router } from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   constructor(private router: Router) {}
 
-  intercept(
-    req: HttpRequest<unknown>,
-    next: HttpHandler
-  ): Observable<HttpEvent<unknown>> {
-    const token = localStorage.getItem('jwt') || '';
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Skip interception for authentication requests
+    if (request.url.includes('/auth/login') || request.url.includes('/auth/register')) {
+      return next.handle(request);
+    }
 
-    const authReq = token
-      ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-      : req;
+    // Retrieve token from localStorage
+    const token = localStorage.getItem('jwt');
 
-    return next.handle(authReq).pipe(
-      catchError(err => {
-        if (err.status === 401) {
-          // redirection automatique vers login
-          this.router.navigate(['/login']);
+    if (token) {
+      request = request.clone({
+        setHeaders: {
+          Authorization: `Bearer ${token}`
         }
-        return throwError(() => err);
-      })
-    );
+      });
+    }
+
+    return next.handle(request);
   }
 }

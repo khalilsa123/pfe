@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<!--
-* CoreUI - Angular 19.2 Free Admin Template
+<!-- * CoreUI - Angular 19.2 Free Admin Template
 * @version v5.4.5
 * @link https://coreui.io/angular/
 * Copyright (c) 2017-2025 creativeLabs Łukasz Holeczek
-* License: MIT
--->
+* License: MIT -->
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -13,12 +11,87 @@
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport" />
   <meta content="CoreUI Free Angular Admin Template" name="description" />
   <meta content="Łukasz Holeczek" name="author" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta
     content="CoreUI,Bootstrap,Admin,Template,Free,Angular,Dashboard,Typescript"
     name="keyword"
   />
   <link href="assets/favicon.ico" rel="icon" type="image/x-icon">
   <title>CoreUI Free Angular Admin Template</title>
+  
+  <!-- Ajout Font Awesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <!-- Styles globaux pour les variables de couleur OneTech -->
+  <style>
+    :root {
+      --onetech-blue: #0074B5;
+      --onetech-dark-blue: #00538C;
+      --onetech-light-blue: #E3F1F9;
+      --onetech-orange: #FF6D0A;
+      --onetech-gray: #565656;
+      --onetech-light-gray: #F2F2F2;
+      --onetech-white: #FFFFFF;
+    }
+    
+    /* Styles globaux pour les tableaux et composants */
+    .resultat-comptage-container {
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      margin: 15px;
+    }
+    
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    .table td, .table th {
+      padding: 10px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    /* Styles pour les statuts */
+    .status-valid {
+      background-color: #d1fae5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .status-needs-third {
+      background-color: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fed7aa;
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .status-incomplete {
+      background-color: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+  </style>
 </head>
 <body>
 <noscript>You need to enable JavaScript to run this app.</noscript>

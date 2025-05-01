@@ -21,11 +21,11 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "dist/coreui-free-angular-admin-template",
             "index": "src/index.html",
-            "browser": "src/main.ts",
+            "main": "src/main.ts",
             "polyfills": [
               "@angular/localize/init",
               "zone.js"
@@ -38,19 +38,16 @@
               "src/assets"
             ],
             "styles": [
-             
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-            
               "node_modules/@coreui/coreui/dist/css/coreui.min.css",
-            
-              "src/scss/styles.scss"
+              "src/styles.scss"
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [],
             "stylePreprocessorOptions": {
-              "sass": {
-                "silenceDeprecations": []
-              }
+              "includePaths": [
+                "src/scss"
+              ]
             }
           },
           "configurations": {
@@ -80,6 +77,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "coreui-free-angular-admin-template:build"
+          },
           "configurations": {
             "production": {
               "buildTarget": "coreui-free-angular-admin-template:build:production"
@@ -113,9 +113,14 @@
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/@coreui/coreui/dist/css/coreui.min.css",
-              "src/scss/styles.scss"
+              "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src/scss"
+              ]
+            }
           }
         }
       }

@@ -1,7 +1,6 @@
-// src/app/views/pages/register/register.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthentificationnServiceService } from '../../../services/authentificationn.service';
 import { User } from '../../../models/user.model';
@@ -52,8 +51,21 @@ export class RegisterComponent implements OnInit {
       firstname: ['', Validators.required],
       lastname:  ['', Validators.required],
       password:  ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]],
       role:      [ role, Validators.required ]
-    });
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  // Validation personnalisée pour vérifier que les mots de passe correspondent
+  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('password');
+    const confirmPassword = control.get('confirmPassword');
+
+    if (!password || !confirmPassword) {
+      return null;
+    }
+
+    return password.value === confirmPassword.value ? null : { passwordMismatch: true };
   }
 
   onSubmit(): void {
@@ -62,7 +74,17 @@ export class RegisterComponent implements OnInit {
       return;
     }
     this.isSubmitting = true;
-    this.authService.register(this.registerForm.value)
+    
+    // Créer un objet sans le champ confirmPassword
+    const userToRegister = {
+      username: this.registerForm.value.username,
+      firstname: this.registerForm.value.firstname,
+      lastname: this.registerForm.value.lastname,
+      password: this.registerForm.value.password,
+      role: this.registerForm.value.role
+    };
+    
+    this.authService.register(userToRegister)
       .subscribe({
         next: () => {
           this.isSignUpFailed = false;
@@ -76,7 +98,7 @@ export class RegisterComponent implements OnInit {
       })
       .add(() => this.isSubmitting = false);
   }
-  
+   
   // Ajout de la méthode goBack pour le bouton retour
   goBack(): void {
     this.location.back();

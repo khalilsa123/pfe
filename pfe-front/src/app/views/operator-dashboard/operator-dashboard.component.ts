@@ -27,26 +27,22 @@ export class OperatorDashboardComponent implements OnInit {
   showUsersMenu = false;
   showInventoryManagement = false;
   
-  // Propriété pour gérer le menu déroulant
   showCountingDropdown = false;
-  
-  // Propriétés pour les différentes listes de comptage
   showAllCounting = false;
   showCountingType1 = false;
   showCountingType2 = false;
   showCountingType3 = false;
   
-  // Propriété pour gérer l'ordre de tri
   sortAscending = false;
   
-  // Pour gérer l'état actif des boutons
-  activeButton: 'inventory' | 'counting' | 'users' | null = null;
+  activeButton: 'inventory' | 'counting' | 'users' | 'results' | null = null;
   
   currentUsersRole?: 'OPERATEUR' | 'SUPERVISEUR';
   users: User[] = [];
   comptages: Comptage[] = [];
-  allComptages: ComptageWithOperator[] = []; // Tous les comptages du système
-  filteredComptages: ComptageWithOperator[] = []; // Pour l'affichage filtré
+  userComptages: Comptage[] = [];
+  allComptages: ComptageWithOperator[] = [];
+  filteredComptages: ComptageWithOperator[] = [];
   newComptage: Partial<Comptage> = {};
   editing = false;
 
@@ -58,15 +54,13 @@ export class OperatorDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.user = this.authSrv.getCurrentUser()!;
+    this.user = this.authSrv.getCurrentUser() || undefined;
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
     }
-    // On ne charge pas les comptages au démarrage
   }
 
-  // Obtenir les initiales pour l'avatar
   getUserInitials(): string {
     if (!this.user) return '';
     return (
@@ -75,38 +69,54 @@ export class OperatorDashboardComponent implements OnInit {
     ).toUpperCase();
   }
 
-  // Basculer l'ordre de tri
+  // Parse the reference string into its components
+  parseReference(fullReference: string): { ref: string; qte: string; lot: string; sousLot: string } {
+    if (!fullReference) {
+      return { ref: '', qte: '', lot: '', sousLot: '' };
+    }
+    const parts = fullReference.split('$');
+    return {
+      ref: parts[0] || '',
+      qte: parts[1] || '',
+      lot: parts[2] || '',
+      sousLot: parts[3] || ''
+    };
+  }
+
+  getComptageTypeName(numComptage: number): string {
+    switch(numComptage) {
+      case 1: return 'Premier Comptage';
+      case 2: return 'Deuxième Comptage';
+      case 3: return 'Troisième Comptage';
+      default: return `Comptage ${numComptage}`;
+    }
+  }
+
   toggleSortOrder(): void {
     this.sortAscending = !this.sortAscending;
     this.applySort();
   }
   
-  // Appliquer le tri
   private applySort(): void {
     this.filteredComptages.sort((a, b) => {
       const dateA = new Date(a.timestamp!).getTime();
       const dateB = new Date(b.timestamp!).getTime();
-      
       return this.sortAscending ? dateA - dateB : dateB - dateA;
     });
   }
 
-  // Basculer l'affichage du menu déroulant des comptages
   toggleCountingDropdown(): void {
     if (this.activeButton === 'counting' && this.showCountingDropdown) {
-      // Si déjà actif, on ferme le menu et réinitialise l'état actif
       this.showCountingDropdown = false;
       this.closeAllCountingPanels();
       this.activeButton = null;
     } else {
-      // Sinon, on active le menu des comptages
       this.showCountingDropdown = true;
       this.hideAllPanels('counting');
       this.activeButton = 'counting';
     }
   }
   
-  // Fermer tous les panneaux de comptage
   private closeAllCountingPanels(): void {
     this.showAllCounting = false;
     this.showCountingType1 = false;
@@ -114,32 +124,22 @@ export class OperatorDashboardComponent implements OnInit {
     this.showCountingType3 = false;
   }
 
-  // Afficher/masquer le panneau d'inventaire
   toggleInventoryManagement(): void {
     if (this.activeButton === 'inventory') {
-      // Si déjà actif, on ferme simplement
       this.showInventoryManagement = false;
       this.activeButton = null;
     } else {
-      // Sinon, on l'active et désactive les autres
       this.showInventoryManagement = true;
       this.hideAllPanels('inventory');
       this.activeButton = 'inventory';
-      
-      // Charger les données
       this.loadComptages();
     }
   }
 
-  // Afficher la liste de comptages selon le type
   showCountingList(type: 'all' | 1 | 2 | 3): void {
-    // Masquer tous les panneaux sauf le menu des comptages
     this.hideAllPanels('counting');
-    
-    // Réinitialiser tous les états des comptages
     this.closeAllCountingPanels();
     
-    // Afficher seulement le panneau demandé
     if (type === 'all') {
       this.showAllCounting = true;
     } else if (type === 1) {
@@ -150,33 +150,26 @@ export class OperatorDashboardComponent implements OnInit {
       this.showCountingType3 = true;
     }
     
-    // Charger les données
     this.loadComptagesByType(type);
   }
   
-  // Obtenir le titre pour la liste de comptages
   getCountingListTitle(): string {
     if (this.showAllCounting) return 'Liste de tous les comptages';
-    if (this.showCountingType1) return 'Liste des comptages numéro 1';
-    if (this.showCountingType2) return 'Liste des comptages numéro 2';
-    if (this.showCountingType3) return 'Liste des comptages numéro 3';
+    if (this.showCountingType1) return 'Liste des premiers comptages';
+    if (this.showCountingType2) return 'Liste des deuxièmes comptages';
+    if (this.showCountingType3) return 'Liste des troisièmes comptages';
     return '';
   }
   
-  // Masquer tous les panneaux sauf celui spécifié
-  private hideAllPanels(exceptPanel: 'inventory' | 'counting' | 'users'): void {
+  private hideAllPanels(exceptPanel: 'inventory' | 'counting' | 'users' | 'results'): void {
     if (exceptPanel !== 'inventory') this.showInventoryManagement = false;
     if (exceptPanel !== 'counting') {
-      // Ne pas fermer le menu déroulant des comptages
-      // mais fermer les panneaux d'affichage
       this.closeAllCountingPanels();
     }
     if (exceptPanel !== 'users') this.showUsersMenu = false;
   }
 
-  // -- UTILISATEURS --
   loadUsers(role: 'OPERATEUR' | 'SUPERVISEUR'): void {
-    // Si on clique sur le même rôle déjà actif, on ferme le panneau
     if (this.activeButton === 'users' && this.currentUsersRole === role) {
       this.showUsersMenu = false;
       this.activeButton = null;
@@ -190,7 +183,13 @@ export class OperatorDashboardComponent implements OnInit {
     
     this.authSrv.getUsersByRole(role).subscribe({
       next: list => this.users = list,
-      error: (err: any) => console.error('Erreur chargement utilisateurs', err)
+      error: (err: any) => {
+        console.error('Erreur chargement utilisateurs', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+      }
     });
   }
 
@@ -209,8 +208,14 @@ export class OperatorDashboardComponent implements OnInit {
     const pwd = prompt(`Nouveau mot de passe pour ${u.username}`, '');
     if (!pwd) return;
     this.authSrv.updatePassword(u.id!, { password: pwd }).subscribe({
-      next: () => alert('Mot de passe mis à jour'),
-      error: (err: any) => console.error('Erreur mise à jour pwd', err)
+     // next: () => alert('Mot de passe mis à jour'),
+      error: (err: any) => {
+        console.error('Erreur mise à jour pwd', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+      }
     });
   }
 
@@ -225,7 +230,13 @@ export class OperatorDashboardComponent implements OnInit {
     if (!confirm(`Supprimer ${u.username} ?`)) return;
     this.authSrv.deleteUser(u.id!).subscribe({
       next: () => this.loadUsers(this.currentUsersRole!),
-      error: (err: any) => console.error('Erreur suppression utilisateur', err)
+      error: (err: any) => {
+        console.error('Erreur suppression utilisateur', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+      }
     });
   }
 
@@ -234,36 +245,38 @@ export class OperatorDashboardComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
-  // -- COMPTAGES --
-  // Charger les comptages pour l'inventaire de l'utilisateur courant
   private loadComptages(): void {
     this.comptageService.getAllComptages().subscribe({
       next: (data: Comptage[]) => {
-      this.comptages = data.sort((a: Comptage, b: Comptage) =>
-        +new Date(b.timestamp!) - +new Date(a.timestamp!)
-      );
+        this.comptages = data.sort((a: Comptage, b: Comptage) =>
+          +new Date(b.timestamp!) - +new Date(a.timestamp!)
+        );
+        this.userComptages = this.comptages.filter(
+          c => c.operateurId === this.user?.id
+        );
       },
-      error: (err: unknown) => console.error('Erreur chargement comptages', err)
+      error: (err: any) => {
+        console.error('Erreur chargement comptages', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+      }
     });
   }
   
-  // Chargement des utilisateurs pour associer les noms d'opérateurs aux comptages
   private loadOperateurNames(comptages: Comptage[]): void {
     this.authSrv.getUsersByRole('OPERATEUR').subscribe({
       next: (operateurs: User[]) => {
         const operateursMap = new Map<number, User>();
-        
-        // Construire un map pour un accès rapide par ID
         operateurs.forEach(op => {
           if (op.id) {
             operateursMap.set(op.id, op);
           }
         });
         
-        // Associer les infos d'opérateurs aux comptages
         this.allComptages = comptages.map(c => {
           const comptageWithOp: ComptageWithOperator = {...c};
-          
           if (c.operateurId) {
             const operateur = operateursMap.get(c.operateurId);
             comptageWithOp.operatorId = c.operateurId.toString();
@@ -273,23 +286,24 @@ export class OperatorDashboardComponent implements OnInit {
           } else {
             comptageWithOp.operatorName = 'Inconnu';
           }
-          
           return comptageWithOp;
         });
         
-        // Trier par date décroissante (par défaut)
         this.allComptages.sort((a, b) => 
           +new Date(b.timestamp!) - +new Date(a.timestamp!)
         );
-        
-        // Appliquer les filtres actuels
         this.applyComptageFilter();
       },
-      error: (err: any) => console.error('Erreur chargement opérateurs', err)
+      error: (err: any) => {
+        console.error('Erreur chargement opérateurs', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+      }
     });
   }
   
-  // Filtrer les comptages selon le type sélectionné
   private applyComptageFilter(): void {
     if (this.showAllCounting) {
       this.filteredComptages = [...this.allComptages];
@@ -300,23 +314,30 @@ export class OperatorDashboardComponent implements OnInit {
     } else if (this.showCountingType3) {
       this.filteredComptages = this.allComptages.filter(c => c.numComptage === 3);
     }
-    
-    // Appliquer le tri actuel
     this.applySort();
   }
+
+  goToResultsPage(): void {
+    this.activeButton = 'results';
+    this.hideAllPanels('results');
+    this.router.navigate(['/resultats-comptage']);
+  }
   
-  // Charger tous les comptages du système ou filtrés par type
   private loadComptagesByType(type: 'all' | 1 | 2 | 3): void {
-    // Déterminer si l'utilisateur courant a accès à tous les comptages
     const isAdmin = this.user?.role === 'ADMIN';
     const isSupervisor = this.user?.role === 'SUPERVISEUR';
     
     if (isAdmin || isSupervisor) {
-      // Admin ou Superviseur: accès à tous les comptages
       if (type === 'all') {
         this.comptageService.getAllComptages().subscribe({
           next: (data: Comptage[]) => this.loadOperateurNames(data),
-          error: (err: any) => console.error('Erreur chargement comptages', err)
+          error: (err: any) => {
+            console.error('Erreur chargement comptages', err);
+            if (err.status === 401) {
+              this.authSrv.logout();
+              this.router.navigate(['/login']);
+            }
+          }
         });
       } else {
         this.comptageService.getAllComptages().subscribe({
@@ -324,14 +345,20 @@ export class OperatorDashboardComponent implements OnInit {
             const filteredData = data.filter(c => c.numComptage === type);
             this.loadOperateurNames(filteredData);
           },
-          error: (err: any) => console.error('Erreur chargement comptages', err)
+          error: (err: any) => {
+            console.error('Erreur chargement comptages', err);
+            if (err.status === 401) {
+              this.authSrv.logout();
+              this.router.navigate(['/login']);
+            }
+          }
         });
       }
     } else {
-      // Opérateur: accès seulement à ses propres comptages
       this.comptageService.getAllComptages().subscribe({
         next: (data: Comptage[]) => {
-          const comptagesWithOperator: ComptageWithOperator[] = data.map(c => ({
+          const userComptages = data.filter(c => c.operateurId === this.user?.id);
+          const comptagesWithOperator: ComptageWithOperator[] = userComptages.map(c => ({
             ...c,
             operatorId: this.user?.id?.toString(),
             operatorName: `${this.user?.firstname} ${this.user?.lastname}`
@@ -343,95 +370,112 @@ export class OperatorDashboardComponent implements OnInit {
           
           this.allComptages = comptagesWithOperator;
           
-          // Appliquer le filtre de type
           if (type === 'all') {
             this.filteredComptages = [...this.allComptages];
           } else {
             this.filteredComptages = this.allComptages.filter(c => c.numComptage === type);
           }
           
-          // Appliquer le tri actuel
           this.applySort();
         },
-        error: (err: any) => console.error('Erreur chargement comptages', err)
+        error: (err: any) => {
+          console.error('Erreur chargement comptages', err);
+          if (err.status === 401) {
+            this.authSrv.logout();
+            this.router.navigate(['/login']);
+          }
+        }
       });
     }
   }
 
-  /** Ajout ou mise à jour */
   onSubmit(): void {
-    // Si référence est fournie, on tente de remplir automatiquement les autres champs
-    if (this.newComptage.reference && !this.editing) {
-      // Support multiple formats: REF-LOT-SOUSLOT-QTE ou REF$LOT$SOUSLOT$QTE
-      let refParts: string[] = [];
-      
-      if (this.newComptage.reference.includes('-')) {
-        refParts = this.newComptage.reference.split('-');
-      } else if (this.newComptage.reference.includes('$')) {
-        refParts = this.newComptage.reference.split('$');
-      }
-      
-      if (refParts.length >= 2) {
-        // Gestion des différents cas selon le nombre de parties
-        if (refParts.length >= 4) {
-          // Format complet: REF$QTE$LOT$SOUSLOT
-          this.newComptage.quantiteTotale = parseInt(refParts[1], 10) || 1;
-          this.newComptage.numLot = refParts[2] || '00001';
-          this.newComptage.numSousLot = refParts[3] || '0000';
-        } else if (refParts.length === 3) {
-          // Format partiel: REF$QTE$LOT (sans sous-lot)
-          this.newComptage.quantiteTotale = parseInt(refParts[1], 10) || 1;
-          this.newComptage.numLot = refParts[2] || '00001';
-          this.newComptage.numSousLot = '0000'; // Valeur par défaut
-        } else {
-          // Format minimal: REF$QTE (sans lot ni sous-lot)
-          this.newComptage.quantiteTotale = parseInt(refParts[1], 10) || 1;
-          this.newComptage.numLot = '00001'; // Valeur par défaut
-          this.newComptage.numSousLot = '0000'; // Valeur par défaut
-        }
-      } else {
-        // Juste la référence, utiliser les valeurs par défaut
-        this.newComptage.numLot = '00001';
-        this.newComptage.numSousLot = '0000';
-        this.newComptage.quantiteTotale = 1;
-      }
+    // Validate reference format
+    const referenceParts = this.parseReference(this.newComptage.reference || '');
+    if (!referenceParts.ref || !referenceParts.qte || !referenceParts.lot || !referenceParts.sousLot) {
+      alert('La référence doit être au format ref$qte$lot$sous_lot');
+      return;
     }
+
+    // Prepare the comptage object
+    const comptage: Comptage = {
+      ...this.newComptage,
+      reference: this.newComptage.reference || '',
+      quantiteTotale: parseInt(referenceParts.qte) || 0,
+      numLot: referenceParts.lot,
+      numSousLot: referenceParts.sousLot,
+      poids: this.newComptage.poids || 0,
+      numComptage: this.newComptage.numComptage || 1,
+      emplacement: this.newComptage.emplacement,
+      operateurId: this.user!.id!,
+      timestamp: new Date().toISOString()
+    } as Comptage;
 
     if (this.editing) {
       // UPDATE
-      this.comptageService.updateComptage(this.newComptage.id!, this.newComptage as Comptage).subscribe({
+      this.comptageService.updateComptage(this.newComptage.id!, comptage).subscribe({
         next: () => {
           this.editing = false;
           this.newComptage = {};
           this.loadComptages();
+         // alert('Comptage mis à jour avec succès');
         },
-        error: (err: any) => console.error('Erreur mise à jour', err)
+        error: (err: any) => {
+          console.error('Erreur mise à jour', err);
+          if (err.status === 401) {
+            this.authSrv.logout();
+            this.router.navigate(['/login']);
+            alert('Session expirée, veuillez vous reconnecter');
+          } else {
+            alert('Erreur lors de la mise à jour du comptage');
+          }
+        }
       });
     } else {
       // CREATE
-      this.comptageService.addComptage(this.user!.id!, this.newComptage as Comptage).subscribe({
+      this.comptageService.addComptage(this.user!.id!, comptage).subscribe({
         next: () => {
           this.newComptage = {};
           this.loadComptages();
+        //  alert('Comptage ajouté avec succès');
         },
-        error: (err: any) => console.error('Erreur création', err)
+        error: (err: any) => {
+          console.error('Erreur création', err);
+          if (err.status === 401) {
+            this.authSrv.logout();
+            this.router.navigate(['/login']);
+            alert('Session expirée, veuillez vous reconnecter');
+          } else {
+            alert('Erreur lors de l\'ajout du comptage');
+          }
+        }
       });
     }
   }
 
-  /** Prépare l'édition */
   editComptage(c: Comptage): void {
     this.editing = true;
     this.newComptage = { ...c };
   }
 
-  /** Suppression  */
   delete(c: Comptage): void {
     if (!c.id) return;
     if (!confirm('Supprimer ce comptage ?')) return;
     this.comptageService.deleteComptage(this.user!.id!, c.id!).subscribe({
-      next: () => this.loadComptages(),
-      error: (err: any) => console.error('Erreur suppression', err)
+      next: () => {
+        this.loadComptages();
+       // alert('Comptage supprimé avec succès');
+      },
+      error: (err: any) => {
+        console.error('Erreur suppression', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        //  alert('Session expirée, veuillez vous reconnecter');
+        } else {
+          alert('Erreur lors de la suppression du comptage');
+        }
+      }
     });
   }
 }
