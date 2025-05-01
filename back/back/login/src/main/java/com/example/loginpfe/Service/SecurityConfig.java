@@ -51,9 +51,11 @@ public class SecurityConfig {
                         // Login / register sans token
                         .requestMatchers("/auth/**").permitAll()
                         // Tous les endpoints opérateur nécessitent d'être authentifié
-                        .requestMatchers("/api/operateurs/**").authenticated()
+                        //.requestMatchers("/api/operateurs/**").authenticated()
                         // Les accès globaux aux comptages sont réservés aux SUPERVISEUR et ADMIN
                         .requestMatchers("/api/comptages/**").permitAll()
+                        .requestMatchers("/api/stocks/**").permitAll()
+
                         // Tout le reste demande authentification
                         .anyRequest().authenticated()
                 )

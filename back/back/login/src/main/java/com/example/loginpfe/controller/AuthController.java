@@ -33,7 +33,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
-
+ 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         request.setPassword(passwordEncoder.encode(request.getPassword()));
