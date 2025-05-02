@@ -1,3 +1,4 @@
+
 /* Couleurs OneTech Tunisie */
 $onetech-blue:      #0074B5; 
 $onetech-dark-blue: #00538C; 
@@ -367,12 +368,36 @@ h2 {
   }
 }
 
+/* Force Référence INPUT wider even in form-control-sm */
+.reference-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  /* old form-control override */
+  .form-control {
+    width: 15rem !important;
+  }
+
+  /* also catch the “-sm” variant */
+  .form-control-sm {
+    width: 15rem !important;
+  }
+
+  .reference-format {
+    margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: $onetech-gray;
+  }
+}
+
 /* Formulaire */
 .od-form {
   background: $onetech-white;
   padding: 1.25rem;
   border-radius: 6px;
-  border: 1px solid #D8DEE3;
+  border: 1px solid #e3ded8;
   box-shadow: 0 2px 6px rgba(0, 83, 140, 0.12);
   margin-bottom: 1.5rem;
   

@@ -1,3 +1,4 @@
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,17 @@ import { ComptageService } from '../../services/comptage.service';
 import { AuthentificationnServiceService } from '../../services/authentificationn.service';
 import { Comptage } from '../../models/comptage.model';
 import { User } from '../../models/user.model';
+import { HttpClient } from '@angular/common/http';
+
+// Interface for SessionInventaire
+interface SessionInventaire {
+  id?: number;
+  nomSession: string;
+  dateDebut: string;
+  dateFin: string;
+  commentaire?: string;
+  comptages?: Comptage[];
+}
 
 // Interface étendue pour les comptages avec info opérateur
 interface ComptageWithOperator extends Comptage {
@@ -26,7 +38,8 @@ export class OperatorDashboardComponent implements OnInit {
   showProfile = false;
   showUsersMenu = false;
   showInventoryManagement = false;
-  
+  showSessionInventaire = false;
+  showCreateSessionForm = false;
   showCountingDropdown = false;
   showAllCounting = false;
   showCountingType1 = false;
@@ -35,7 +48,7 @@ export class OperatorDashboardComponent implements OnInit {
   
   sortAscending = false;
   
-  activeButton: 'inventory' | 'counting' | 'users' | 'results' | null = null;
+  activeButton: 'inventory' | 'session-inventaire' | 'counting' | 'users' | 'results' | null = null;
   
   currentUsersRole?: 'OPERATEUR' | 'SUPERVISEUR';
   users: User[] = [];
@@ -43,14 +56,21 @@ export class OperatorDashboardComponent implements OnInit {
   userComptages: Comptage[] = [];
   allComptages: ComptageWithOperator[] = [];
   filteredComptages: ComptageWithOperator[] = [];
+  sessions: SessionInventaire[] = [];
+  newSession: Partial<SessionInventaire> = {};
+  selectedSession: SessionInventaire | null = null;
+  sessionComptages: ComptageWithOperator[] = [];
   newComptage: Partial<Comptage> = {};
   editing = false;
+
+  private apiUrl = 'http://localhost:8080/api/session-inventaire'; // Adjust to your backend URL
 
   constructor(
     private authSrv: AuthentificationnServiceService,
     private opSrv: OperatorService,
     private comptageService: ComptageService,
-    private router: Router
+    private router: Router,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -58,6 +78,9 @@ export class OperatorDashboardComponent implements OnInit {
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
+    }
+    if (this.user.role === 'ADMIN') {
+      this.loadSessions();
     }
   }
 
@@ -136,6 +159,138 @@ export class OperatorDashboardComponent implements OnInit {
     }
   }
 
+  toggleSessionInventaire(): void {
+    if (this.activeButton === 'session-inventaire') {
+      this.showSessionInventaire = false;
+      this.showCreateSessionForm = false;
+      this.selectedSession = null;
+      this.sessionComptages = [];
+      this.activeButton = null;
+    } else {
+      this.showSessionInventaire = true;
+      this.hideAllPanels('session-inventaire');
+      this.activeButton = 'session-inventaire';
+      this.loadSessions();
+    }
+  }
+
+  toggleCreateSessionForm(): void {
+    this.showCreateSessionForm = !this.showCreateSessionForm;
+    if (!this.showCreateSessionForm) {
+      this.newSession = {};
+    }
+  }
+
+  loadSessions(): void {
+    this.http.get<SessionInventaire[]>(this.apiUrl).subscribe({
+      next: (data) => {
+        this.sessions = data;
+      },
+      error: (err) => {
+        console.error('Erreur chargement sessions', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+      }
+    });
+  }
+
+  createSession(): void {
+    if (!this.newSession.nomSession || !this.newSession.dateDebut || !this.newSession.dateFin) {
+      alert('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+    this.http.post<SessionInventaire>(this.apiUrl, this.newSession).subscribe({
+      next: (session) => {
+        this.sessions.push(session);
+        this.newSession = {};
+        this.showCreateSessionForm = false;
+        alert('Session créée avec succès');
+      },
+      error: (err) => {
+        console.error('Erreur création session', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+        alert('Erreur lors de la création de la session');
+      }
+    });
+  }
+
+  viewSessionComptages(session: SessionInventaire): void {
+    this.selectedSession = session;
+    this.http.get<SessionInventaire>(`${this.apiUrl}/${session.id}`).subscribe({
+      next: (data) => {
+        this.sessionComptages = (data.comptages || []).map(c => {
+          const comptageWithOp: ComptageWithOperator = { ...c };
+          if (c.operateurId) {
+            this.authSrv.getUsersByRole('OPERATEUR').subscribe({
+              next: (operateurs: User[]) => {
+                const operateur = operateurs.find(op => op.id === c.operateurId);
+                comptageWithOp.operatorName = operateur ? 
+                  `${operateur.firstname} ${operateur.lastname}` : 
+                  `Opérateur #${c.operateurId}`;
+              }
+            });
+          }
+          return comptageWithOp;
+        });
+      },
+      error: (err) => {
+        console.error('Erreur chargement comptages de session', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+      }
+    });
+  }
+
+  populateSession(sessionId: number | undefined): void {
+    if (!sessionId) return;
+    this.http.post<SessionInventaire>(`${this.apiUrl}/${sessionId}/populate`, {}).subscribe({
+      next: (session) => {
+        const index = this.sessions.findIndex(s => s.id === session.id);
+        if (index !== -1) {
+          this.sessions[index] = session;
+        }
+        alert('Session peuplée avec succès');
+      },
+      error: (err) => {
+        console.error('Erreur peuplement session', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['//login']);
+        }
+        alert('Erreur lors du peuplement de la session');
+      }
+    });
+  }
+
+  deleteSession(sessionId: number | undefined): void {
+    if (!sessionId || !confirm('Supprimer cette session ?')) return;
+    this.http.delete(`${this.apiUrl}/${sessionId}`).subscribe({
+      next: () => {
+        this.sessions = this.sessions.filter(s => s.id !== sessionId);
+        if (this.selectedSession?.id === sessionId) {
+          this.selectedSession = null;
+          this.sessionComptages = [];
+        }
+        alert('Session supprimée avec succès');
+      },
+      error: (err) => {
+        console.error('Erreur suppression session', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        }
+        alert('Erreur lors de la suppression de la session');
+      }
+    });
+  }
+
   showCountingList(type: 'all' | 1 | 2 | 3): void {
     this.hideAllPanels('counting');
     this.closeAllCountingPanels();
@@ -161,8 +316,14 @@ export class OperatorDashboardComponent implements OnInit {
     return '';
   }
   
-  private hideAllPanels(exceptPanel: 'inventory' | 'counting' | 'users' | 'results'): void {
+  private hideAllPanels(exceptPanel: 'inventory' | 'session-inventaire' | 'counting' | 'users' | 'results'): void {
     if (exceptPanel !== 'inventory') this.showInventoryManagement = false;
+    if (exceptPanel !== 'session-inventaire') {
+      this.showSessionInventaire = false;
+      this.showCreateSessionForm = false;
+      this.selectedSession = null;
+      this.sessionComptages = [];
+    }
     if (exceptPanel !== 'counting') {
       this.closeAllCountingPanels();
     }
@@ -208,7 +369,6 @@ export class OperatorDashboardComponent implements OnInit {
     const pwd = prompt(`Nouveau mot de passe pour ${u.username}`, '');
     if (!pwd) return;
     this.authSrv.updatePassword(u.id!, { password: pwd }).subscribe({
-     // next: () => alert('Mot de passe mis à jour'),
       error: (err: any) => {
         console.error('Erreur mise à jour pwd', err);
         if (err.status === 401) {
@@ -418,7 +578,6 @@ export class OperatorDashboardComponent implements OnInit {
           this.editing = false;
           this.newComptage = {};
           this.loadComptages();
-         // alert('Comptage mis à jour avec succès');
         },
         error: (err: any) => {
           console.error('Erreur mise à jour', err);
@@ -437,7 +596,6 @@ export class OperatorDashboardComponent implements OnInit {
         next: () => {
           this.newComptage = {};
           this.loadComptages();
-        //  alert('Comptage ajouté avec succès');
         },
         error: (err: any) => {
           console.error('Erreur création', err);
@@ -464,14 +622,12 @@ export class OperatorDashboardComponent implements OnInit {
     this.comptageService.deleteComptage(this.user!.id!, c.id!).subscribe({
       next: () => {
         this.loadComptages();
-       // alert('Comptage supprimé avec succès');
       },
       error: (err: any) => {
         console.error('Erreur suppression', err);
         if (err.status === 401) {
           this.authSrv.logout();
-          this.router.navigate(['/login']);
-        //  alert('Session expirée, veuillez vous reconnecter');
+          this.router.navigate(['//login']);
         } else {
           alert('Erreur lors de la suppression du comptage');
         }

@@ -1,7 +1,8 @@
+
 <div class="wrapper">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <!-- Logo added at the top of sidebar -->
+    <!-- Logo -->
     <div class="logo-container">
       <img src="assets/onetech_logo.jpg" alt="OneTech Tunisia" class="logo">
     </div>
@@ -16,16 +17,26 @@
       {{ showInventoryManagement ? 'Masquer Inventaire' : 'Gestion des Inventaires' }}
     </button>
 
-    <!-- Bouton pour les Résultats de Comptage -->
-    <button class="btn btn-menu mb-2 w-100"
+    <!-- Bouton Gestion des Sessions d'Inventaire (Admin only) -->
+    <button *ngIf="user?.role === 'ADMIN'"
+            class="btn btn-menu mb-2 w-100"
+            [class.active]="activeButton === 'session-inventaire'"
+            (click)="toggleSessionInventaire()">
+      <i class="fas fa-calendar-alt me-2"></i>
+      {{ showSessionInventaire ? 'Masquer Sessions' : 'Gestion des Sessions d\'Inventaire' }}
+    </button>
+
+    <!-- Bouton Résultats de Comptage (Supervisor or Admin only) -->
+    <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
+            class="btn btn-menu mb-2 w-100"
             [class.active]="activeButton === 'results'" 
             (click)="goToResultsPage()">
       <i class="fas fa-chart-bar me-2"></i>
       Résultats de Comptage
     </button>
 
-    <!-- Menu déroulant pour les comptages -->
-    <div class="dropdown-menu-container">
+    <!-- Menu déroulant pour les comptages (Supervisor or Admin only) -->
+    <div *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'" class="dropdown-menu-container">
       <button class="btn btn-menu mb-2 w-100"
               [class.active]="activeButton === 'counting'" 
               (click)="toggleCountingDropdown()">
@@ -123,9 +134,7 @@
         </div>
         
         <!-- Formulaire d'ajout / édition -->
-        <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4"
-              #f="ngForm" >
-  
+        <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4" #f="ngForm">
           <div class="form-row">
             <!-- Champ pour référence -->
             <div class="form-group reference-field">
@@ -164,68 +173,146 @@
             <i class="fas fa-plus-circle"></i> {{ editing ? 'Enregistrer' : 'Ajouter' }}
           </button>
         </form>
-  
-        <!-- Tableau des comptages -->
+      </section>
+
+      <!-- ZONE SESSION INVENTAIRE (Admin only) -->
+      <section *ngIf="showSessionInventaire">
+        <div class="section-header">
+          <h2>Gestion des Sessions d'Inventaire</h2>
+          <button class="btn btn-ajouter" (click)="toggleCreateSessionForm()">
+            <i class="fas fa-plus-circle"></i> {{ showCreateSessionForm ? 'Annuler' : 'Nouvelle Session' }}
+          </button>
+        </div>
+
+        <!-- Formulaire de création de session -->
+        <form *ngIf="showCreateSessionForm" class="od-form d-flex flex-wrap align-items-end gap-2 mb-4" #sessionForm="ngForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom de la Session*</label>
+              <input name="nomSession" class="form-control form-control-sm" required
+                     [(ngModel)]="newSession.nomSession">
+            </div>
+            <div class="form-group">
+              <label>Date de Début*</label>
+              <input type="date" name="dateDebut" class="form-control form-control-sm" required
+                     [(ngModel)]="newSession.dateDebut">
+            </div>
+            <div class="form-group">
+              <label>Date de Fin*</label>
+              <input type="date" name="dateFin" class="form-control form-control-sm" required
+                     [(ngModel)]="newSession.dateFin">
+            </div>
+            <div class="form-group">
+              <label>Commentaire (opt.)</label>
+              <textarea name="commentaire" class="form-control form-control-sm"
+                        [(ngModel)]="newSession.commentaire"></textarea>
+            </div>
+          </div>
+          <button type="button" (click)="createSession()" class="btn btn-ajouter btn-sm"
+                  [disabled]="sessionForm.invalid">
+            <i class="fas fa-save"></i> Créer
+          </button>
+        </form>
+
+        <!-- Tableau des sessions -->
         <div class="table-container">
           <div class="table-header">
-            <h4>Mes comptages</h4>
+            <h4>Liste des Sessions d'Inventaire</h4>
           </div>
           <div class="table-responsive mb-5">
             <table class="table table-hover table-striped table-sm mb-0">
               <thead>
                 <tr>
-                  <th>Réf.</th>
-                  <th>Lot</th>
-                  <th>Sous-lot</th>
-                  <th>Qté</th>
-                  <th>Empl.</th>
-                  <th>Poids</th>
-                  <th>Type de comptage</th>
-                  <th>Date</th>
+                  <th>Nom de la Session</th>
+                  <th>Date de Début</th>
+                  <th>Date de Fin</th>
+                  <th>Commentaire</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let c of userComptages">
-                  <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
-                  <td>{{ parseReference(c.reference).lot }}</td>
-                  <td>{{ parseReference(c.reference).sousLot }}</td>
-                  <td>{{ parseReference(c.reference).qte }}</td>
-                  <td>{{ c.emplacement||'–' }}</td>
-                  <td>{{ c.poids }}</td>
-                  <td>
-                    <span class="comptage-type" [ngClass]="'comptage-type-' + c.numComptage">
-                      {{ getComptageTypeName(c.numComptage) }}
-                    </span>
-                  </td>
-                  <td>{{ c.timestamp|date:'short' }}</td>
+                <tr *ngFor="let session of sessions">
+                  <td>{{ session.nomSession }}</td>
+                  <td>{{ session.dateDebut | date:'shortDate' }}</td>
+                  <td>{{ session.dateFin | date:'shortDate' }}</td>
+                  <td>{{ session.commentaire || '–' }}</td>
                   <td class="actions-cell">
+                    <button class="btn btn-info btn-sm me-1"
+                            (click)="viewSessionComptages(session)">
+                      <i class="fas fa-eye"></i> Voir Comptages
+                    </button>
                     <button class="btn btn-modifier btn-sm me-1"
-                            (click)="editComptage(c)">
-                      <i class="fas fa-edit"></i> modifier
+                            (click)="populateSession(session.id)">
+                      <i class="fas fa-sync"></i> Peupler
                     </button>
                     <button class="btn btn-supprimer btn-sm"
-                            (click)="delete(c)">
-                      <i class="fas fa-trash"></i> supprimer
+                            (click)="deleteSession(session.id)">
+                      <i class="fas fa-trash"></i> Supprimer
                     </button>
                   </td>
                 </tr>
-                <tr *ngIf="!userComptages.length">
-                  <td colspan="9" class="text-center py-3">Aucun comptage</td>
+                <tr *ngIf="!sessions.length">
+                  <td colspan="5" class="text-center py-3">Aucune session d'inventaire</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
+
+        <!-- Tableau des comptages de la session sélectionnée -->
+        <ng-container *ngIf="selectedSession">
+          <div class="table-container">
+            <div class="table-header">
+              <h4>Comptages de la Session: {{ selectedSession.nomSession }}</h4>
+              <button class="btn btn-outline-secondary btn-sm" (click)="selectedSession = null; sessionComptages = []">
+                <i class="fas fa-times"></i> Fermer
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-striped table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>Réf.</th>
+                    <th>Lot</th>
+                    <th>Sous-lot</th>
+                    <th>Qté</th>
+                    <th>Empl.</th>
+                    <th>Poids</th>
+                    <th>Type de comptage</th>
+                    <th>Date</th>
+                    <th>Opérateur</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let c of sessionComptages">
+                    <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
+                    <td>{{ parseReference(c.reference).lot }}</td>
+                    <td>{{ parseReference(c.reference).sousLot }}</td>
+                    <td>{{ parseReference(c.reference).qte }}</td>
+                    <td>{{ c.emplacement || '–' }}</td>
+                    <td>{{ c.poids }}</td>
+                    <td>
+                      <span class="comptage-type" [ngClass]="'comptage-type-' + c.numComptage">
+                        {{ getComptageTypeName(c.numComptage) }}
+                      </span>
+                    </td>
+                    <td>{{ c.timestamp | date:'short' }}</td>
+                    <td>{{ c.operatorName || c.operatorId }}</td>
+                  </tr>
+                  <tr *ngIf="!sessionComptages.length">
+                    <td colspan="9" class="text-center py-3">Aucun comptage pour cette session</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </ng-container>
       </section>
 
       <!-- ZONE LISTE COMPTAGES -->
       <section *ngIf="showAllCounting || showCountingType1 || showCountingType2 || showCountingType3">
         <div class="section-header">
-          <h2>
-            {{ getCountingListTitle() }}
-          </h2>
-          
+          <h2>{{ getCountingListTitle() }}</h2>
           <div class="d-flex gap-2">
             <!-- Bouton de tri par date -->
             <button class="btn btn-info"
@@ -258,14 +345,14 @@
                   <td>{{ parseReference(c.reference).lot }}</td>
                   <td>{{ parseReference(c.reference).sousLot }}</td>
                   <td>{{ parseReference(c.reference).qte }}</td>
-                  <td>{{ c.emplacement||'–' }}</td>
+                  <td>{{ c.emplacement || '–' }}</td>
                   <td>{{ c.poids }}</td>
                   <td>
                     <span class="comptage-type" [ngClass]="'comptage-type-' + c.numComptage">
                       {{ getComptageTypeName(c.numComptage) }}
                     </span>
                   </td>
-                  <td>{{ c.timestamp|date:'short' }}</td>
+                  <td>{{ c.timestamp | date:'short' }}</td>
                   <td>{{ c.operatorName || c.operatorId }}</td>
                 </tr>
                 <tr *ngIf="!filteredComptages.length">
@@ -282,13 +369,13 @@
         <div class="section-header">
           <h2>
             Liste des
-            {{ currentUsersRole==='OPERATEUR' ? 'Opérateurs' : 'Superviseurs' }}
+            {{ currentUsersRole === 'OPERATEUR' ? 'Opérateurs' : 'Superviseurs' }}
           </h2>
           <!-- Bouton création utilisateur -->
           <button class="btn btn-ajouter"
                   (click)="goToRegister(currentUsersRole!)">
             <i class="fas fa-user-plus"></i> Créer
-            {{ currentUsersRole==='OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
+            {{ currentUsersRole === 'OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
           </button>
         </div>
   
@@ -312,12 +399,12 @@
                     <button *ngIf="canChangePassword(u)"
                             class="btn btn-modifier btn-sm me-1"
                             (click)="changePassword(u)">
-                      <i class="fas fa-key"></i> modifier le mot de passe
+                      <i class="fas fa-key"></i> Modifier le mot de passe
                     </button>
                     <button *ngIf="canDeleteUser(u)"
                             class="btn btn-supprimer btn-sm"
                             (click)="deleteUser(u)">
-                      <i class="fas fa-trash"></i> supprimer
+                      <i class="fas fa-trash"></i> Supprimer
                     </button>
                   </td>
                 </tr>

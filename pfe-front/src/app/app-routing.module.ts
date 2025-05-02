@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './views/pages/login/login.component';
 //import { DashboardComponent } from './views/dashboard/dashboard.component';
-import { OperatorDashboardModule } from './views/operator-dashboard/operator-dashboard.module';
+//import { OperatorDashboardModule } from './views/operator-dashboard/operator-dashboard.module';
 import { OperatorDashboardComponent } from './views/operator-dashboard/operator-dashboard.component';
 import { ResultatComptageComponent } from './views/pages/resultat-comptage/resultat-comptage.component';
 
