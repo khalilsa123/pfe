@@ -1,228 +1,376 @@
-<div class="resultat-comptage-container">
-  
-  <div class="section-header d-flex justify-content-between align-items-center mb-4">
-    <h2>Résultats de Comptage</h2>
-    <div class="d-flex gap-2">
-      <!-- Boutons de navigation -->
-      <button class="btn btn-stats" (click)="showStatistics()">
-        <i class="fas fa-chart-pie me-2"></i>Statistiques d'Avancement
+<div class="wrapper">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Logo -->
+    <div class="logo-container">
+      <img src="assets/onetech_logo.jpg" alt="OneTech Tunisia" class="logo">
+    </div>
+    
+    <h3>Menu</h3>
+
+    <!-- Bouton Gestion des Inventaires -->
+    <button class="btn btn-menu mb-2 w-100"
+            [class.active]="activeButton === 'inventory'" 
+            (click)="toggleInventoryManagement()">
+      <i class="fas fa-boxes me-2"></i>
+      {{ showInventoryManagement ? 'Masquer Inventaire' : 'Gestion des Inventaires' }}
+    </button>
+
+    <!-- Bouton Gestion des Sessions d'Inventaire (Admin only) -->
+    <button *ngIf="user?.role === 'ADMIN'"
+            class="btn btn-menu mb-2 w-100"
+            [class.active]="activeButton === 'session-inventaire'"
+            (click)="toggleSessionInventaire()">
+      <i class="fas fa-calendar-alt me-2"></i>
+      {{ showSessionInventaire ? 'Masquer Sessions' : 'Gestion des Sessions d\'Inventaire' }}
+    </button>
+
+    <!-- Bouton Résultats de Comptage (Supervisor or Admin only) -->
+    <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
+            class="btn btn-menu mb-2 w-100"
+            [class.active]="activeButton === 'results'" 
+            (click)="goToResultsPage()">
+      <i class="fas fa-chart-bar me-2"></i>
+      Résultats de Comptage
+    </button>
+
+    <!-- Menu déroulant pour les comptages (Supervisor or Admin only) -->
+    <div *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'" class="dropdown-menu-container">
+      <button class="btn btn-menu mb-2 w-100"
+              [class.active]="activeButton === 'counting'" 
+              (click)="toggleCountingDropdown()">
+        <i class="fas fa-list-ol me-2"></i>
+        Comptages
+        <i class="fas fa-chevron-down ms-auto" [class.rotated]="showCountingDropdown"></i>
       </button>
-      <!-- Imprimer Button with Dropdown -->
-      <div class="dropdown">
-        <button class="btn btn-print dropdown-toggle" type="button" id="imprimerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          <i class="fas fa-file-excel me-2"></i>Imprimer
+      
+      <!-- Sous-menu pour les comptages -->
+      <div class="submenu" [class.show]="showCountingDropdown">
+        <button class="btn btn-submenu w-100"
+                [class.active]="showAllCounting"
+                (click)="showCountingList('all')">
+          <i class="fas fa-list me-2"></i>
+          Liste Comptages Totaux
         </button>
-        <ul class="dropdown-menu" aria-labelledby="imprimerDropdown">
-          <li><a class="dropdown-item" href="#" (click)="showPreview('all'); $event.preventDefault()">Tous les comptages</a></li>
-          <li><a class="dropdown-item" href="#" (click)="showPreview('valid'); $event.preventDefault()">Validés</a></li>
-          <li><a class="dropdown-item" href="#" (click)="showPreview('needsThird'); $event.preventDefault()">Besoin 3e Comptage</a></li>
-          <li><a class="dropdown-item" href="#" (click)="showPreview('incomplete'); $event.preventDefault()">Incomplets</a></li>
-          <li><a class="dropdown-item" href="#" (click)="showPreview('comptage1'); $event.preventDefault()">Comptage 1</a></li>
-          <li><a class="dropdown-item" href="#" (click)="showPreview('comptage2'); $event.preventDefault()">Comptage 2</a></li>
-          <li><a class="dropdown-item" href="#" (click)="showPreview('comptage3'); $event.preventDefault()">Comptage 3</a></li>
-          <li><a class="dropdown-item" href="#" (click)="showPreview('comptageFinal'); $event.preventDefault()">Comptage Final</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li class="dropdown-item">
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" [(ngModel)]="includeOperatorNames" id="includeOperatorNamesMain">
-              <label class="form-check-label" for="includeOperatorNamesMain">
-                Inclure le nom des opérateurs
-              </label>
-            </div>
-          </li>
-        </ul>
+        
+        <button class="btn btn-submenu w-100"
+                [class.active]="showCountingType1"
+                (click)="showCountingList(1)">
+          <i class="fas fa-list-ol me-2"></i>
+          Premier Comptage
+        </button>
+        
+        <button class="btn btn-submenu w-100"
+                [class.active]="showCountingType2"
+                (click)="showCountingList(2)">
+          <i class="fas fa-list-ol me-2"></i>
+          Deuxième Comptage
+        </button>
+        
+        <button class="btn btn-submenu w-100"
+                [class.active]="showCountingType3"
+                (click)="showCountingList(3)">
+          <i class="fas fa-list-ol me-2"></i>
+          Troisième Comptage
+        </button>
       </div>
     </div>
-  </div>
 
-  <!-- Filtres et options de tri -->
-  <div class="filters-container mb-4">
-    <div class="row align-items-center">
-      <div class="col-md-4">
-        <div class="input-group">
-          <span class="input-group-text"><i class="fas fa-search"></i></span>
-          <input type="text" class="form-control" placeholder="Rechercher par référence..." 
-                 [(ngModel)]="searchTerm" (input)="applyFilters()">
-        </div>
-      </div>
-      <div class="col-md-8">
-        <div class="d-flex justify-content-end gap-2">
-          <div class="btn-group">
-            <button type="button" class="btn btn-filter" (click)="filterByStatus('all')"
-                    [class.active]="currentStatusFilter === 'all'">
-              Tous
-            </button>
-            <button type="button" class="btn btn-filter" (click)="filterByStatus('valid')"
-                    [class.active]="currentStatusFilter === 'valid'">
-              Valides
-            </button>
-            <button type="button" class="btn btn-filter" (click)="filterByStatus('invalid')"
-                    [class.active]="currentStatusFilter === 'invalid'">
-              Invalides
-            </button>
-            <button type="button" class="btn btn-filter" (click)="filterByStatus('needsThird')"
-                    [class.active]="currentStatusFilter === 'needsThird'">
-              Besoin 3e Comptage
-            </button>
+    <!-- Boutons utilisateurs selon le rôle -->
+    <ng-container *ngIf="user?.role !== 'OPERATEUR'">
+      <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
+              class="btn btn-menu mb-2 w-100"
+              [class.active]="activeButton === 'users' && currentUsersRole === 'OPERATEUR'"
+              (click)="loadUsers('OPERATEUR')">
+        <i class="fas fa-users me-2"></i>
+        Liste Opérateurs
+      </button>
+      <button *ngIf="user?.role === 'ADMIN'"
+              class="btn btn-menu w-100"
+              [class.active]="activeButton === 'users' && currentUsersRole === 'SUPERVISEUR'"
+              (click)="loadUsers('SUPERVISEUR')">
+        <i class="fas fa-user-shield me-2"></i>
+        Liste Superviseurs
+      </button>
+    </ng-container>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <!-- Barre supérieure avec profile et déconnexion -->
+    <div class="top-bar">
+      <h2 class="app-title">Système d'Inventaire OneTech</h2>
+      <div class="user-profile-container">
+        <button class="btn btn-profile-dropdown" [class.active]="showProfile" (click)="showProfile = !showProfile">
+          <div class="avatar-circle">
+            <span class="initials">{{ getUserInitials() }}</span>
           </div>
-          <button class="btn btn-sort" (click)="toggleSortOrder()">
-            <i class="fas" [ngClass]="sortAscending ? 'fa-sort-amount-up' : 'fa-sort-amount-down'"></i>
-            {{ sortAscending ? 'Date ↑' : 'Date ↓' }}
+          <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
+          <i class="fas fa-chevron-down ms-2"></i>
+        </button>
+        <div *ngIf="showProfile" class="profile-dropdown">
+          <div class="profile-info">
+            <p><strong>Nom :</strong> {{ user?.lastname }}</p>
+            <p><strong>Prénom :</strong> {{ user?.firstname }}</p>
+            <p><strong>Username :</strong> {{ user?.username }}</p>
+            <p><strong>Rôle :</strong> {{ user?.role }}</p>
+          </div>
+          <button class="btn btn-logout w-100"
+                  (click)="logout()">
+            <i class="fas fa-sign-out-alt me-2"></i>
+            Déconnexion
           </button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Tableau des résultats -->
-  <div class="table-container">
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Référence</th>
-            <th>Lot</th>
-            <th>Sous-lot</th>
-            <th class="comptage-col">
-              <div class="comptage-header">
-                <span>1er Comptage</span>
-                <div class="comptage-subheader">
-                  <span>Opérateur</span>
-                  <span>Poids</span>
-                </div>
-              </div>
-            </th>
-            <th class="comptage-col">
-              <div class="comptage-header">
-                <span>2e Comptage</span>
-                <div class="comptage-subheader">
-                  <span>Opérateur</span>
-                  <span>Poids</span>
-                </div>
-              </div>
-            </th>
-            <th class="comptage-col">
-              <div class="comptage-header">
-                <span>3e Comptage</span>
-                <div class="comptage-subheader">
-                  <span>Opérateur</span>
-                  <span>Poids</span>
-                </div>
-              </div>
-            </th>
-            <th>Résultat</th>
-            <th>Poids Final</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let result of filteredResults" 
-              [ngClass]="{'valid-row': result.status === 'valid', 
-                          'invalid-row': result.status === 'invalid',
-                          'needs-third-row': result.status === 'needsThird',
-                          'incomplete-row': result.status === 'incomplete'}">
-            <td>{{ extractReference(result.reference) }}</td>
-            <td>{{ result.lot }}</td>
-            <td>{{ result.sousLot }}</td>
-            
-            <!-- 1er Comptage -->
-            <td class="comptage-data" *ngIf="result.comptage1">
-              <div class="comptage-info">
-                <span class="operator-name">{{ result.comptage1.operatorName }}</span>
-                <span class="weight">{{ result.comptage1.poids }} g</span>
-              </div>
-            </td>
-            <td class="comptage-data missing-data" *ngIf="!result.comptage1">
-              <div class="comptage-info">
-                <span class="operator-name">-</span>
-                <span class="weight">-</span>
-              </div>
-            </td>
-            
-            <!-- 2e Comptage -->
-            <td class="comptage-data" *ngIf="result.comptage2">
-              <div class="comptage-info">
-                <span class="operator-name">{{ result.comptage2.operatorName }}</span>
-                <span class="weight">{{ result.comptage2.poids }} g</span>
-              </div>
-            </td>
-            <td class="comptage-data missing-data" *ngIf="!result.comptage2">
-              <div class="comptage-info">
-                <span class="operator-name">-</span>
-                <span class="weight">-</span>
-              </div>
-            </td>
-            
-            <!-- 3e Comptage -->
-            <td class="comptage-data" *ngIf="result.comptage3">
-              <div class="comptage-info">
-                <span class="operator-name">{{ result.comptage3.operatorName }}</span>
-                <span class="weight">{{ result.comptage3.poids }} g</span>
-              </div>
-            </td>
-            <td class="comptage-data missing-data" *ngIf="!result.comptage3">
-              <div class="comptage-info">
-                <span class="operator-name">-</span>
-                <span class="weight">-</span>
-              </div>
-            </td>
-            
-            <!-- Résultat -->
-            <td>
-              <div class="status-badge" [ngClass]="getStatusClass(result.status)">
-                {{ getStatusText(result.status) }}
-                <span *ngIf="result.status === 'valid' && result.difference" class="difference">
-                  (Diff: {{ result.difference | number:'1.2-2' }}%)
-                </span>
-              </div>
-            </td>
-            
-            <!-- Poids Final -->
-            <td class="poids-final">
-              <span *ngIf="result.status === 'valid' || result.status === 'validWithThird'">
-                {{ result.poidsFinal }} g
-              </span>
-              <span *ngIf="result.status === 'needsThird'" class="awaiting-text">
-                En attente du 3e comptage
-              </span>
-              <span *ngIf="result.status === 'incomplete'" class="awaiting-text">
-                Comptage incomplet
-              </span>
-              <span *ngIf="result.status === 'invalid'" class="invalid-text">
-                Comptage invalide
-              </span>
-            </td>
-            
-            <td>{{ result.lastUpdate | date:'dd/MM/yyyy HH:mm' }}</td>
-            
-            <!-- Actions -->
-            <td>
-              <button *ngIf="result.status === 'needsThird' && canDoThirdCount" 
-                      class="btn btn-do-count btn-sm"
-                      (click)="doThirdCount(result)">
-                <i class="fas fa-plus-circle me-1"></i>Faire 3e comptage
+    <!-- CONTENU PRINCIPAL - Résultats de comptage -->
+    <div class="content-area">
+      <div class="resultat-comptage-container">
+        <div class="section-header d-flex justify-content-between align-items-center mb-4">
+          <h2>Résultats de Comptage</h2>
+          <div class="d-flex gap-2">
+            <!-- Boutons de navigation -->
+            <button class="btn btn-stats" (click)="showStatistics()">
+              <i class="fas fa-chart-pie me-2"></i>Statistiques d'Avancement
+            </button>
+            <!-- Imprimer Button with Dropdown -->
+            <div class="dropdown">
+              <button class="btn btn-print dropdown-toggle" type="button" id="imprimerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-file-excel me-2"></i>Imprimer
               </button>
-              <button *ngIf="result.status === 'validWithThird' && isAdmin" 
-                      class="btn btn-validate btn-sm"
-                      (click)="validateFinalCount(result)">
-                <i class="fas fa-check-circle me-1"></i>Valider
-              </button>
-            </td>
-          </tr>
-          
-          <tr *ngIf="filteredResults.length === 0">
-            <td colspan="10" class="text-center py-3">
-              <div class="no-results">
-                <i class="fas fa-search mb-2"></i>
-                <p>Aucun résultat trouvé</p>
+              <ul class="dropdown-menu" aria-labelledby="imprimerDropdown">
+                <li><a class="dropdown-item" href="#" (click)="showPreview('all'); $event.preventDefault()">Tous les comptages</a></li>
+                <li><a class="dropdown-item" href="#" (click)="showPreview('valid'); $event.preventDefault()">Validés</a></li>
+                <li><a class="dropdown-item" href="#" (click)="showPreview('needsThird'); $event.preventDefault()">Besoin 3e Comptage</a></li>
+                <li><a class="dropdown-item" href="#" (click)="showPreview('incomplete'); $event.preventDefault()">Incomplets</a></li>
+                <li><a class="dropdown-item" href="#" (click)="showPreview('comptage1'); $event.preventDefault()">Comptage 1</a></li>
+                <li><a class="dropdown-item" href="#" (click)="showPreview('comptage2'); $event.preventDefault()">Comptage 2</a></li>
+                <li><a class="dropdown-item" href="#" (click)="showPreview('comptage3'); $event.preventDefault()">Comptage 3</a></li>
+                <li><a class="dropdown-item" href="#" (click)="showPreview('comptageFinal'); $event.preventDefault()">Comptage Final</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li class="dropdown-item">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="includeOperatorNames" id="includeOperatorNamesMain">
+                    <label class="form-check-label" for="includeOperatorNamesMain">
+                      Inclure le nom des opérateurs
+                    </label>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres et options de tri -->
+        <div class="filters-container mb-4">
+          <div class="row align-items-center">
+            <div class="col-md-4">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" placeholder="Rechercher par référence..." 
+                      [(ngModel)]="searchTerm" (input)="applyFilters()">
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+            <div class="col-md-8">
+              <div class="d-flex justify-content-end gap-2">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-filter" (click)="filterByStatus('all')"
+                          [class.active]="currentStatusFilter === 'all'">
+                    Tous
+                  </button>
+                  <button type="button" class="btn btn-filter" (click)="filterByStatus('valid')"
+                          [class.active]="currentStatusFilter === 'valid'">
+                    Valides
+                  </button>
+                  <button type="button" class="btn btn-filter" (click)="filterByStatus('invalid')"
+                          [class.active]="currentStatusFilter === 'invalid'">
+                    Invalides
+                  </button>
+                  <button type="button" class="btn btn-filter" (click)="filterByStatus('needsThird')"
+                          [class.active]="currentStatusFilter === 'needsThird'">
+                    Besoin 3e Comptage
+                  </button>
+                </div>
+                <button class="btn btn-sort" (click)="toggleSortOrder()">
+                  <i class="fas" [ngClass]="sortAscending ? 'fa-sort-amount-up' : 'fa-sort-amount-down'"></i>
+                  {{ sortAscending ? 'Date ↑' : 'Date ↓' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tableau des résultats -->
+        <div class="table-container">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Référence</th>
+                  <th>Lot</th>
+                  <th>Sous-lot</th>
+                  <th class="comptage-col">
+                    <div class="comptage-header">
+                      <span>1er Comptage</span>
+                      <div class="comptage-subheader">
+                        <span>Opérateur</span>
+                        <span>Poids</span>
+                      </div>
+                    </div>
+                  </th>
+                  <th class="comptage-col">
+                    <div class="comptage-header">
+                      <span>2e Comptage</span>
+                      <div class="comptage-subheader">
+                        <span>Opérateur</span>
+                        <span>Poids</span>
+                      </div>
+                    </div>
+                  </th>
+                  <th class="comptage-col">
+                    <div class="comptage-header">
+                      <span>3e Comptage</span>
+                      <div class="comptage-subheader">
+                        <span>Opérateur</span>
+                        <span>Poids</span>
+                      </div>
+                    </div>
+                  </th>
+                  <th>Résultat</th>
+                  <th>Poids Final</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let result of filteredResults" 
+                    [ngClass]="{'valid-row': result.status === 'valid', 
+                                'invalid-row': result.status === 'invalid',
+                                'needs-third-row': result.status === 'needsThird',
+                                'incomplete-row': result.status === 'incomplete'}">
+                  <td>{{ extractReference(result.reference) }}</td>
+                  <td>{{ result.lot }}</td>
+                  <td>{{ result.sousLot }}</td>
+                  
+                  <!-- 1er Comptage -->
+                  <td class="comptage-data" *ngIf="result.comptage1">
+                    <div class="comptage-info">
+                      <span class="operator-name">{{ result.comptage1.operatorName }}</span>
+                      <span class="weight">{{ result.comptage1.poids }} g</span>
+                    </div>
+                    <span class="comptage-type" [ngClass]="'comptage-type-' + result.comptage1?.numComptage">
+                      {{ getComptageTypeName(result.comptage1?.numComptage || 1) }}
+                      <span *ngIf="result.comptage1?.iteration" class="iteration-badge ms-1" [class.warning]="result.comptage1?.iteration! > 1">
+                        {{ result.comptage1?.iteration }}
+                      </span>
+                    </span>
+                  </td>
+                  <td class="comptage-data missing-data" *ngIf="!result.comptage1">
+                    <div class="comptage-info">
+                      <span class="operator-name">-</span>
+                      <span class="weight">-</span>
+                    </div>
+                  </td>
+                  
+                  <!-- 2e Comptage -->
+                  <td class="comptage-data" *ngIf="result.comptage2">
+                    <div class="comptage-info">
+                      <span class="operator-name">{{ result.comptage2.operatorName }}</span>
+                      <span class="weight">{{ result.comptage2.poids }} g</span>
+                    </div>
+                    <span class="comptage-type" [ngClass]="'comptage-type-' + result.comptage2?.numComptage">
+                      {{ getComptageTypeName(result.comptage2?.numComptage || 2) }}
+                      <span *ngIf="result.comptage2?.iteration" class="iteration-badge ms-1" [class.warning]="result.comptage2?.iteration! > 1">
+                        {{ result.comptage2?.iteration }}
+                      </span>
+                    </span>
+                  </td>
+                  <td class="comptage-data missing-data" *ngIf="!result.comptage2">
+                    <div class="comptage-info">
+                      <span class="operator-name">-</span>
+                      <span class="weight">-</span>
+                    </div>
+                  </td>
+                  
+                  <!-- 3e Comptage -->
+                  <td class="comptage-data" *ngIf="result.comptage3">
+                    <div class="comptage-info">
+                      <span class="operator-name">{{ result.comptage3.operatorName }}</span>
+                      <span class="weight">{{ result.comptage3.poids }} g</span>
+                    </div>
+                    <span class="comptage-type" [ngClass]="'comptage-type-' + result.comptage3?.numComptage">
+                      {{ getComptageTypeName(result.comptage3?.numComptage || 3) }}
+                      <span *ngIf="result.comptage3?.iteration" class="iteration-badge ms-1" [class.warning]="result.comptage3?.iteration! > 1">
+                        {{ result.comptage3?.iteration }}
+                      </span>
+                    </span>
+                  </td>
+                  <td class="comptage-data missing-data" *ngIf="!result.comptage3">
+                    <div class="comptage-info">
+                      <span class="operator-name">-</span>
+                      <span class="weight">-</span>
+                    </div>
+                  </td>
+                  
+                  <!-- Résultat -->
+                  <td>
+                    <div class="status-badge" [ngClass]="getStatusClass(result.status)">
+                      {{ getStatusText(result.status) }}
+                      <span *ngIf="result.status === 'valid' && result.difference" class="difference">
+                        (Diff: {{ result.difference | number:'1.2-2' }}%)
+                      </span>
+                    </div>
+                  </td>
+                  
+                  <!-- Poids Final -->
+                  <td class="poids-final">
+                    <span *ngIf="result.status === 'valid' || result.status === 'validWithThird'">
+                      {{ result.poidsFinal }} g
+                    </span>
+                    <span *ngIf="result.status === 'needsThird'" class="awaiting-text">
+                      En attente du 3e comptage
+                    </span>
+                    <span *ngIf="result.status === 'incomplete'" class="awaiting-text">
+                      Comptage incomplet
+                    </span>
+                    <span *ngIf="result.status === 'invalid'" class="invalid-text">
+                      Comptage invalide
+                    </span>
+                  </td>
+                  
+                  <td>{{ result.lastUpdate | date:'dd/MM/yyyy HH:mm' }}</td>
+                  
+                  <!-- Actions -->
+                  <td>
+                    <button *ngIf="result.status === 'needsThird' && canDoThirdCount" 
+                            class="btn btn-do-count btn-sm"
+                            (click)="doThirdCount(result)">
+                      <i class="fas fa-plus-circle me-1"></i>Faire 3e comptage
+                    </button>
+                    <button *ngIf="result.status === 'validWithThird' && isAdmin" 
+                            class="btn btn-validate btn-sm"
+                            (click)="validateFinalCount(result)">
+                      <i class="fas fa-check-circle me-1"></i>Valider
+                    </button>
+                  </td>
+                </tr>
+                
+                <tr *ngIf="filteredResults.length === 0">
+                  <td colspan="10" class="text-center py-3">
+                    <div class="no-results">
+                      <i class="fas fa-search mb-2"></i>
+                      <p>Aucun résultat trouvé</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </main>
 </div>
 
 <!-- Modal pour les statistiques -->
@@ -240,7 +388,6 @@
   </div>
 </div>
 
-<!-- Modal pour les options d'export (removed since we're using preview modal) -->
 <!-- Preview Modal -->
 <div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true" #previewModal>
   <div class="modal-dialog modal-xl">

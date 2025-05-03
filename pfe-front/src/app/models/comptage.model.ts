@@ -1,15 +1,13 @@
 export interface Comptage {
   id?: number;
-   operateurId: any;
-  emplacement: string;
   reference: string;
+  quantiteTotale: number;
   numLot: string;
   numSousLot: string;
-  typeMatiere: string;
   poids: number;
-  quantiteTotale: number;
   numComptage: number;
-  timestamp:       string;  
-
-  operatorName?: string;    // → utilisé pour la colonne « Date »
+  emplacement?: string;
+  operateurId?: number;
+  timestamp?: string;
+  iteration?: number; // Track how many times this counting has been performed
 }

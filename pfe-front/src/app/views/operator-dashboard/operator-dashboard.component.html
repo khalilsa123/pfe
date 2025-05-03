@@ -1,4 +1,3 @@
-
 <div class="wrapper">
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -279,6 +278,7 @@
                     <th>Empl.</th>
                     <th>Poids</th>
                     <th>Type de comptage</th>
+                    <th>Itération</th>
                     <th>Date</th>
                     <th>Opérateur</th>
                   </tr>
@@ -296,11 +296,16 @@
                         {{ getComptageTypeName(c.numComptage) }}
                       </span>
                     </td>
+                    <td>
+                      <span class="iteration-badge" [class.warning]="c.iteration! > 1">
+                        {{ c.iteration || 1 }}
+                      </span>
+                    </td>
                     <td>{{ c.timestamp | date:'short' }}</td>
                     <td>{{ c.operatorName || c.operatorId }}</td>
                   </tr>
                   <tr *ngIf="!sessionComptages.length">
-                    <td colspan="9" class="text-center py-3">Aucun comptage pour cette session</td>
+                    <td colspan="10" class="text-center py-3">Aucun comptage pour cette session</td>
                   </tr>
                 </tbody>
               </table>
@@ -335,6 +340,7 @@
                   <th>Empl.</th>
                   <th>Poids</th>
                   <th>Type de comptage</th>
+                  <th>Itération</th>
                   <th>Date</th>
                   <th>Opérateur</th>
                 </tr>
@@ -352,11 +358,16 @@
                       {{ getComptageTypeName(c.numComptage) }}
                     </span>
                   </td>
+                  <td>
+                    <span class="iteration-badge" [class.warning]="c.iteration! > 1">
+                      {{ c.iteration || 1 }}
+                    </span>
+                  </td>
                   <td>{{ c.timestamp | date:'short' }}</td>
                   <td>{{ c.operatorName || c.operatorId }}</td>
                 </tr>
                 <tr *ngIf="!filteredComptages.length">
-                  <td colspan="9" class="text-center py-3">Aucun comptage</td>
+                  <td colspan="10" class="text-center py-3">Aucun comptage</td>
                 </tr>
               </tbody>
             </table>
@@ -401,6 +412,30 @@
                             (click)="changePassword(u)">
                       <i class="fas fa-key"></i> Modifier le mot de passe
                     </button>
+                    
+                    <!-- Nouveau bouton pour assigner le type de comptage -->
+                    <div *ngIf="u.role === 'OPERATEUR'" class="btn-group me-1">
+                      <button type="button" class="btn btn-assign btn-sm" (click)="toggleComptageDropdown(u.id!)">
+                        <i class="fas fa-tasks"></i> Affecter comptage
+                        <span *ngIf="u.defaultComptageType" class="badge badge-light ms-1">{{ u.defaultComptageType }}</span>
+                      </button>
+                      <div class="dropdown-menu" [class.show]="selectedUserId === u.id">
+                        <a class="dropdown-item" (click)="assignComptageType(u, 1)">
+                          <i class="fas fa-1"></i> Premier Comptage
+                        </a>
+                        <a class="dropdown-item" (click)="assignComptageType(u, 2)">
+                          <i class="fas fa-2"></i> Deuxième Comptage
+                        </a>
+                        <a class="dropdown-item" (click)="assignComptageType(u, 3)">
+                          <i class="fas fa-3"></i> Troisième Comptage
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" (click)="assignComptageType(u, null)">
+                          <i class="fas fa-times"></i> Aucun comptage
+                        </a>
+                      </div>
+                    </div>
+                    
                     <button *ngIf="canDeleteUser(u)"
                             class="btn btn-supprimer btn-sm"
                             (click)="deleteUser(u)">

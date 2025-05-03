@@ -12,12 +12,14 @@ export interface User {
   lastname?: string;
   username: string;
   password: string;
+  defaultComptageType?: number; // Default counting type assigned to the user
 }
 
 export interface AuthResponse {
   access_token: string;
   user: User;
 }
+
 export interface login {
   username: string;
   password: string;

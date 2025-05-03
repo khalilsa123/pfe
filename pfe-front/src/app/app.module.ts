@@ -2,8 +2,11 @@
 
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AppRoutingModule } from './app-routing.module';  // votre module de routes
 import { AppComponent } from './app.component';
@@ -32,9 +35,12 @@ import { OperatorDashboardComponent } from './views/operator-dashboard/operator-
   ],
   imports: [
     BrowserModule,         // Directives de base et bootstrap
+    BrowserAnimationsModule, // Animations Material
     AppRoutingModule,      // Routage de l’application
     HttpClientModule,      // Pour HttpClient dans vos services
     FormsModule,           // Pour [(ngModel)] et formulaires template-driven
+    ReactiveFormsModule,   // Pour formulaires réactifs
+    MatSnackBarModule,     // Module Material Snackbar
     // OperatorDashboardModule, // décommentez si vous utilisez un module de fonctionnalité
   ],
   providers: [

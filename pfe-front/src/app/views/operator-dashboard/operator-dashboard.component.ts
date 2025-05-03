@@ -1,14 +1,14 @@
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { OperatorService } from '../../services/operator.service';
 import { ComptageService } from '../../services/comptage.service';
 import { AuthentificationnServiceService } from '../../services/authentificationn.service';
 import { Comptage } from '../../models/comptage.model';
 import { User } from '../../models/user.model';
 import { HttpClient } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 // Interface for SessionInventaire
 interface SessionInventaire {
@@ -62,6 +62,7 @@ export class OperatorDashboardComponent implements OnInit {
   sessionComptages: ComptageWithOperator[] = [];
   newComptage: Partial<Comptage> = {};
   editing = false;
+  selectedUserId: number | null = null;
 
   private apiUrl = 'http://localhost:8080/api/session-inventaire'; // Adjust to your backend URL
 
@@ -70,8 +71,18 @@ export class OperatorDashboardComponent implements OnInit {
     private opSrv: OperatorService,
     private comptageService: ComptageService,
     private router: Router,
-    private http: HttpClient
-  ) {}
+    private route: ActivatedRoute,
+    private http: HttpClient,
+    private snackBar: MatSnackBar
+  ) {
+    // Add click handler to close dropdown when clicking outside
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.btn-group')) {
+        this.selectedUserId = null;
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.user = this.authSrv.getCurrentUser() || undefined;
@@ -79,9 +90,35 @@ export class OperatorDashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    
+    // Initialize counting with user's default type
+    if (this.user.role === 'OPERATEUR' && this.user.defaultComptageType) {
+      this.newComptage.numComptage = this.user.defaultComptageType;
+    } else {
+      this.newComptage.numComptage = 1; // Default value if no type assigned
+    }
+    
     if (this.user.role === 'ADMIN') {
       this.loadSessions();
     }
+
+    // Check URL parameters
+    this.route.queryParams.subscribe(params => {
+      if (params['reference']) {
+        this.newComptage.reference = params['reference'];
+      }
+      
+      if (params['numComptage']) {
+        this.newComptage.numComptage = +params['numComptage'];
+      }
+      
+      // If parameters were provided, automatically open inventory section
+      if (params['reference'] || params['numComptage']) {
+        this.showInventoryManagement = true;
+        this.hideAllPanels('inventory');
+        this.activeButton = 'inventory';
+      }
+    });
   }
 
   getUserInitials(): string {
@@ -630,6 +667,45 @@ export class OperatorDashboardComponent implements OnInit {
           this.router.navigate(['//login']);
         } else {
           alert('Erreur lors de la suppression du comptage');
+        }
+      }
+    });
+  }
+
+  toggleComptageDropdown(userId: number): void {
+    // Close dropdown if clicking the same button again
+    if (this.selectedUserId === userId) {
+      this.selectedUserId = null;
+    } else {
+      this.selectedUserId = userId;
+    }
+  }
+
+  assignComptageType(user: User, comptageType: number | null): void {
+    if (!user.id) return;
+    
+    this.authSrv.updateUserDefaultComptageType(user.id, comptageType || 0).subscribe({
+      next: () => {
+        // Update user in local list
+        user.defaultComptageType = comptageType || undefined;
+        this.selectedUserId = null; // Close the dropdown
+        this.snackBar.open(
+          `Type de comptage ${comptageType || 'aucun'} affecté à ${user.firstname} ${user.lastname}`,
+          'Fermer',
+          { duration: 3000 }
+        );
+      },
+      error: (err) => {
+        console.error('Erreur lors de l\'affectation du type de comptage:', err);
+        if (err.status === 401) {
+          this.authSrv.logout();
+          this.router.navigate(['/login']);
+        } else {
+          this.snackBar.open(
+            'Erreur lors de l\'affectation du type de comptage',
+            'Fermer',
+            { duration: 3000 }
+          );
         }
       }
     });

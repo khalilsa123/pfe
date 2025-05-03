@@ -62,5 +62,13 @@ export class AuthentificationnServiceService {
     localStorage.removeItem('jwt');
     localStorage.removeItem('currentUser');
   }
+
+  updateUserDefaultComptageType(userId: number, comptageType: number): Observable<any> {
+    return this.http.put<any>(
+      `${AUTH_API}/users/${userId}/comptage-type`, 
+      { defaultComptageType: comptageType }, 
+      httpOptions
+    ).pipe(catchError(err => throwError(() => err)));
+  }
 }
 

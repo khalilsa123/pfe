@@ -19,6 +19,8 @@ interface ComptageSummary {
   operatorName: string;
   poids: number;
   date: Date;
+  numComptage: number;
+  iteration?: number;
 }
 
 interface ComptageResult {
@@ -69,13 +71,28 @@ export class ResultatComptageComponent implements OnInit {
   includeOperatorNames = true; // Default to true
   selectedExportType: string | null = null; // To track the export type for preview
   
+  // Menu variables from OperatorDashboardComponent
+  showProfile = false;
+  showUsersMenu = false;
+  showInventoryManagement = false;
+  showSessionInventaire = false;
+  showCreateSessionForm = false;
+  showCountingDropdown = false;
+  showAllCounting = false;
+  showCountingType1 = false;
+  showCountingType2 = false;
+  showCountingType3 = false;
+  activeButton: 'inventory' | 'session-inventaire' | 'counting' | 'users' | 'results' | null = 'results';
+  currentUsersRole?: 'OPERATEUR' | 'SUPERVISEUR';
+  users: User[] = [];
+  
   // Modal references
   private statsModal?: Modal;
   private expModal?: Modal;
   private prevModal?: Modal;
 
   // Cache for operators
-  private operatorsCache: Map<number, User> = new Map();
+  private operatorsCache: Map<number, User | undefined> = new Map();
 
   constructor(
     private comptageService: ComptageService,
@@ -85,7 +102,7 @@ export class ResultatComptageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.user = this.authService.getCurrentUser()!;
+    this.user = this.authService.getCurrentUser() || undefined;
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
@@ -112,17 +129,82 @@ export class ResultatComptageComponent implements OnInit {
     }
   }
 
+  // Menu methods from OperatorDashboardComponent
+  getUserInitials(): string {
+    if (!this.user) return '';
+    return (
+      (this.user.firstname?.charAt(0) || '') + 
+      (this.user.lastname?.charAt(0) || '')
+    ).toUpperCase();
+  }
+
+  toggleInventoryManagement(): void {
+    this.router.navigate(['/operator-dashboard']);
+  }
+
+  toggleSessionInventaire(): void {
+    this.router.navigate(['/operator-dashboard'], { queryParams: { view: 'session-inventaire' } });
+  }
+
+  toggleCountingDropdown(): void {
+    if (this.activeButton === 'counting' && this.showCountingDropdown) {
+      this.showCountingDropdown = false;
+      this.closeAllCountingPanels();
+      this.activeButton = null;
+    } else {
+      this.showCountingDropdown = true;
+      this.activeButton = 'counting';
+    }
+  }
+  
+  private closeAllCountingPanels(): void {
+    this.showAllCounting = false;
+    this.showCountingType1 = false;
+    this.showCountingType2 = false;
+    this.showCountingType3 = false;
+  }
+  
+  showCountingList(type: 'all' | 1 | 2 | 3): void {
+    this.router.navigate(['/operator-dashboard'], { 
+      queryParams: { view: 'counting', type: type } 
+    });
+  }
+  
+  goToResultsPage(): void {
+    // Already on results page
+  }
+  
+  loadUsers(role: 'OPERATEUR' | 'SUPERVISEUR'): void {
+    this.router.navigate(['/operator-dashboard'], { 
+      queryParams: { view: 'users', role: role } 
+    });
+  }
+  
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  // Extraction de référence de la chaîne complète
+  extractReference(fullReference: string): string {
+    if (!fullReference) return '';
+    // Séparer par $ et prendre la première partie
+    const parts = fullReference.split('$');
+    return parts[0] || fullReference;
+  }
+
   loadComptages(): void {
     this.comptageService.getAllComptages().subscribe({
       next: raw => {
-        console.log('► raw comptages:', raw);
         this.comptages = raw;
         this.processComptageData();
-        console.log('► comptageResults après traitement:', this.comptageResults);
-        console.log('► filteredResults:', this.filteredResults);
       },
       error: err => {
         console.error('Erreur chargement comptages:', err);
+        if (err.status === 401) {
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        }
       }
     });
   }
@@ -140,7 +222,7 @@ export class ResultatComptageComponent implements OnInit {
       const ref = parts[0];
       const lot = parts[2];
       const sousLot = parts[3];
-      const groupKey = `${ref}$${lot}$${sousLot}`;
+      const groupKey = `${ref}${lot}${sousLot}`;
       
       if (!comptageGroups.has(groupKey)) {
         comptageGroups.set(groupKey, []);
@@ -178,7 +260,9 @@ export class ResultatComptageComponent implements OnInit {
           operatorId: comptage1.operateurId!,
           operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage1.operateurId}`,
           poids: comptage1.poids,
-          date: new Date(comptage1.timestamp!)
+          date: new Date(comptage1.timestamp!),
+          numComptage: comptage1.numComptage,
+          iteration: comptage1.iteration
         };
       }
       
@@ -188,7 +272,9 @@ export class ResultatComptageComponent implements OnInit {
           operatorId: comptage2.operateurId!,
           operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage2.operateurId}`,
           poids: comptage2.poids,
-          date: new Date(comptage2.timestamp!)
+          date: new Date(comptage2.timestamp!),
+          numComptage: comptage2.numComptage,
+          iteration: comptage2.iteration
         };
       }
       
@@ -198,7 +284,9 @@ export class ResultatComptageComponent implements OnInit {
           operatorId: comptage3.operateurId!,
           operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage3.operateurId}`,
           poids: comptage3.poids,
-          date: new Date(comptage3.timestamp!)
+          date: new Date(comptage3.timestamp!),
+          numComptage: comptage3.numComptage,
+          iteration: comptage3.iteration
         };
       }
       
@@ -268,26 +356,29 @@ export class ResultatComptageComponent implements OnInit {
     this.applyFilters();
   }
   
-  findOperator(operatorId: number): User | undefined {
-    // Check cache first
-    if (this.operatorsCache.has(operatorId)) {
-      return this.operatorsCache.get(operatorId);
+  // Méthode pour trouver un opérateur dans le cache
+  private findOperator(operatorId: number): User | undefined {
+    if (!this.operatorsCache.has(operatorId)) {
+      // Si l'opérateur n'est pas dans le cache, on le met à undefined
+      // Dans une version future, on pourrait implémenter un chargement à la demande
+      this.operatorsCache.set(operatorId, undefined);
     }
-
-    // In a real implementation, fetch the operator from the auth service
-    // For now, we'll return undefined since the service method isn't provided
-    // Example: this.authService.getUserById(operatorId).subscribe(user => { ... });
-    return undefined;
+    return this.operatorsCache.get(operatorId);
   }
 
-  // Méthode pour extraire juste la référence de la chaîne complète
-  extractReference(fullReference: string): string {
-    if (!fullReference) return '';
-    // Séparer par $ et prendre la première partie
-    const parts = fullReference.split('$');
-    return parts[0] || fullReference;
+  getComptageTypeName(numComptage: number): string {
+    switch(numComptage) {
+      case 1:
+        return 'Premier comptage';
+      case 2:
+        return 'Deuxième comptage';
+      case 3:
+        return 'Troisième comptage';
+      default:
+        return `Comptage ${numComptage}`;
+    }
   }
-  
+
   // Méthodes de filtrage et tri
   applyFilters(): void {
     let results = [...this.comptageResults];
@@ -394,11 +485,6 @@ export class ResultatComptageComponent implements OnInit {
     this.statsModal?.show();
   }
   
-  showExportOptions(): void {
-    this.expModal?.show();
-  }
-
-  // Show preview modal with filtered data
   showPreview(exportType: string): void {
     this.selectedExportType = exportType;
     this.previewResults = this.preparePreviewData(exportType);

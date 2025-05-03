@@ -6,6 +6,8 @@
 @import 'charts';
 @import 'custom';
 @import 'examples';
+@import '@angular/material/prebuilt-themes/deeppurple-amber.css'; // Material theme
+
 /* src/styles.scss */
 :root {
     --onetech-blue: #0074B5;
@@ -18,4 +20,3 @@
   } 
   
   // and your other global @imports…
-  
