@@ -3,12 +3,13 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { AuthInterceptor } from './services/auth.interceptor';
 
-import { AppRoutingModule } from './app-routing.module';  // votre module de routes
+import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
 // Pages
@@ -20,8 +21,6 @@ import { ResultatComptageComponent } from './views/pages/resultat-comptage/resul
 
 // Dashboard opérateur
 import { OperatorDashboardComponent } from './views/operator-dashboard/operator-dashboard.component';
-// Si vous avez un module dédié, vous pouvez à la place importer :
-// import { OperatorDashboardModule } from './views/operator-dashboard/operator-dashboard.module';
 
 @NgModule({
   declarations: [
@@ -34,18 +33,21 @@ import { OperatorDashboardComponent } from './views/operator-dashboard/operator-
     OperatorDashboardComponent,
   ],
   imports: [
-    BrowserModule,         // Directives de base et bootstrap
-    BrowserAnimationsModule, // Animations Material
-    AppRoutingModule,      // Routage de l’application
-    HttpClientModule,      // Pour HttpClient dans vos services
-    FormsModule,           // Pour [(ngModel)] et formulaires template-driven
-    ReactiveFormsModule,   // Pour formulaires réactifs
-    MatSnackBarModule,     // Module Material Snackbar
-    // OperatorDashboardModule, // décommentez si vous utilisez un module de fonctionnalité
+    BrowserModule,
+    BrowserAnimationsModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatSnackBarModule,
+    HttpClientModule,
   ],
   providers: [
-    // Vos services sont en général fournis via `providedIn: 'root'`, 
-    // vous n’avez donc rien à ajouter ici sauf cas particulier.
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }
   ],
   bootstrap: [AppComponent]
 })

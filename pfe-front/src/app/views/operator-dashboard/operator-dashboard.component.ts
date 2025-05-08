@@ -98,9 +98,9 @@ export class OperatorDashboardComponent implements OnInit {
       this.newComptage.numComptage = 1; // Default value if no type assigned
     }
     
-    if (this.user.role === 'ADMIN') {
+   /* if (this.user.role === 'ADMIN') {
       this.loadSessions();
-    }
+    }*/
 
     // Check URL parameters
     this.route.queryParams.subscribe(params => {
@@ -207,7 +207,7 @@ export class OperatorDashboardComponent implements OnInit {
       this.showSessionInventaire = true;
       this.hideAllPanels('session-inventaire');
       this.activeButton = 'session-inventaire';
-      this.loadSessions();
+       this.loadSessions();
     }
   }
 
@@ -218,12 +218,12 @@ export class OperatorDashboardComponent implements OnInit {
     }
   }
 
-  loadSessions(): void {
+  private loadSessions(): void {
     this.http.get<SessionInventaire[]>(this.apiUrl).subscribe({
-      next: (data) => {
+      next: data => {
         this.sessions = data;
       },
-      error: (err) => {
+      error: err => {
         console.error('Erreur chargement sessions', err);
         if (err.status === 401) {
           this.authSrv.logout();
@@ -232,6 +232,7 @@ export class OperatorDashboardComponent implements OnInit {
       }
     });
   }
+  
 
   createSession(): void {
     if (!this.newSession.nomSession || !this.newSession.dateDebut || !this.newSession.dateFin) {
@@ -541,6 +542,7 @@ export class OperatorDashboardComponent implements OnInit {
           next: (data: Comptage[]) => {
             const filteredData = data.filter(c => c.numComptage === type);
             this.loadOperateurNames(filteredData);
+            console.log(data)
           },
           error: (err: any) => {
             console.error('Erreur chargement comptages', err);
@@ -566,6 +568,7 @@ export class OperatorDashboardComponent implements OnInit {
           );
           
           this.allComptages = comptagesWithOperator;
+          console.log(this.allComptages)
           
           if (type === 'all') {
             this.filteredComptages = [...this.allComptages];
@@ -574,6 +577,7 @@ export class OperatorDashboardComponent implements OnInit {
           }
           
           this.applySort();
+          console.log(this.filteredComptages)
         },
         error: (err: any) => {
           console.error('Erreur chargement comptages', err);
@@ -587,66 +591,71 @@ export class OperatorDashboardComponent implements OnInit {
   }
 
   onSubmit(): void {
-    // Validate reference format
-    const referenceParts = this.parseReference(this.newComptage.reference || '');
-    if (!referenceParts.ref || !referenceParts.qte || !referenceParts.lot || !referenceParts.sousLot) {
-      alert('La référence doit être au format ref$qte$lot$sous_lot');
-      return;
-    }
-
-    // Prepare the comptage object
-    const comptage: Comptage = {
-      ...this.newComptage,
-      reference: this.newComptage.reference || '',
-      quantiteTotale: parseInt(referenceParts.qte) || 0,
-      numLot: referenceParts.lot,
-      numSousLot: referenceParts.sousLot,
-      poids: this.newComptage.poids || 0,
-      numComptage: this.newComptage.numComptage || 1,
-      emplacement: this.newComptage.emplacement,
-      operateurId: this.user!.id!,
-      timestamp: new Date().toISOString()
-    } as Comptage;
-
-    if (this.editing) {
-      // UPDATE
-      this.comptageService.updateComptage(this.newComptage.id!, comptage).subscribe({
-        next: () => {
-          this.editing = false;
-          this.newComptage = {};
-          this.loadComptages();
-        },
-        error: (err: any) => {
-          console.error('Erreur mise à jour', err);
-          if (err.status === 401) {
-            this.authSrv.logout();
-            this.router.navigate(['/login']);
-            alert('Session expirée, veuillez vous reconnecter');
-          } else {
-            alert('Erreur lors de la mise à jour du comptage');
-          }
-        }
-      });
-    } else {
-      // CREATE
-      this.comptageService.addComptage(this.user!.id!, comptage).subscribe({
-        next: () => {
-          this.newComptage = {};
-          this.loadComptages();
-        },
-        error: (err: any) => {
-          console.error('Erreur création', err);
-          if (err.status === 401) {
-            this.authSrv.logout();
-            this.router.navigate(['/login']);
-            alert('Session expirée, veuillez vous reconnecter');
-          } else {
-            alert('Erreur lors de l\'ajout du comptage');
-          }
-        }
-      });
-    }
+  console.log('Préparation du comptage:', this.newComptage);
+  
+  // Assurez-vous que toutes les propriétés requises sont présentes
+  if (!this.newComptage.reference) {
+    alert('La référence est obligatoire');
+    return;
   }
+  
+  if (this.newComptage.poids === undefined || this.newComptage.poids <= 0) {
+    alert('Le poids est obligatoire et doit être supérieur à 0');
+    return;
+  }
+  
+  // Assurer que la référence est au bon format
+  const referenceParts = this.parseReference(this.newComptage.reference);
+  if (!referenceParts.ref || !referenceParts.qte || !referenceParts.lot || !referenceParts.sousLot) {
+    alert('La référence doit être au format ref$qte$lot$sous_lot');
+    return;
+  }
+  
+  // Assurez-vous que les propriétés numériques sont bien des nombres
+  const comptage: Comptage = {
+    reference: this.newComptage.reference,
+    quantiteTotale: parseInt(referenceParts.qte) || 0,
+    numLot: referenceParts.lot,
+    numSousLot: referenceParts.sousLot,
+    poids: Number(this.newComptage.poids),
+    numComptage: Number(this.newComptage.numComptage) || 1,
+    emplacement: this.newComptage.emplacement || '',
+    operateurId: this.user!.id!,
+    timestamp: new Date().toISOString(),
+    iteration: 1 // Défini manuellement pour éviter l'appel à getIterationCount
+  };
+  
+  console.log('Envoi du comptage:', comptage);
+  
+  if (this.editing && this.newComptage.id) {
+    // UPDATE
+    this.comptageService.updateComptage(this.newComptage.id, comptage).subscribe({
+      next: () => {
+        this.editing = false;
+        this.newComptage = { numComptage: 1 };
+        this.loadComptages();
+        alert('Comptage mis à jour avec succès');
+      },
+      error: (err: any) => {
+        console.error('Erreur mise à jour', err);
+        alert('Erreur lors de la mise à jour du comptage: ' + (err.message || 'Erreur inconnue'));
+      }
+    });
+  } else {
+    // CREATE
+    this.comptageService.addComptage(this.user!.id!, comptage).subscribe({
+      next: () => {
+        this.newComptage = { numComptage: 1 };
+        this.loadComptages();
+        alert('Comptage ajouté avec succès');
+      },
+      error: (err: any) => {
+        console.error('Erreur création', err);
+        alert('Erreur lors de l\'ajout du comptage: ' + (err.message || 'Erreur inconnue'));
+      }
+    });
+  }
+}
 
   editComptage(c: Comptage): void {
     this.editing = true;

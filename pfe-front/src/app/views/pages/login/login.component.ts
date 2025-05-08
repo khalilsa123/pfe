@@ -33,10 +33,11 @@ import {
     ColComponent,
     CardComponent,
     CardBodyComponent,
-    InputGroupComponent,
-    InputGroupTextDirective,
-    FormControlDirective,
-    ButtonDirective
+    //InputGroupComponent,
+   // InputGroupTextDirective,
+    //FormControlDirective,
+   // ButtonDirective
+    
   ]
 })
 export class LoginComponent {

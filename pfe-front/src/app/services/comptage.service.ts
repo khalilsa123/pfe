@@ -1,83 +1,150 @@
 // src/app/services/comptage.service.ts
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { Observable, throwError, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { Comptage } from '../models/comptage.model';
 
-const COMPTAGE_API = 'http://localhost:8080/api/comptages';
-const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json' })
-};
+// URL de base pour toutes les requêtes API
+const API_URL = 'http://localhost:8080';
 
 @Injectable({ providedIn: 'root' })
 export class ComptageService {
   constructor(private http: HttpClient) {}
 
+  // Fonction d'aide pour créer les options avec le Bearer token
+  private getAuthOptions(params?: HttpParams): {
+    headers: HttpHeaders,
+    params?: HttpParams
+  } {
+    let token = localStorage.getItem('jwt');
+  
+    // Supprime les guillemets si le token a été stringifié par erreur
+    if (token?.startsWith('"') && token.endsWith('"')) {
+      token = token.slice(1, -1);
+    }
+  
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+  
+    return params ? { headers, params } : { headers };
+  }
+  
+
   /** Récupérer tous les comptages (SUPERVISEUR/ADMIN) */
   getAllComptages(): Observable<Comptage[]> {
-    return this.http.get<Comptage[]>(COMPTAGE_API)
-      .pipe(catchError(err => throwError(() => err)));
+    return this.http.get<Comptage[]>(`${API_URL}/api/comptages`, this.getAuthOptions())
+      .pipe(catchError(err => {
+        console.error('Erreur lors de la récupération des comptages:', err);
+        return throwError(() => err);
+      }));
   }
 
-  /** Récupérer les comptages d’un opérateur donné */
+  /** Récupérer les comptages d'un opérateur donné */
   getComptagesByOperateur(operateurId: number): Observable<Comptage[]> {
     return this.http.get<Comptage[]>(
-      `${COMPTAGE_API}/operator/${operateurId}/comptage`
-    );
+      `${API_URL}/api/operateurs/${operateurId}/comptage`,
+      this.getAuthOptions()
+    ).pipe(catchError(err => {
+      console.error('Erreur lors de la récupération des comptages d\'opérateur:', err);
+      return throwError(() => err);
+    }));
   }
 
+  /** Test d'ajout d'un comptage simple */
+  testAddComptage(operateurId: number): Observable<any> {
+    const simpleComptage = {
+      reference: "test$100$lot1$souslot1",
+      poids: 100,
+      numComptage: 1
+    };
+    
+    console.log('Test d\'envoi comptage:', JSON.stringify(simpleComptage));
+    
+    return this.http.post<any>(
+      `${API_URL}/api/operateurs/${operateurId}/comptage`,
+      simpleComptage,
+      this.getAuthOptions()
+    ).pipe(catchError(err => {
+      console.error('Erreur test:', err);
+      return throwError(() => err);
+    }));
+  }
+  
   /** Créer un nouveau comptage pour cet opérateur */
   addComptage(operateurId: number, comptage: Comptage): Observable<Comptage> {
-    // First get the current iteration count
-    return this.getIterationCount(comptage.reference, comptage.numComptage).pipe(
-      switchMap(count => {
-        // Set the iteration number
-        comptage.iteration = count + 1;
-        // Then proceed with the comptage creation
-        return this.http.post<Comptage>(
-          `${COMPTAGE_API}/operator/${operateurId}`,
-          comptage,
-          httpOptions
-        ).pipe(catchError(err => throwError(() => err)));
-      })
-    );
+    // S'assurer que toutes les propriétés obligatoires sont présentes
+    const completeComptage: Comptage = {
+      reference: comptage.reference,
+      numLot: comptage.numLot || '',
+      numSousLot: comptage.numSousLot || '',
+      poids: comptage.poids,
+      numComptage: comptage.numComptage || 1,
+      quantiteTotale: comptage.quantiteTotale || 0,
+      operateurId: operateurId,
+      emplacement: comptage.emplacement || '',
+      iteration: 1, // Définir directement à 1
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('Envoi de comptage (complet):', JSON.stringify(completeComptage));
+    
+    return this.http.post<Comptage>(
+      `${API_URL}/api/operateurs/${operateurId}/comptage`,
+      completeComptage,
+      this.getAuthOptions()
+    ).pipe(catchError(err => {
+      console.error('Erreur détaillée lors de l\'ajout du comptage:', err);
+      return throwError(() => err);
+    }));
   }
 
   /** Mettre à jour un comptage existant */
-  updateComptage(id: number, comptage: Comptage): Observable<any> {
-    // If changing the reference or numComptage, we need to update iteration
-    return this.getIterationCount(comptage.reference, comptage.numComptage).pipe(
-      map(count => {
-        // Set the iteration number if not already set
-        if (!comptage.iteration) {
-          comptage.iteration = count + 1;
-        }
-        // Then proceed with the update
-        return this.http.put(
-          `${COMPTAGE_API}/${id}`,
-          comptage,
-          httpOptions
-        ).pipe(catchError(err => throwError(() => err)));
-      })
-    );
+  updateComptage(id: number, comptage: Comptage): Observable<Comptage> {
+    // Pour simplifier, définir directement l'itération sans utiliser getIterationCount
+    comptage.iteration = comptage.iteration || 1;
+    
+    console.log('Mise à jour comptage:', JSON.stringify(comptage));
+    
+    return this.http.put<Comptage>(
+      `${API_URL}/api/operateurs/${comptage.operateurId}/comptage/${id}`,
+      comptage,
+      this.getAuthOptions()
+    ).pipe(catchError(err => {
+      console.error('Erreur lors de la mise à jour du comptage:', err);
+      return throwError(() => err);
+    }));
   }
 
   /** Supprimer un comptage */
   deleteComptage(operateurId: number, comptageId: number): Observable<any> {
-    return this.http.delete(
-      `${COMPTAGE_API}/operator/${operateurId}/comptage/${comptageId}`,
-      httpOptions
-    ).pipe(catchError(err => throwError(() => err)));
+    console.log('Suppression comptage:', comptageId);
+    
+    return this.http.delete<any>(
+      `${API_URL}/api/operateurs/${operateurId}/comptage/${comptageId}`,
+      this.getAuthOptions()
+    ).pipe(catchError(err => {
+      console.error('Erreur lors de la suppression du comptage:', err);
+      return throwError(() => err);
+    }));
   }
 
-  /** Get iteration count for a specific reference and counting type */
+  /** Obtenir le nombre d'itérations pour une référence et un type de comptage spécifiques */
   getIterationCount(reference: string, numComptage: number): Observable<number> {
     const params = new HttpParams()
       .set('reference', reference)
       .set('numComptage', numComptage.toString());
-      
-    return this.http.get<number>(`${COMPTAGE_API}/iteration-count`, { params })
-      .pipe(catchError(err => throwError(() => err)));
+    
+    console.log('Récupération itération:', reference, numComptage);
+    
+    return this.http.get<number>(
+      `${API_URL}/api/comptages/iteration-count`, 
+      { ...this.getAuthOptions(params), observe: 'body' }
+    ).pipe(catchError(err => {
+      console.warn('API iteration-count inaccessible, valeur par défaut utilisée', err);
+      return of(0); // Retourner 0 par défaut en cas d'erreur
+    }));
   }
 }

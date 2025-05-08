@@ -43,7 +43,7 @@ interface ComptageResult {
     CommonModule, 
     FormsModule,
     StatisticsDashboardComponent,
-    ExportDashboardComponent
+   // ExportDashboardComponent
   ],
   templateUrl: './resultat-comptage.component.html',
   encapsulation: ViewEncapsulation.None,
