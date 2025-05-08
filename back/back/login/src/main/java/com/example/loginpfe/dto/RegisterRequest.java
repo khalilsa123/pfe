@@ -2,11 +2,8 @@ package com.example.loginpfe.dto;
 
 
 import com.example.loginpfe.entity.User;
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Date;
 
 @Getter
 @Setter
@@ -16,7 +13,7 @@ public class RegisterRequest {
     private String firstname;
     private String lastname; // Correction de lastame à lastname
 
-    private User.Role role ;
+    private User.Role role;
 
 
     // Getter pour email
@@ -28,6 +25,7 @@ public class RegisterRequest {
     public void setPassword(String password) {
         this.password = password;
     }
+
     public User.Role getRole() {
         return role;
     }
@@ -62,5 +60,4 @@ public class RegisterRequest {
     // Getter pour status
 
 }
-
 

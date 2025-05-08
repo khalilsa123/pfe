@@ -2,10 +2,10 @@
 package com.example.loginpfe.controller;
 
 import com.example.loginpfe.Repository.UserRepository;
-import com.example.loginpfe.Service.UserService;
 import com.example.loginpfe.Service.JwtService;
-import com.example.loginpfe.dto.RegisterRequest;
+import com.example.loginpfe.Service.UserService;
 import com.example.loginpfe.dto.AuthResponse;
+import com.example.loginpfe.dto.RegisterRequest;
 import com.example.loginpfe.entity.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +33,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
- 
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         request.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -43,7 +43,7 @@ public class AuthController {
         user.setFirstname(request.getFirstname());
         user.setLastname(request.getLastname());
         user.setRole(request.getRole());
-       // user.setEmail(request.getEmail());
+        // user.setEmail(request.getEmail());
         User saved = userRepository.save(user);
         return ResponseEntity.ok(saved);
     }

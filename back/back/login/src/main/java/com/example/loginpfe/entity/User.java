@@ -1,11 +1,9 @@
-
 package com.example.loginpfe.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 
 @Setter
 @Getter

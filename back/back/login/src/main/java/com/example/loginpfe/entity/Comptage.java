@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 
 @Entity
 public class Comptage {
+    @ManyToOne
+    @JoinColumn(name = "session_id")
+    private SessionInventaire session;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +32,7 @@ public class Comptage {
 
     // Type de matière (pour l'instant, à modifier ultérieurement)
     private String typeMatiere;
-
+    private String getNombreIterations;
     // Mesure de la quantité (en grammes) saisie par l'opérateur
     private double poids;
 
@@ -47,43 +50,111 @@ public class Comptage {
     }
 
     // Getters et Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getOperateurId() { return operateurId; }
-    public void setOperateurId(Long operateurId) { this.operateurId = operateurId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getEmplacement() { return emplacement; }
-    public void setEmplacement(String emplacement) { this.emplacement = emplacement; }
+    public SessionInventaire getSession() {
+        return session;
+    }
 
-    public String getReference() { return reference; }
-    public void setReference(String reference) { this.reference = reference; }
+    public void setSession(SessionInventaire session) {
+        this.session = session;
+    }
 
-    public String getNumLot() { return numLot; }
-    public void setNumLot(String numLot) { this.numLot = numLot; }
+    public Long getOperateurId() {
+        return operateurId;
+    }
 
-    public String getNumSousLot() { return numSousLot; }
-    public void setNumSousLot(String numSousLot) { this.numSousLot = numSousLot; }
+    public void setOperateurId(Long operateurId) {
+        this.operateurId = operateurId;
+    }
 
-    public String getTypeMatiere() { return typeMatiere; }
-    public void setTypeMatiere(String typeMatiere) { this.typeMatiere = typeMatiere; }
+    public String getEmplacement() {
+        return emplacement;
+    }
 
-    public double getPoids() { return poids; }
-    public void setPoids(double poids) { this.poids = poids; }
+    public void setEmplacement(String emplacement) {
+        this.emplacement = emplacement;
+    }
 
-    public double getQuantiteTotale() { return quantiteTotale; }
-    public void setQuantiteTotale(double quantiteTotale) { this.quantiteTotale = quantiteTotale; }
+    public String getReference() {
+        return reference;
+    }
 
-    public int getNumComptage() { return numComptage; }
-    public void setNumComptage(int numComptage) { this.numComptage = numComptage; }
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
 
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public String getNumLot() {
+        return numLot;
+    }
+
+    public void setNumLot(String numLot) {
+        this.numLot = numLot;
+    }
+
+    public String getNumSousLot() {
+        return numSousLot;
+    }
+
+    public void setNumSousLot(String numSousLot) {
+        this.numSousLot = numSousLot;
+    }
+
+    public String getTypeMatiere() {
+        return typeMatiere;
+    }
+
+    public void setTypeMatiere(String typeMatiere) {
+        this.typeMatiere = typeMatiere;
+    }
+
+    public double getPoids() {
+        return poids;
+    }
+
+    public void setPoids(double poids) {
+        this.poids = poids;
+    }
+
+    public double getQuantiteTotale() {
+        return quantiteTotale;
+    }
+
+    public void setQuantiteTotale(double quantiteTotale) {
+        this.quantiteTotale = quantiteTotale;
+    }
+
+    public int getNumComptage() {
+        return numComptage;
+    }
+
+    public void setNumComptage(int numComptage) {
+        this.numComptage = numComptage;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public String getOperateurUsername() {
         return operateurUsername;
     }
 
     public void setOperateurUsername(String operateurUsername) {
         this.operateurUsername = operateurUsername;
+    }
+
+    public String getNombreIterations() {
+        return getNombreIterations;
     }
 }

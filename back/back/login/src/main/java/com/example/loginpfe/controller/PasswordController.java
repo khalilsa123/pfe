@@ -2,9 +2,9 @@
 package com.example.loginpfe.controller;
 
 import com.example.loginpfe.Repository.UserRepository;
+import com.example.loginpfe.dto.ChangePasswordRequest;
 import com.example.loginpfe.entity.User;
 import com.example.loginpfe.entity.User.Role;
-import com.example.loginpfe.dto.ChangePasswordRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -60,16 +60,14 @@ public class PasswordController {
                         "Superviseur can only update opérateur passwords"
                 );
             }
-        }
-        else if (currRole == Role.ADMIN) {
+        } else if (currRole == Role.ADMIN) {
             if (targetRole != Role.OPERATEUR && targetRole != Role.SUPERVISEUR) {
                 throw new ResponseStatusException(
                         HttpStatus.FORBIDDEN,
                         "Admin can only update opérateur or superviseur passwords"
                 );
             }
-        }
-        else {
+        } else {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Opérateur cannot update other users' passwords"
@@ -83,4 +81,3 @@ public class PasswordController {
         return ResponseEntity.ok().build();
     }
 }
-

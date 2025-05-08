@@ -1,7 +1,6 @@
-// src/main/java/com/example/loginpfe/Service/SecurityConfig.java
 package com.example.loginpfe.Service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.loginpfe.security.JwtAuthFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,42 +23,56 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthFilter jwtAuthFilter;
+    private final JwtAuthFilter jwtAuthFilter;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
 
-    @Autowired
-    private UserDetailsServiceImpl userDetailsServiceImpl;
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          UserDetailsServiceImpl userDetailsServiceImpl) {
+        this.jwtAuthFilter = jwtAuthFilter;
+        this.userDetailsServiceImpl = userDetailsServiceImpl;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Pas de session côté serveur
+                // Pas de session côté serveur, désactive CSRF pour une API REST
                 .csrf(csrf -> csrf.disable())
+                // CORS configuré par bean corsConfigurationSource()
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // Stateless : pas de session HTTP
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Renvoie 401 sur accès non autorisé
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
                 ))
-                // Define access rules
+                // Règles d'accès
                 .authorizeHttpRequests(auth -> auth
-                        // Login / register sans token
-                        .requestMatchers("/auth/**").permitAll()
-                        // Tous les endpoints opérateur nécessitent d'être authentifié
-                        //.requestMatchers("/api/operateurs/**").authenticated()
-                        // Les accès globaux aux comptages sont réservés aux SUPERVISEUR et ADMIN
-                        .requestMatchers("/api/comptages/**").permitAll()
-                        .requestMatchers("/api/stocks/**").permitAll()
+                        // 1) CORS preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Tout le reste demande authentification
+                        // 2) Endpoints de login/inscription
+                        .requestMatchers("/auth/**").permitAll()
+
+                        // 3) Endpoints publics métier
+                        .requestMatchers("/api/comptages/**", "/api/stocks/**").permitAll()
+
+                        // 4) SessionInventaire réservé aux ADMIN
+                        .requestMatchers("/api/session-inventaire/**").hasAnyRole("ADMIN", "SUPERVISEUR", "OPERATEUR")
+
+
+                        // 5) Tout le reste requiert authentification
                         .anyRequest().authenticated()
                 )
-                // On place le filtre JWT avant celui de Spring Security
+                // Auth provider pour charger les UserDetails
+                .authenticationProvider(authenticationProvider())
+                // Filtre JWT avant l’authentification standard
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -88,9 +101,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(Arrays.asList("*"));
+        cfg.setAllowedOriginPatterns(List.of("*"));
         cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        cfg.setAllowedHeaders(Arrays.asList("*"));
+        cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);

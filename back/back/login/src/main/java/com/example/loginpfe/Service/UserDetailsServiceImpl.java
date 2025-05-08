@@ -3,13 +3,10 @@ package com.example.loginpfe.Service;
 
 import com.example.loginpfe.Repository.UserRepository;
 import com.example.loginpfe.entity.User;
-
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -18,6 +15,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetailsServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
@@ -30,16 +28,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
 
-    /** @Override
-     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-         User user = userRepository.findByEmail(email)
-                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    /** @Override public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    User user = userRepository.findByEmail(email)
+    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-         return org.springframework.security.core.userdetails.User
-                 .withUsername(user.getUsername())
-                 .password(user.getPassword())  // Le mot de passe doit être encodé !
-                 .roles(user.getRole().name()) // Spring Security utilise "roles" pour l'autorisation
-                 .build();
-     }*/
+    return org.springframework.security.core.userdetails.User
+    .withUsername(user.getUsername())
+    .password(user.getPassword())  // Le mot de passe doit être encodé !
+    .roles(user.getRole().name()) // Spring Security utilise "roles" pour l'autorisation
+    .build();
+    }*/
 }
-

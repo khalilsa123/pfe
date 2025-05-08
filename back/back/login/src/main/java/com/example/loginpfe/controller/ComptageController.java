@@ -1,8 +1,8 @@
 // src/main/java/com/example/loginpfe/controller/ComptageController.java
 package com.example.loginpfe.controller;
 
-import com.example.loginpfe.entity.Comptage;
 import com.example.loginpfe.Service.ComptageService;
+import com.example.loginpfe.entity.Comptage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,14 +20,30 @@ public class ComptageController {
         this.comptageService = comptageService;
     }
 
-    /** NOUVEAU : récupère tous les comptages de la base */
+    /**
+     * NOUVEAU : récupère tous les comptages de la base
+     */
     @GetMapping("/comptages")
     public ResponseEntity<List<Comptage>> getAllComptages() {
         List<Comptage> all = comptageService.findAll();
         return ResponseEntity.ok(all);
     }
 
-    /** Liste tous les comptages pour un opérateur donné */
+    @GetMapping("/comptages/iteration-count")
+    public ResponseEntity<Integer> getIterationCount(
+            @RequestParam String reference,
+            @RequestParam int numComptage) {
+        // Comptez combien de comptages existent avec cette référence et ce numComptage
+        List<Comptage> comptages = comptageService.findAll();
+        long count = comptages.stream()
+                .filter(c -> c.getReference().equals(reference) && c.getNumComptage() == numComptage)
+                .count();
+        return ResponseEntity.ok((int) count);
+    }
+
+    /**
+     * Liste tous les comptages pour un opérateur donné
+     */
     @GetMapping("/operateurs/{operateurId}/comptage")
     public ResponseEntity<List<Comptage>> listComptages(
             @PathVariable Long operateurId) {
@@ -35,7 +51,9 @@ public class ComptageController {
         return ResponseEntity.ok(list);
     }
 
-    /** Crée un nouveau comptage pour cet opérateur */
+    /**
+     * Crée un nouveau comptage pour cet opérateur
+     */
     @PostMapping("/operateurs/{operateurId}/comptage")
     public ResponseEntity<Comptage> createComptage(
             @PathVariable Long operateurId,
@@ -45,7 +63,9 @@ public class ComptageController {
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
     }
 
-    /** Modifie un comptage existant */
+    /**
+     * Modifie un comptage existant
+     */
     @PutMapping("/operateurs/{operateurId}/comptage/{comptageId}")
     public ResponseEntity<Comptage> updateComptage(
             @PathVariable Long operateurId,
@@ -56,7 +76,9 @@ public class ComptageController {
         return ResponseEntity.ok(updated);
     }
 
-    /** Supprime un comptage */
+    /**
+     * Supprime un comptage
+     */
     @DeleteMapping("/operateurs/{operateurId}/comptage/{comptageId}")
     public ResponseEntity<Void> deleteComptage(
             @PathVariable Long operateurId,

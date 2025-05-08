@@ -1,7 +1,7 @@
 package com.example.loginpfe.Service;
 
-import com.example.loginpfe.entity.Stock;
 import com.example.loginpfe.Repository.StockRepository;
+import com.example.loginpfe.entity.Stock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
