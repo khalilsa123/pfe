@@ -1,14 +1,24 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
-import { OperatorService } from '../../services/operator.service';
-import { ComptageService } from '../../services/comptage.service';
+import { CommonModule }              from '@angular/common';
+import { FormsModule }               from '@angular/forms';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { HttpClientModule, HttpClient }        from '@angular/common/http';
+
+import { MatSnackBar, MatSnackBarModule }       from '@angular/material/snack-bar';
+import { MatButtonModule }                      from '@angular/material/button';
+import { MatIconModule }                        from '@angular/material/icon';
+import { MatFormFieldModule }                   from '@angular/material/form-field';
+import { MatInputModule }                       from '@angular/material/input';
+import { MatTableModule }                       from '@angular/material/table';
+import { MatSelectModule }                      from '@angular/material/select';
+import { MatMenuModule }                        from '@angular/material/menu';
+// …import any other Material modules you use in the template
+
+import { OperatorService }            from '../../services/operator.service';
+import { ComptageService }            from '../../services/comptage.service';
 import { AuthentificationnServiceService } from '../../services/authentificationn.service';
-import { Comptage } from '../../models/comptage.model';
-import { User } from '../../models/user.model';
-import { HttpClient } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Comptage }                   from '../../models/comptage.model';
+import { User }                       from '../../models/user.model';
 
 // Interface for SessionInventaire
 interface SessionInventaire {
@@ -29,7 +39,18 @@ interface ComptageWithOperator extends Comptage {
 @Component({
   selector: 'app-operator-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule,RouterModule,
+    HttpClientModule,
+
+    // Angular Material
+    MatSnackBarModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatSelectModule,
+    MatMenuModule],
   templateUrl: './operator-dashboard.component.html',
   styleUrls: ['./operator-dashboard.component.scss']
 })
@@ -37,7 +58,7 @@ export class OperatorDashboardComponent implements OnInit {
   user?: User;
   showProfile = false;
   showUsersMenu = false;
-  showInventoryManagement = false;
+  showInventoryManagement = true;
   showSessionInventaire = false;
   showCreateSessionForm = false;
   showCountingDropdown = false;
@@ -90,33 +111,35 @@ export class OperatorDashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    console.log('khlil est belle')
+    // AJOUT IMPORTANT: Forcer l'affichage du tableau
+    this.showAllCounting = true;
+    console.log(this.showAllCounting);
     
-    // Initialize counting with user's default type
-    if (this.user.role === 'OPERATEUR' && this.user.defaultComptageType) {
-      this.newComptage.numComptage = this.user.defaultComptageType;
-    } else {
-      this.newComptage.numComptage = 1; // Default value if no type assigned
-    }
-    
-   /* if (this.user.role === 'ADMIN') {
-      this.loadSessions();
-    }*/
-
-    // Check URL parameters
-    this.route.queryParams.subscribe(params => {
-      if (params['reference']) {
-        this.newComptage.reference = params['reference'];
-      }
-      
-      if (params['numComptage']) {
-        this.newComptage.numComptage = +params['numComptage'];
-      }
-      
-      // If parameters were provided, automatically open inventory section
-      if (params['reference'] || params['numComptage']) {
-        this.showInventoryManagement = true;
-        this.hideAllPanels('inventory');
-        this.activeButton = 'inventory';
+    // AJOUT: Charger directement les comptages au démarrage
+    this.loadAllComptages();
+    console.log(this.loadAllComptages())
+  }
+  
+  // NOUVELLE MÉTHODE: Charger tous les comptages directement
+  loadAllComptages() {
+    this.comptageService.getAllComptages().subscribe({
+      next: (data) => {
+        console.log('Comptages chargés:', data.length);
+        
+        // Ajouter l'ID d'opérateur sous forme de texte pour l'affichage
+        this.allComptages = data.map(c => ({
+          ...c,
+          operatorId: String(c.operateurId),
+          operatorName: `Opérateur #${c.operateurId || 'inconnu'}`
+        }));
+        
+        
+        // Appliquer à filteredComptages pour affichage immédiat
+        this.filteredComptages = [...this.allComptages];
+      },
+      error: (err) => {
+        console.error('Erreur chargement comptages:', err);
       }
     });
   }
@@ -134,10 +157,13 @@ export class OperatorDashboardComponent implements OnInit {
     if (!fullReference) {
       return { ref: '', qte: '', lot: '', sousLot: '' };
     }
+    
+    // Gérer les différents formats possibles
     const parts = fullReference.split('$');
+    
     return {
-      ref: parts[0] || '',
-      qte: parts[1] || '',
+      ref: parts[0] || fullReference, // Si pas de $, utiliser toute la référence
+      qte: parts[1] || '0',
       lot: parts[2] || '',
       sousLot: parts[3] || ''
     };
@@ -162,7 +188,7 @@ export class OperatorDashboardComponent implements OnInit {
       const dateA = new Date(a.timestamp!).getTime();
       const dateB = new Date(b.timestamp!).getTime();
       return this.sortAscending ? dateA - dateB : dateB - dateA;
-    });
+    })
   }
 
   toggleCountingDropdown(): void {
@@ -192,6 +218,7 @@ export class OperatorDashboardComponent implements OnInit {
       this.showInventoryManagement = true;
       this.hideAllPanels('inventory');
       this.activeButton = 'inventory';
+      this.showAllCounting = true; 
       this.loadComptages();
     }
   }
