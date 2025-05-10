@@ -7,6 +7,7 @@ import com.example.loginpfe.entity.Comptage;
 import com.example.loginpfe.entity.SessionInventaire;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,27 +43,33 @@ public class SessionInventaireService {
         sessionRepo.deleteById(id);
     }
 
+    /**
+     * Associe à cette session tous les comptages non affectés
+     * dont le timestamp est entre dateDebut et dateFin.
+     */
+    @Transactional
     public SessionInventaire populateSession(Long sessionId) {
+        // 1) Charger la session
         SessionInventaire sess = findById(sessionId);
 
+        // 2) Calculer la plage de dates
         LocalDateTime start = sess.getDateDebut().atStartOfDay();
         LocalDateTime end = sess.getDateFin().atTime(23, 59, 59);
 
-        // Récupérer les comptages à associer
+        // 3) Récupérer les comptages non liés et dans la plage
         List<Comptage> nouveaux = comptageRepo
-                .findBySession_IdAndTimestampBetween(sessionId, start, end);
+                .findBySessionIsNullAndTimestampBetween(start, end);
 
-        // 1) Vider l’ancienne liste (même instance)
+        // 4) Vider l’ancienne liste (pour orphanRemoval)
         sess.getComptages().clear();
 
-        // 2) Pour chaque comptage, fixer la session puis ajouter dans la liste
+        // 5) Associer chaque comptage à la session
         for (Comptage c : nouveaux) {
             c.setSession(sess);
             sess.getComptages().add(c);
         }
 
-        // 3) Sauvegarder le tout
+        // 6) Sauvegarder et renvoyer la session enrichie
         return sessionRepo.save(sess);
     }
-
 }

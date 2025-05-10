@@ -1,5 +1,6 @@
 package com.example.loginpfe.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 @Entity
 public class Comptage {
     @ManyToOne
+    @JsonIgnoreProperties("comptages")
     @JoinColumn(name = "session_id")
     private SessionInventaire session;
 

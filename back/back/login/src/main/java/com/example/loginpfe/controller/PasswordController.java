@@ -33,7 +33,7 @@ public class PasswordController {
      * - SUPERVISEUR can update OPERATEUR passwords
      * - ADMIN can update SUPERVISEUR and OPERATEUR passwords
      */
-    @PutMapping("/users/{id}/password")
+    @PutMapping("/updatepassword/{id}")
     public ResponseEntity<Void> changePassword(
             @PathVariable("id") Long targetId,
             @RequestBody ChangePasswordRequest body,

@@ -42,37 +42,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Pas de session côté serveur, désactive CSRF pour une API REST
                 .csrf(csrf -> csrf.disable())
-                // CORS configuré par bean corsConfigurationSource()
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // Stateless : pas de session HTTP
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Renvoie 401 sur accès non autorisé
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
                 ))
-                // Règles d'accès
                 .authorizeHttpRequests(auth -> auth
                         // 1) CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 2) Endpoints de login/inscription
+                        // 2) Endpoints publics
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/comptages/**").permitAll()
+                        .requestMatchers("/api/stocks/**").permitAll()
 
-                        // 3) Endpoints publics métier
-                        .requestMatchers("/api/comptages/**", "/api/stocks/**").permitAll()
+                        // 3) Votre session-inventaire réservée aux ADMIN
+                        .requestMatchers("/api/session-inventaire/**").hasRole("ADMIN")
 
-                        // 4) SessionInventaire réservé aux ADMIN
-                        .requestMatchers("/api/session-inventaire/**").hasAnyRole("ADMIN", "SUPERVISEUR", "OPERATEUR")
-
-
-                        // 5) Tout le reste requiert authentification
+                        // 4) Tout le reste nécessite authentification
                         .anyRequest().authenticated()
                 )
-                // Auth provider pour charger les UserDetails
-                .authenticationProvider(authenticationProvider())
-                // Filtre JWT avant l’authentification standard
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

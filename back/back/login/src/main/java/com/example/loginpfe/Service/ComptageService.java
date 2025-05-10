@@ -48,24 +48,13 @@ public class ComptageService {
 
     /**
      * Récupère le nombre d'itérations pour un comptage spécifique
-     *
-     * @param reference   La référence du comptage
-     * @param numComptage Le numéro du comptage
-     * @return Le nombre d'itérations ou null si non trouvé
      */
     public String getIterationCount(String reference, int numComptage) {
-        // Implémentation selon votre logique métier
-        // Par exemple:
         List<Comptage> comptages = comptageRepository.findByReferenceAndNumComptage(reference, numComptage);
         if (comptages == null || comptages.isEmpty()) {
             return null;
         }
-        // Calculez le nombre d'itérations selon votre logique métier
-        // Par exemple, si le nombre d'itérations est stocké dans un champ:
         return comptages.get(0).getNombreIterations();
-
-        // Ou si c'est calculé d'une autre façon:
-        // return comptages.size();
     }
 
     /**
@@ -79,16 +68,42 @@ public class ComptageService {
     }
 
     /**
-     * Tous les comptages d’un opérateur
+     * Tous les comptages d'un opérateur
      */
     public List<Comptage> afficherComptagesParOperateur(Long operateurId) {
         return comptageRepository.findByOperateurId(operateurId);
     }
 
     /**
-     * *NOUVEAU** : liste **tous** les comptages en base
+     * Liste les comptages non affectés dans une plage de dates
+     */
+    public List<Comptage> findUnassignedBetween(LocalDateTime start, LocalDateTime end) {
+        List<Comptage> results = comptageRepository.findBySessionIsNullAndTimestampBetween(start, end);
+        System.out.println("Found " + results.size() + " unassigned comptages between dates");
+        return results;
+    }
+
+    /**
+     * Liste tous les comptages en base
      */
     public List<Comptage> findAll() {
-        return comptageRepository.findAll();
+        List<Comptage> results = comptageRepository.findAll();
+        System.out.println("ComptageService.findAll() - Found " + results.size() + " comptages");
+
+        // Debug log the first few comptages
+        if (!results.isEmpty()) {
+            for (int i = 0; i < Math.min(3, results.size()); i++) {
+                Comptage c = results.get(i);
+                System.out.println("Comptage[" + i + "]: id=" + c.getId() +
+                        ", ref=" + c.getReference() +
+                        ", numComptage=" + c.getNumComptage() +
+                        ", operateurId=" + c.getOperateurId() +
+                        ", poids=" + c.getPoids());
+            }
+        } else {
+            System.out.println("WARNING: No comptages found in database!");
+        }
+
+        return results;
     }
 }
