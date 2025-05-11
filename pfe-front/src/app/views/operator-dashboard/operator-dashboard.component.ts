@@ -58,6 +58,7 @@ export class OperatorDashboardComponent implements OnInit {
   user?: User;
   showProfile = false;
   showUsersMenu = false;
+  originalReference?: string;
   showInventoryManagement = true;
   showSessionInventaire = false;
   showCreateSessionForm = false;
@@ -87,23 +88,30 @@ export class OperatorDashboardComponent implements OnInit {
 
   private apiUrl = 'http://localhost:8080/api/session-inventaire'; // Adjust to your backend URL
 
-  constructor(
-    private authSrv: AuthentificationnServiceService,
-    private opSrv: OperatorService,
-    private comptageService: ComptageService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private http: HttpClient,
-    private snackBar: MatSnackBar
-  ) {
-    // Add click handler to close dropdown when clicking outside
-    document.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.btn-group')) {
-        this.selectedUserId = null;
-      }
-    });
-  }
+ constructor(
+  private authSrv: AuthentificationnServiceService,
+  private opSrv: OperatorService,
+  private comptageService: ComptageService,
+  private router: Router,
+  private route: ActivatedRoute,
+  private http: HttpClient,
+  private snackBar: MatSnackBar
+) {
+  // Add click handler to close dropdown when clicking outside
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    
+    // Fermer le menu déroulant des utilisateurs
+    if (!target.closest('.btn-group')) {
+      this.selectedUserId = null;
+    }
+    
+    // Fermer le menu de profil si on clique en dehors
+    if (!target.closest('.user-profile-container') && this.showProfile) {
+      this.showProfile = false;
+    }
+  });
+}
 
   ngOnInit(): void {
     this.user = this.authSrv.getCurrentUser() || undefined;
@@ -153,21 +161,23 @@ export class OperatorDashboardComponent implements OnInit {
   }
 
   // Parse the reference string into its components
-  parseReference(fullReference: string): { ref: string; qte: string; lot: string; sousLot: string } {
-    if (!fullReference) {
-      return { ref: '', qte: '', lot: '', sousLot: '' };
-    }
-    
-    // Gérer les différents formats possibles
-    const parts = fullReference.split('$');
-    
-    return {
-      ref: parts[0] || fullReference, // Si pas de $, utiliser toute la référence
-      qte: parts[1] || '0',
-      lot: parts[2] || '',
-      sousLot: parts[3] || ''
-    };
+ parseReference(fullReference: string): { ref: string; qte: string; lot: string; sousLot: string } {
+  if (!fullReference) {
+    return { ref: '', qte: '', lot: '', sousLot: '' };
   }
+  
+  // Gérer les différents formats possibles
+  const parts = fullReference.split(/[$#]/);
+
+  
+  return {
+    ref: parts[0] || '',
+    qte: parts[1] || '0',
+    lot: parts.length > 2 ? parts[2] : '000', // Valeur par défaut: 000
+    sousLot: parts.length > 3 ? parts[3] : '001' // Valeur par défaut: 0.001 sans le point
+  };
+}
+
 
   getComptageTypeName(numComptage: number): string {
     switch(numComptage) {
@@ -190,6 +200,28 @@ export class OperatorDashboardComponent implements OnInit {
       return this.sortAscending ? dateA - dateB : dateB - dateA;
     })
   }
+ validateAndFormatReference(reference: string): string {
+  const parts = reference.split(/[$#]/);
+  const ref    = parts[0] || '';
+  const qte    = parts[1] || '';
+  let   lot    = parts[2] || '';
+  let   sousLot= parts[3] || '';
+
+  if (!lot && !sousLot) {
+    lot     = '0.003';
+    sousLot = '0.003';
+  }
+  else if (!lot) {
+    lot = '0.001';
+  }
+  else if (!sousLot) {
+    sousLot = '0.002';
+  }
+
+  // on utilise # comme séparateur entre lot et sousLot
+  return `${ref}$${qte}$${lot}#${sousLot}`;
+}
+
 
   toggleCountingDropdown(): void {
     if (this.activeButton === 'counting' && this.showCountingDropdown) {
@@ -528,7 +560,11 @@ export class OperatorDashboardComponent implements OnInit {
       }
     });
   }
-  
+  // Ajouter cette méthode à votre classe de composant
+toggleProfile(event: MouseEvent): void {
+  event.stopPropagation();
+  this.showProfile = !this.showProfile;
+}
   private applyComptageFilter(): void {
     if (this.showAllCounting) {
       this.filteredComptages = [...this.allComptages];
@@ -620,6 +656,11 @@ export class OperatorDashboardComponent implements OnInit {
   onSubmit(): void {
   console.log('Préparation du comptage:', this.newComptage);
   
+  // Formater la référence selon les règles
+  if (this.newComptage.reference) {
+    this.newComptage.reference = this.validateAndFormatReference(this.newComptage.reference);
+  }
+  
   // Assurez-vous que toutes les propriétés requises sont présentes
   if (!this.newComptage.reference) {
     alert('La référence est obligatoire');
@@ -633,7 +674,7 @@ export class OperatorDashboardComponent implements OnInit {
   
   // Assurer que la référence est au bon format
   const referenceParts = this.parseReference(this.newComptage.reference);
-  if (!referenceParts.ref || !referenceParts.qte || !referenceParts.lot || !referenceParts.sousLot) {
+  if (!referenceParts.ref || !referenceParts.qte) {
     alert('La référence doit être au format ref$qte$lot$sous_lot');
     return;
   }
@@ -684,10 +725,11 @@ export class OperatorDashboardComponent implements OnInit {
   }
 }
 
-  editComptage(c: Comptage): void {
-    this.editing = true;
-    this.newComptage = { ...c };
-  }
+editComptage(c: Comptage): void {
+  this.editing = true;
+  this.originalReference = c.reference;
+  this.newComptage = { ...c };
+}
 
   delete(c: Comptage): void {
     if (!c.id) return;

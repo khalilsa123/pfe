@@ -101,14 +101,16 @@
     <div class="top-bar">
       <h2 class="app-title">Système d'Inventaire OneTech</h2>
       <div class="user-profile-container">
-        <button class="btn btn-profile-dropdown" [class.active]="showProfile" (click)="showProfile = !showProfile">
-          <div class="avatar-circle">
-            <span class="initials">{{ getUserInitials() }}</span>
-          </div>
-          <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
-          <i class="fas fa-chevron-down ms-2"></i>
-        </button>
-        <div *ngIf="showProfile" class="profile-dropdown">
+      <button class="btn btn-profile-dropdown" 
+        [class.active]="showProfile" 
+        (click)="toggleProfile($event)">
+  <div class="avatar-circle">
+    <span class="initials">{{ getUserInitials() }}</span>
+  </div>
+  <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
+  <i class="fas fa-chevron-down ms-2"></i>
+</button>
+        <div *ngIf="showProfile" class="profile-dropdown" (click)="$event.stopPropagation()">
           <div class="profile-info">
             <p><strong>Nom :</strong> {{ user?.lastname }}</p>
             <p><strong>Prénom :</strong> {{ user?.firstname }}</p>
@@ -133,45 +135,72 @@
         </div>
         
         <!-- Formulaire d'ajout / édition -->
-        <form class="od-form d-flex flex-wrap align-items-end gap-2 mb-4" #f="ngForm">
-          <div class="form-row">
-            <!-- Champ pour référence -->
-            <div class="form-group reference-field">
-              <label>Référence*</label>
-              <input name="reference" class="form-control form-control-sm" required
-                     [(ngModel)]="newComptage.reference">
-              <span class="reference-format">Format: ref$qte$lot$sous_lot</span>
-            </div>
-            
-            <!-- Autres champs -->
-            <div class="form-group">
-              <label>Emplacement (opt.)</label>
-              <input name="emplacement" class="form-control form-control-sm"
-                     [(ngModel)]="newComptage.emplacement">
-            </div>
-            <div class="form-group">
-              <label>Poids (g)*</label>
-              <input type="number" min="0" name="poids"
-                     class="form-control form-control-sm" required
-                     [(ngModel)]="newComptage.poids">
-            </div>
-            <div class="form-group">
-              <label>Type de comptage*</label>
-              <select name="numComptage"
-                      class="form-control form-control-sm" required
-                      [(ngModel)]="newComptage.numComptage">
-                <option [ngValue]="1">Premier Comptage</option>
-                <option [ngValue]="2">Deuxième Comptage</option>
-                <option [ngValue]="3">Troisième Comptage</option>
-              </select>
-            </div>
-          </div>
-  
-          <button type="button" (click)="onSubmit()" class="btn btn-ajouter btn-sm"
-                  [disabled]="f.invalid">
-            <i class="fas fa-plus-circle"></i> {{ editing ? 'Enregistrer' : 'Ajouter' }}
-          </button>
-        </form>
+        <!-- operator-dashboard.component.html -->
+<form class="od-form mb-4" #f="ngForm">
+  <div class="form-row">
+    <!-- Référence + format -->
+    <div class="form-group reference-field">
+      <label class="mb-0">Référence*</label>
+      <div class="d-flex align-items-center gap-1">
+        <input
+          name="reference"
+          class="form-control form-control-sm"
+          required
+          [(ngModel)]="newComptage.reference">
+        <small class="reference-format mb-0">
+          Format: ref$qte$lot#sous_lot
+        </small>
+      </div>
+    </div>
+
+    <!-- Emplacement -->
+    <div class="form-group">
+      <label class="mb-0">Emplacement (opt.)</label>
+      <input
+        name="emplacement"
+        class="form-control form-control-sm"
+        [(ngModel)]="newComptage.emplacement">
+    </div>
+
+    <!-- Poids -->
+    <div class="form-group">
+      <label class="mb-0">Poids (g)*</label>
+      <input
+        type="number"
+        min="0"
+        name="poids"
+        class="form-control form-control-sm"
+        required
+        [(ngModel)]="newComptage.poids">
+    </div>
+
+    <!-- Type de comptage -->
+    <div class="form-group">
+      <label class="mb-0">Type de comptage*</label>
+      <select
+        name="numComptage"
+        class="form-control form-control-sm"
+        required
+        [(ngModel)]="newComptage.numComptage">
+        <option [ngValue]="1">Premier Comptage</option>
+        <option [ngValue]="2">Deuxième Comptage</option>
+        <option [ngValue]="3">Troisième Comptage</option>
+      </select>
+    </div>
+
+    <!-- Bouton Ajouter/Enregistrer -->
+    <button
+      type="button"
+      (click)="onSubmit()"
+      class="btn btn-ajouter btn-sm"
+      [disabled]="f.invalid">
+      <i class="fas fa-plus-circle"></i>
+      {{ editing ? 'Enregistrer' : 'Ajouter' }}
+    </button>
+  </div>
+</form>
+
+
       </section>
 
       <!-- ZONE SESSION INVENTAIRE (Admin only) -->

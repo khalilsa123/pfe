@@ -483,20 +483,24 @@ h2 {
   margin-bottom: 1.5rem;
   
   .form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    width: 100%;
+    display: flex !important;
+    flex-wrap: nowrap !important;
     align-items: flex-end;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    width: 100%;
   }
   
   .form-group {
+    flex: 0 0 auto;
+    min-width: 150px;
     display: flex;
     flex-direction: column;
     
     label { 
       font-size: 0.85rem; 
-      margin-bottom: 0.3rem;
+      margin-bottom: 0.2rem;
       font-weight: 500;
       color: $onetech-gray;
     }
@@ -514,6 +518,17 @@ h2 {
         outline: none;
       }
     }
+  }
+
+  /* Pour le bloc référence + format */
+  .reference-field > .d-flex {
+    gap: 0.5rem;
+  }
+
+  /* Petit texte "Format…" */
+  .reference-format {
+    font-size: 0.85rem;
+    color: $onetech-gray;
   }
   
   button { 

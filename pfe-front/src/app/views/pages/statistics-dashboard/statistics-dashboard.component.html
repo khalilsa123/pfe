@@ -1,9 +1,7 @@
+<!-- statistics-dashboard.component.html -->
 <div class="statistics-container">
-  <!-- Logo -->
- 
-  
 
-  <!-- Affichage du chargement -->
+  <!-- Chargement -->
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Chargement...</span>
@@ -13,94 +11,30 @@
 
   <!-- Contenu des statistiques -->
   <div *ngIf="!isLoading" class="statistics-content">
-   
 
-    <!-- Carte d'information utilisateur -->
-    <div class="user-stats-card">
-      <div class="user-info">
-        <div class="user-avatar">
-          <span>{{ user?.firstname?.charAt(0) }}{{ user?.lastname?.charAt(0) }}</span>
-        </div>
-        <div class="user-details">
-          <h3>{{ user?.firstname }} {{ user?.lastname }}</h3>
-          <p class="user-role">{{ user?.role }}</p>
-        </div>
-      </div>
-
-      <div class="user-counts">
-        <div class="count-box">
-          <span class="count-value">{{ userComptage1Count }}</span>
-          <span class="count-label">1er Comptages</span>
-        </div>
-        <div class="count-box">
-          <span class="count-value">{{ userComptage2Count }}</span>
-          <span class="count-label">2e Comptages</span>
-        </div>
-        <div class="count-box">
-          <span class="count-value">{{ userComptage3Count }}</span>
-          <span class="count-label"> zaś Comptages</span>
-        </div>
-        <div class="count-box total">
-          <span class="count-value">{{ userTotalCount }}</span>
-          <span class="count-label">Total</span>
-        </div>
-      </div>
-
-      <div class="user-progress">
-        <div class="progress-label">
-          <span>Votre progression</span>
-          <span>{{ userCompletionPercentage | number:'1.0-0' }}%</span>
-        </div>
-        <div class="progress">
-          <div class="progress-bar"
-               [style.width.%]="userCompletionPercentage"
-               [ngClass]="{'bg-danger': userCompletionPercentage < 30,
-                          'bg-warning': userCompletionPercentage >= 30 && userCompletionPercentage < 70,
-                          'bg-success': userCompletionPercentage >= 70}">
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Statistiques générales -->
+    <!-- Statistiques d'inventaire -->
     <div class="general-stats">
       <h3 class="stats-section-title">Statistiques d'inventaire</h3>
-
       <div class="stats-cards">
+        <!-- Total articles -->
         <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-boxes"></i>
-          </div>
+          <div class="stat-icon"><i class="fas fa-boxes"></i></div>
           <div class="stat-info">
             <span class="stat-value">{{ totalStockItems }}</span>
             <span class="stat-label">Total articles</span>
           </div>
         </div>
-
+        <!-- Articles validés -->
         <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-weight-hanging"></i>
-          </div>
-          <div class="stat-info">
-            <span class="stat-value">{{ totalStockWeight | number:'1.0-0' }} g</span>
-            <span class="stat-label">Poids total</span>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-clipboard-check"></i>
-          </div>
+          <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
           <div class="stat-info">
             <span class="stat-value">{{ validatedReferences.size }}</span>
             <span class="stat-label">Articles validés</span>
           </div>
         </div>
-
+        <!-- En attente -->
         <div class="stat-card">
-          <div class="stat-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
+          <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingReferences }}</span>
             <span class="stat-label">En attente</span>
@@ -109,71 +43,82 @@
       </div>
     </div>
 
-    <!-- Graphique d'avancement -->
+    <!-- Avancement global -->
     <div class="progress-chart">
       <h3 class="stats-section-title">Avancement global</h3>
-
       <div class="progress-bars">
+        <!-- Comptés -->
         <div class="progress-item">
           <div class="progress-label">
             <span>Comptés</span>
             <span>{{ completionPercentage | number:'1.0-0' }}%</span>
           </div>
           <div class="progress">
-            <div class="progress-bar bg-primary" [style.width.%]="completionPercentage"></div>
+            <div class="progress-bar bg-primary"
+                 [style.width.%]="completionPercentage">
+            </div>
           </div>
         </div>
-
+        <!-- Validés -->
         <div class="progress-item">
           <div class="progress-label">
             <span>Validés</span>
             <span>{{ validatedPercentage | number:'1.0-0' }}%</span>
           </div>
           <div class="progress">
-            <div class="progress-bar bg-success" [style.width.%]="validatedPercentage"></div>
+            <div class="progress-bar bg-success"
+                 [style.width.%]="validatedPercentage">
+            </div>
           </div>
         </div>
-
+        <!-- En attente -->
         <div class="progress-item">
           <div class="progress-label">
             <span>En attente</span>
             <span>{{ invalidPercentage | number:'1.0-0' }}%</span>
           </div>
           <div class="progress">
-            <div class="progress-bar bg-warning" [style.width.%]="invalidPercentage"></div>
+            <div class="progress-bar bg-warning"
+                 [style.width.%]="invalidPercentage">
+            </div>
           </div>
         </div>
-
+        <!-- Non comptés -->
         <div class="progress-item">
           <div class="progress-label">
             <span>Non comptés</span>
-            <span>{{ 100 - completionPercentage | number:'1.0-0' }}%</span>
+            <span>{{ (100 - completionPercentage) | number:'1.0-0' }}%</span>
           </div>
           <div class="progress">
-            <div class="progress-bar bg-secondary" [style.width.%]="100 - completionPercentage"></div>
+            <div class="progress-bar bg-secondary"
+                 [style.width.%]="100 - completionPercentage">
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Détail des comptages -->
+    <!-- Répartition des comptages -->
     <div class="counting-details">
       <h3 class="stats-section-title">Répartition des comptages</h3>
-
       <div class="count-chart">
-        <div class="count-block" [style.height.%]="(comptage1Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
+        <div class="count-block"
+             [style.height.%]="(comptage1Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
           <span class="count-value">{{ comptage1Count }}</span>
           <span class="count-label">1er Comptage</span>
         </div>
-        <div class="count-block" [style.height.%]="(comptage2Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
+        <div class="count-block"
+             [style.height.%]="(comptage2Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
           <span class="count-value">{{ comptage2Count }}</span>
           <span class="count-label">2e Comptage</span>
         </div>
-        <div class="count-block" [style.height.%]="(comptage3Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
+        <div class="count-block"
+             [style.height.%]="(comptage3Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
           <span class="count-value">{{ comptage3Count }}</span>
           <span class="count-label">3e Comptage</span>
         </div>
       </div>
     </div>
+
   </div>
 </div>
