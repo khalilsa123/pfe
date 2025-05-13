@@ -30,11 +30,20 @@ public class User {
     private Role role;
     private String resetToken;
     private LocalDateTime tokenExpiration;
+    @Column
+    private Integer defaultComptageType;
+
+    public Integer getDefaultComptageType() {
+        return defaultComptageType;
+    }
+
+    public void setDefaultComptageType(Integer defaultComptageType) {
+        this.defaultComptageType = defaultComptageType;
+    }
 
     public enum Role {
         OPERATEUR,
         SUPERVISEUR,
         ADMIN
     }
-
 }

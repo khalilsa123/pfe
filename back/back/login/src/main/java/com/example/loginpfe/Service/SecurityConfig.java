@@ -56,7 +56,9 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/comptages/**").permitAll()
                         .requestMatchers("/api/stocks/**").permitAll()
-
+                        // Add this in your security configuration rules
+                        .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "SUPERVISEUR")
+                        .requestMatchers(HttpMethod.PUT, "/api/operateurs/*/comptage/*/affecter").hasAnyRole("SUPERVISOR", "ADMIN")
                         // 3) Votre session-inventaire réservée aux ADMIN
                         .requestMatchers("/api/session-inventaire/**").hasRole("ADMIN")
 

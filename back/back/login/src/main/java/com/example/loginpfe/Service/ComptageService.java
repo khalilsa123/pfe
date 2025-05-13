@@ -49,12 +49,20 @@ public class ComptageService {
     /**
      * Récupère le nombre d'itérations pour un comptage spécifique
      */
-    public String getIterationCount(String reference, int numComptage) {
-        List<Comptage> comptages = comptageRepository.findByReferenceAndNumComptage(reference, numComptage);
-        if (comptages == null || comptages.isEmpty()) {
-            return null;
-        }
-        return comptages.get(0).getNombreIterations();
+    public int getIterationCount(String reference, int numComptage) {
+        List<Comptage> comptages =
+                comptageRepository.findByReferenceAndNumComptage(reference, numComptage);
+        return comptages == null ? 0 : comptages.size();
+    }
+
+    /**
+     * Affecte un comptage existant à un opérateur
+     */
+    public Comptage affecterComptage(Long comptageId, Long operateurId) {
+        Comptage c = comptageRepository.findById(comptageId)
+                .orElseThrow(() -> new RuntimeException("Comptage non trouvé : " + comptageId));
+        c.setOperateurId(operateurId);
+        return comptageRepository.save(c);
     }
 
     /**
@@ -78,7 +86,8 @@ public class ComptageService {
      * Liste les comptages non affectés dans une plage de dates
      */
     public List<Comptage> findUnassignedBetween(LocalDateTime start, LocalDateTime end) {
-        List<Comptage> results = comptageRepository.findBySessionIsNullAndTimestampBetween(start, end);
+        List<Comptage> results =
+                comptageRepository.findBySessionIsNullAndTimestampBetween(start, end);
         System.out.println("Found " + results.size() + " unassigned comptages between dates");
         return results;
     }
@@ -90,7 +99,6 @@ public class ComptageService {
         List<Comptage> results = comptageRepository.findAll();
         System.out.println("ComptageService.findAll() - Found " + results.size() + " comptages");
 
-        // Debug log the first few comptages
         if (!results.isEmpty()) {
             for (int i = 0; i < Math.min(3, results.size()); i++) {
                 Comptage c = results.get(i);
@@ -107,3 +115,4 @@ public class ComptageService {
         return results;
     }
 }
+ 

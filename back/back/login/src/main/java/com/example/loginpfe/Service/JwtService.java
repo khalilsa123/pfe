@@ -41,6 +41,7 @@ public class JwtService {
                 .claim("role", user.getRole().name())
                 .claim("firstname", user.getFirstname())
                 .claim("lastname", user.getLastname())
+                .claim("defaultComptageType", user.getDefaultComptageType())
                 .setIssuedAt(new Date())
                 // utilisation de expirationDuration
                 .setExpiration(new Date(System.currentTimeMillis() + expirationDuration))
@@ -52,7 +53,8 @@ public class JwtService {
                 user.getFirstname(),
                 user.getLastname(),
                 user.getRole().name(),
-                user.getId()
+                user.getId(),
+                user.getDefaultComptageType()
         );
 
         return new AuthResponse(token, userResponse);
