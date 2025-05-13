@@ -1,31 +1,27 @@
 <div class="wrapper">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <!-- Logo -->
     <div class="logo-container">
       <img src="assets/onetech_logo.jpg" alt="OneTech Tunisia" class="logo">
     </div>
     
     <h3>Menu</h3>
 
-    <!-- Bouton Gestion des Inventaires -->
     <button class="btn btn-menu mb-2 w-100"
             [class.active]="activeButton === 'inventory'" 
             (click)="toggleInventoryManagement()">
       <i class="fas fa-boxes me-2"></i>
-      {{ 'Gestion des Inventaires' }}
+      Gestion des Inventaires
     </button>
 
-    <!-- Bouton Gestion des Sessions d'Inventaire (Admin only) -->
     <button *ngIf="user?.role === 'ADMIN'"
             class="btn btn-menu mb-2 w-100"
             [class.active]="activeButton === 'session-inventaire'"
             (click)="toggleSessionInventaire()">
       <i class="fas fa-calendar-alt me-2"></i>
-      {{  'Gestion des Sessions d\'Inventaire' }}
+      Gestion des Sessions d'Inventaire
     </button>
 
-    <!-- Bouton Résultats de Comptage (Supervisor or Admin only) -->
     <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
             class="btn btn-menu mb-2 w-100"
             [class.active]="activeButton === 'results'" 
@@ -34,7 +30,6 @@
       Résultats de Comptage
     </button>
 
-    <!-- Menu déroulant pour les comptages (Supervisor or Admin only) -->
     <div *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'" class="dropdown-menu-container">
       <button class="btn btn-menu mb-2 w-100"
               [class.active]="activeButton === 'counting'" 
@@ -44,7 +39,6 @@
         <i class="fas fa-chevron-down ms-auto" [class.rotated]="showCountingDropdown"></i>
       </button>
       
-      <!-- Sous-menu pour les comptages -->
       <div class="submenu" [class.show]="showCountingDropdown">
         <button class="btn btn-submenu w-100"
                 [class.active]="showAllCounting"
@@ -76,7 +70,6 @@
       </div>
     </div>
 
-    <!-- Boutons utilisateurs selon le rôle -->
     <ng-container *ngIf="user?.role !== 'OPERATEUR'">
       <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
               class="btn btn-menu mb-2 w-100"
@@ -97,19 +90,18 @@
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
-    <!-- Barre supérieure avec profile et déconnexion -->
     <div class="top-bar">
       <h2 class="app-title">Système d'Inventaire OneTech</h2>
       <div class="user-profile-container">
-      <button class="btn btn-profile-dropdown" 
-        [class.active]="showProfile" 
-        (click)="toggleProfile($event)">
-  <div class="avatar-circle">
-    <span class="initials">{{ getUserInitials() }}</span>
-  </div>
-  <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
-  <i class="fas fa-chevron-down ms-2"></i>
-</button>
+        <button class="btn btn-profile-dropdown" 
+                [class.active]="showProfile" 
+                (click)="toggleProfile($event)">
+          <div class="avatar-circle">
+            <span class="initials">{{ getUserInitials() }}</span>
+          </div>
+          <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
+          <i class="fas fa-chevron-down ms-2"></i>
+        </button>
         <div *ngIf="showProfile" class="profile-dropdown" (click)="$event.stopPropagation()">
           <div class="profile-info">
             <p><strong>Nom :</strong> {{ user?.lastname }}</p>
@@ -126,7 +118,6 @@
       </div>
     </div>
 
-    <!-- CONTENU PRINCIPAL -->
     <div class="content-area">
       <!-- ZONE COMPTAGES -->
       <section *ngIf="showInventoryManagement">
@@ -134,74 +125,139 @@
           <h2>Gestion des Inventaires</h2>
         </div>
         
-        <!-- Formulaire d'ajout / édition -->
-        <!-- operator-dashboard.component.html -->
-<form class="od-form mb-4" #f="ngForm">
-  <div class="form-row">
-    <!-- Référence + format -->
-    <div class="form-group reference-field">
-      <label class="mb-0">Référence*</label>
-      <div class="d-flex align-items-center gap-1">
-        <input
-          name="reference"
-          class="form-control form-control-sm"
-          required
-          [(ngModel)]="newComptage.reference">
-        <small class="reference-format mb-0">
-          Format: ref$qte$lot#sous_lot
-        </small>
-      </div>
-    </div>
+        <form class="od-form mb-4" #f="ngForm">
+          <div class="form-row">
+            <div class="form-group reference-field">
+              <label class="mb-0">Référence*</label>
+              <div class="d-flex align-items-center gap-1">
+                <input
+                  name="reference"
+                  class="form-control form-control-sm"
+                  required
+                  [(ngModel)]="newComptage.reference">
+                <small class="reference-format mb-0">
+                  
+                </small>
+              </div>
+            </div>
 
-    <!-- Emplacement -->
-    <div class="form-group">
-      <label class="mb-0">Emplacement (opt.)</label>
-      <input
-        name="emplacement"
-        class="form-control form-control-sm"
-        [(ngModel)]="newComptage.emplacement">
-    </div>
+            <div class="form-group">
+              <label class="mb-0">Emplacement (opt.)</label>
+              <input
+                name="emplacement"
+                class="form-control form-control-sm"
+                [(ngModel)]="newComptage.emplacement">
+            </div>
 
-    <!-- Poids -->
-    <div class="form-group">
-      <label class="mb-0">Poids (g)*</label>
-      <input
-        type="number"
-        min="0"
-        name="poids"
-        class="form-control form-control-sm"
-        required
-        [(ngModel)]="newComptage.poids">
-    </div>
+            <div class="form-group">
+              <label class="mb-0">Poids (g)*</label>
+              <input
+                type="number"
+                min="0"
+                name="poids"
+                class="form-control form-control-sm"
+                required
+                [(ngModel)]="newComptage.poids">
+            </div>
 
-    <!-- Type de comptage -->
-    <div class="form-group">
-      <label class="mb-0">Type de comptage*</label>
-      <select
-        name="numComptage"
-        class="form-control form-control-sm"
-        required
-        [(ngModel)]="newComptage.numComptage"
-        [disabled]="user?.role === 'OPERATEUR'">
-        <option [ngValue]="1">Premier Comptage</option>
-        <option [ngValue]="2">Deuxième Comptage</option>
-        <option [ngValue]="3">Troisième Comptage</option>
-      </select>
-    </div>
+            <div class="form-group">
+              <label class="mb-0">Type de comptage*</label>
+              <select
+                name="numComptage"
+                class="form-control form-control-sm"
+                required
+                [(ngModel)]="newComptage.numComptage"
+                [disabled]="user?.role === 'OPERATEUR'">
+                <option [ngValue]="1">Premier Comptage</option>
+                <option [ngValue]="2">Deuxième Comptage</option>
+                <option [ngValue]="3">Troisième Comptage</option>
+              </select>
+            </div>
 
-    <!-- Bouton Ajouter/Enregistrer -->
-    <button
-      type="button"
-      (click)="onSubmit()"
-      class="btn btn-ajouter btn-sm"
-      [disabled]="f.invalid">
-      <i class="fas fa-plus-circle"></i>
-      {{ editing ? 'Enregistrer' : 'Ajouter' }}
-    </button>
-  </div>
-</form>
+            <button
+              type="button"
+              (click)="onSubmit()"
+              class="btn btn-ajouter btn-sm"
+              [disabled]="f.invalid">
+              <i class="fas fa-plus-circle"></i>
+              {{ editing ? 'Enregistrer' : 'Ajouter' }}
+            </button>
+          </div>
+        </form>
 
+        <!-- New Table for User's Comptages -->
+        <div class="table-container">
+          <div class="table-header">
+            <h4>Vos Comptages</h4>
+            <button class="btn btn-info"
+                    (click)="toggleSortOrder()">
+              <i class="fas me-1" [ngClass]="sortAscending ?   'fa-sort-amount-down' : 'fa-sort-amount-up'"></i>
+              {{ sortAscending ? 'Tri décroissant' : 'Tri croissant'   }}
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover table-striped table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Réf.</th>
+                  <th>Lot</th>
+                  <th>Sous-lot</th>
+                  <th>Qté</th>
+                  <th>Empl.</th>
+                  <th>Poids</th>
+                  <th>Type de comptage</th>
+                  <th>Itération</th>
+                  <th>Date</th>
+                  <th>Opérateur</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+  <tr *ngFor="let c of paginatedComptages">
+    <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
+    <td>{{ parseReference(c.reference).lot }}</td>
+    <td>{{ parseReference(c.reference).sousLot }}</td>
+    <td>{{ parseReference(c.reference).qte }}</td>
+    <td>{{ c.emplacement || '–' }}</td>
+    <td>{{ c.poids }} g</td>
+    <td>
+      <span class="comptage-type" [ngClass]="'comptage-type-' + c.numComptage">
+        {{ getComptageTypeName(c.numComptage) }}
+      </span>
+    </td>
+    <td>
+      <span class="iteration-badge" [class.warning]="c.iteration! > 1">
+        {{ c.iteration || 1 }}
+      </span>
+    </td>
+    <td>{{ c.timestamp | date:'short' }}</td>
+    <!-- now show the real username -->
+    <td>{{ c.operatorName }}</td>
 
+    <!-- re-add the Actions column -->
+    <td class="actions-cell">
+      <button class="btn btn-sm btn-modifier" (click)="editComptage(c)">
+        <i class="fas fa-edit"></i> Modifier
+      </button>
+      <button class="btn btn-sm btn-supprimer" (click)="delete(c)">
+        <i class="fas fa-trash"></i> Supprimer
+      </button>
+    </td>
+  </tr>
+  <tr *ngIf="!paginatedComptages.length">
+    <td colspan="11" class="text-center py-3">Aucun comptage pour cet utilisateur</td>
+  </tr>
+</tbody>
+
+            </table>
+          </div>
+          <app-pagination
+            [currentPage]="currentPage"
+            [itemsPerPage]="itemsPerPage"
+            [totalItems]="filteredComptages.length"
+            (pageChange)="onPageChange($event)">
+          </app-pagination>
+        </div>
       </section>
 
       <!-- ZONE SESSION INVENTAIRE (Admin only) -->
@@ -213,7 +269,6 @@
           </button>
         </div>
 
-        <!-- Formulaire de création de session -->
         <form *ngIf="showCreateSessionForm" class="od-form d-flex flex-wrap align-items-end gap-2 mb-4" #sessionForm="ngForm">
           <div class="form-row">
             <div class="form-group">
@@ -243,7 +298,6 @@
           </button>
         </form>
 
-        <!-- Tableau des sessions -->
         <div class="table-container">
           <div class="table-header">
             <h4>Liste des Sessions d'Inventaire</h4>
@@ -270,7 +324,6 @@
                             (click)="viewSessionComptages(session)">
                       <i class="fas fa-eye"></i> Voir Comptages
                     </button>
-                    
                     <button class="btn btn-supprimer btn-sm"
                             (click)="deleteSession(session.id)">
                       <i class="fas fa-trash"></i> Supprimer
@@ -285,7 +338,6 @@
           </div>
         </div>
 
-        <!-- Tableau des comptages de la session sélectionnée -->
         <ng-container *ngIf="selectedSession">
           <div class="table-container">
             <div class="table-header">
@@ -311,7 +363,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let c of sessionComptages">
+                  <tr *ngFor="let c of paginatedSessionComptages">
                     <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
                     <td>{{ parseReference(c.reference).lot }}</td>
                     <td>{{ parseReference(c.reference).sousLot }}</td>
@@ -331,12 +383,18 @@
                     <td>{{ c.timestamp | date:'short' }}</td>
                     <td>{{ c.operatorName || c.operatorId }}</td>
                   </tr>
-                  <tr *ngIf="!sessionComptages.length">
+                  <tr *ngIf="!paginatedSessionComptages.length">
                     <td colspan="10" class="text-center py-3">Aucun comptage pour cette session</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <app-pagination
+              [currentPage]="sessionComptagesCurrentPage"
+              [itemsPerPage]="itemsPerPage"
+              [totalItems]="sessionComptages.length"
+              (pageChange)="onSessionComptagesPageChange($event)">
+            </app-pagination>
           </div>
         </ng-container>
       </section>
@@ -346,11 +404,10 @@
         <div class="section-header">
           <h2>{{ getCountingListTitle() }}</h2>
           <div class="d-flex gap-2">
-            <!-- Bouton de tri par date -->
             <button class="btn btn-info"
                     (click)="toggleSortOrder()">
-              <i class="fas me-1" [ngClass]="sortAscending ? 'fa-sort-amount-up' : 'fa-sort-amount-down'"></i>
-              {{ sortAscending ? 'Tri croissant' : 'Tri décroissant' }}
+              <i class="fas me-1" [ngClass]="sortAscending ? 'fa-sort-amount-down' : 'fa-sort-amount-up'"></i>
+              {{ sortAscending ? 'Tri décroissant' : 'Tri croissant' }}
             </button>
           </div>
         </div>
@@ -373,7 +430,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let c of filteredComptages">
+                <tr *ngFor="let c of paginatedComptages">
                   <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
                   <td>{{ parseReference(c.reference).lot }}</td>
                   <td>{{ parseReference(c.reference).sousLot }}</td>
@@ -391,17 +448,23 @@
                     </span>
                   </td>
                   <td>{{ c.timestamp | date:'short' }}</td>
-                  <td>{{ c.operatorName || c.operatorId }}</td>
+                  <td>{{ c.operatorName }}</td>
                 </tr>
-                <tr *ngIf="!filteredComptages.length">
+                <tr *ngIf="!paginatedComptages.length">
                   <td colspan="10" class="text-center py-3">Aucun comptage</td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <app-pagination
+            [currentPage]="currentPage"
+            [itemsPerPage]="itemsPerPage"
+            [totalItems]="filteredComptages.length"
+            (pageChange)="onPageChange($event)">
+          </app-pagination>
         </div>
       </section>
-  
+
       <!-- ZONE UTILISATEURS -->
       <section *ngIf="showUsersMenu">
         <div class="section-header">
@@ -409,14 +472,13 @@
             Liste des
             {{ currentUsersRole === 'OPERATEUR' ? 'Opérateurs' : 'Superviseurs' }}
           </h2>
-          <!-- Bouton création utilisateur -->
           <button class="btn btn-ajouter"
                   (click)="goToRegister(currentUsersRole!)">
             <i class="fas fa-user-plus"></i> Créer
             {{ currentUsersRole === 'OPERATEUR' ? 'Opérateur' : 'Superviseur' }}
           </button>
         </div>
-  
+
         <div class="table-container">
           <div class="table-responsive">
             <table class="table table-striped table-sm">
@@ -429,7 +491,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let u of users">
+                <tr *ngFor="let u of paginatedUsers">
                   <td>{{ u.username }}</td>
                   <td>{{ u.lastname }}</td>
                   <td>{{ u.firstname }}</td>
@@ -440,7 +502,6 @@
                       <i class="fas fa-key"></i> Modifier le mot de passe
                     </button>
                     
-                    <!-- Nouveau bouton pour assigner le type de comptage -->
                     <div *ngIf="u.role === 'OPERATEUR'" class="btn-group me-1">
                       <button type="button" class="btn btn-assign btn-sm" (click)="toggleComptageDropdown(u.id!)">
                         <i class="fas fa-tasks"></i> Affecter comptage
@@ -470,12 +531,18 @@
                     </button>
                   </td>
                 </tr>
-                <tr *ngIf="!users.length">
+                <tr *ngIf="!paginatedUsers.length">
                   <td colspan="4" class="text-center py-3">Aucun utilisateur</td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <app-pagination
+            [currentPage]="usersCurrentPage"
+            [itemsPerPage]="itemsPerPage"
+            [totalItems]="users.length"
+            (pageChange)="onUsersPageChange($event)">
+          </app-pagination>
         </div>
       </section>
     </div>

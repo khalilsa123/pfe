@@ -11,6 +11,7 @@ import { Comptage } from '../../../models/comptage.model';
 import { User } from '../../../models/user.model';
 import { StatisticsDashboardComponent } from '../statistics-dashboard/statistics-dashboard.component';
 import { ExportDashboardComponent } from '../export-dashboard/export-dashboard.component';
+import { PaginationComponent } from '../../../../components/pagination/pagination.component';
 import * as XLSX from 'xlsx';
 
 // Interface pour représenter un résultat de comptage
@@ -43,6 +44,7 @@ interface ComptageResult {
     CommonModule, 
     FormsModule,
     StatisticsDashboardComponent,
+    PaginationComponent,
    // ExportDashboardComponent
   ],
   templateUrl: './resultat-comptage.component.html',
@@ -94,6 +96,33 @@ export class ResultatComptageComponent implements OnInit {
   // Cache for operators
   private operatorsCache: Map<number, User | undefined> = new Map();
 
+  // Load operators from the server
+  private loadOperators(): void {
+    console.log('Chargement des opérateurs...');
+    this.authService.getUsersByRole('OPERATEUR').subscribe({
+      next: operators => {
+        console.log('Opérateurs reçus:', operators.length);
+        operators.forEach(op => {
+          if (op.id) {
+            this.operatorsCache.set(op.id, op);
+          }
+        });
+        // Retraiter les données après avoir chargé les opérateurs
+        if (this.comptages.length > 0) {
+          this.processComptageData();
+        }
+      },
+      error: err => {
+        console.error('Erreur chargement opérateurs:', err);
+      }
+    });
+  }
+
+  // Pagination properties
+  currentPage = 1;
+  itemsPerPage = 15;
+  paginatedResults: ComptageResult[] = [];
+
   constructor(
     private comptageService: ComptageService,
     private authService: AuthentificationnServiceService,
@@ -114,6 +143,7 @@ export class ResultatComptageComponent implements OnInit {
     
     // Charger les données
     this.loadComptages();
+    this.updatePagination();
   }
   
   ngAfterViewInit(): void {
@@ -194,8 +224,10 @@ export class ResultatComptageComponent implements OnInit {
   }
 
   loadComptages(): void {
+    console.log('Chargement des comptages...');
     this.comptageService.getAllComptages().subscribe({
       next: raw => {
+        console.log('Comptages reçus:', raw.length);
         this.comptages = raw;
         this.processComptageData();
       },
@@ -416,18 +448,32 @@ export class ResultatComptageComponent implements OnInit {
     });
     
     this.filteredResults = results;
+    this.currentPage = 1; // Reset to first page when applying filters
+    this.updatePagination();
   }
   
   filterByStatus(status: 'all' | 'valid' | 'invalid' | 'needsThird'): void {
     this.currentStatusFilter = status;
+    this.currentPage = 1; // Reset to first page when changing status filter
     this.applyFilters();
   }
   
   toggleSortOrder(): void {
     this.sortAscending = !this.sortAscending;
-    this.applyFilters();
+    this.updatePagination();
   }
   
+  updatePagination(): void {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    this.paginatedResults = this.filteredResults.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePagination();
+  }
+
   // Méthodes pour les classes et textes de statut
   getStatusClass(status: string): string {
     switch(status) {
