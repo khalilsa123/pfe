@@ -32,7 +32,6 @@ export class ComptageService {
     return params ? { headers, params } : { headers };
   }
   
-
   /** Récupérer tous les comptages (SUPERVISEUR/ADMIN) */
   getAllComptages(): Observable<Comptage[]> {
     return this.http.get<Comptage[]>(`${API_URL}/api/comptages`, this.getAuthOptions())
@@ -40,6 +39,14 @@ export class ComptageService {
         console.error('Erreur lors de la récupération des comptages:', err);
         return throwError(() => err);
       }));
+  }
+
+  /** Récupérer le nombre de comptages pour un opérateur */
+  getComptageCountForOperateur(operateurId: number): Observable<number> {
+    return this.getComptagesByOperateur(operateurId).pipe(
+      map(list => list.length),
+      catchError(() => of(0))
+    );
   }
 
   /** Récupérer les comptages d'un opérateur donné */

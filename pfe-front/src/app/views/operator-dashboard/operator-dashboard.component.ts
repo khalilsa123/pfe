@@ -59,7 +59,7 @@ export class OperatorDashboardComponent implements OnInit {
   showProfile = false;
   showUsersMenu = false;
   originalReference?: string;
-  showInventoryManagement = true;
+  showInventoryManagement = false;
   showSessionInventaire = false;
   showCreateSessionForm = false;
   showCountingDropdown = false;
@@ -67,6 +67,7 @@ export class OperatorDashboardComponent implements OnInit {
   showCountingType1 = false;
   showCountingType2 = false;
   showCountingType3 = false;
+  assignedCount = 0; 
   
   sortAscending = false;
   
@@ -112,21 +113,27 @@ export class OperatorDashboardComponent implements OnInit {
     }
   });
 }
-
   ngOnInit(): void {
     this.user = this.authSrv.getCurrentUser() || undefined;
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
     }
-    console.log('khlil est belle')
-    // AJOUT IMPORTANT: Forcer l'affichage du tableau
-    this.showAllCounting = true;
-    console.log(this.showAllCounting);
-    
-    // AJOUT: Charger directement les comptages au démarrage
+
+    if (this.user.role === 'OPERATEUR') {
+      // Load assigned count
+      this.comptageService
+        .getComptageCountForOperateur(this.user.id!)
+        .subscribe(cnt => this.assignedCount = cnt);
+      
+      // Use operator's default counting type
+      if (this.user.defaultComptageType) {
+        this.newComptage.numComptage = this.user.defaultComptageType;
+      }
+    }
+
+    // Load initial list
     this.loadAllComptages();
-    console.log(this.loadAllComptages())
   }
   
   // NOUVELLE MÉTHODE: Charger tous les comptages directement
@@ -303,7 +310,7 @@ export class OperatorDashboardComponent implements OnInit {
         this.sessions.push(session);
         this.newSession = {};
         this.showCreateSessionForm = false;
-        alert('Session créée avec succès');
+      
       },
       error: (err) => {
         console.error('Erreur création session', err);
@@ -316,34 +323,47 @@ export class OperatorDashboardComponent implements OnInit {
     });
   }
 
-  viewSessionComptages(session: SessionInventaire): void {
-    this.selectedSession = session;
-    this.http.get<SessionInventaire>(`${this.apiUrl}/${session.id}`).subscribe({
-      next: (data) => {
-        this.sessionComptages = (data.comptages || []).map(c => {
-          const comptageWithOp: ComptageWithOperator = { ...c };
-          if (c.operateurId) {
-            this.authSrv.getUsersByRole('OPERATEUR').subscribe({
-              next: (operateurs: User[]) => {
-                const operateur = operateurs.find(op => op.id === c.operateurId);
-                comptageWithOp.operatorName = operateur ? 
-                  `${operateur.firstname} ${operateur.lastname}` : 
-                  `Opérateur #${c.operateurId}`;
+ viewSessionComptages(session: SessionInventaire): void {
+  this.selectedSession = session;
+  this.sessionComptages = [];
+
+  // Récupérer d’abord la liste des opérateurs pour éviter les N appels
+  this.authSrv.getUsersByRole('OPERATEUR').subscribe({
+    next: operateurs => {
+      const opMap = new Map<number, User>();
+      operateurs.forEach(u => { if (u.id != null) opMap.set(u.id, u); });
+
+      // Puis récupérer tous les comptages et ne garder que ceux de la session
+      this.comptageService.getAllComptages().subscribe({
+        next: allComptages => {
+          const startTs = new Date(session.dateDebut).getTime();
+          const endTs   = new Date(session.dateFin).getTime();
+
+          this.sessionComptages = allComptages
+            .filter(c => {
+              const ts = new Date(c.timestamp!).getTime();
+              return ts >= startTs && ts <= endTs;
+            })
+            .map(c => {
+              const comp: ComptageWithOperator = { ...c };
+              if (c.operateurId != null && opMap.has(c.operateurId)) {
+                const u = opMap.get(c.operateurId)!;
+                comp.operatorName = `${u.firstname} ${u.lastname}`;
+              } else if (c.operateurId != null) {
+                comp.operatorName = `Opérateur #${c.operateurId}`;
+              } else {
+                comp.operatorName = 'Inconnu';
               }
+              return comp;
             });
-          }
-          return comptageWithOp;
-        });
-      },
-      error: (err) => {
-        console.error('Erreur chargement comptages de session', err);
-        if (err.status === 401) {
-          this.authSrv.logout();
-          this.router.navigate(['/login']);
-        }
-      }
-    });
-  }
+        },
+        error: err => console.error('Erreur chargement de tous les comptages :', err)
+      });
+    },
+    error: err => console.error('Erreur chargement opérateurs :', err)
+  });
+}
+
 
   populateSession(sessionId: number | undefined): void {
     if (!sessionId) return;
@@ -353,7 +373,7 @@ export class OperatorDashboardComponent implements OnInit {
         if (index !== -1) {
           this.sessions[index] = session;
         }
-        alert('Session peuplée avec succès');
+   
       },
       error: (err) => {
         console.error('Erreur peuplement session', err);
@@ -375,7 +395,7 @@ export class OperatorDashboardComponent implements OnInit {
           this.selectedSession = null;
           this.sessionComptages = [];
         }
-        alert('Session supprimée avec succès');
+    
       },
       error: (err) => {
         console.error('Erreur suppression session', err);
@@ -693,16 +713,15 @@ toggleProfile(event: MouseEvent): void {
     iteration: 1 // Défini manuellement pour éviter l'appel à getIterationCount
   };
   
-  console.log('Envoi du comptage:', comptage);
-  
-  if (this.editing && this.newComptage.id) {
+  console.log('Envoi du comptage:', comptage);    if (this.editing && this.newComptage.id) {
     // UPDATE
     this.comptageService.updateComptage(this.newComptage.id, comptage).subscribe({
       next: () => {
         this.editing = false;
-        this.newComptage = { numComptage: 1 };
+        // Reset all fields EXCEPT numComptage:
+        this.newComptage = { numComptage: this.user?.defaultComptageType || 1 };
         this.loadComptages();
-        alert('Comptage mis à jour avec succès');
+       
       },
       error: (err: any) => {
         console.error('Erreur mise à jour', err);
@@ -713,9 +732,10 @@ toggleProfile(event: MouseEvent): void {
     // CREATE
     this.comptageService.addComptage(this.user!.id!, comptage).subscribe({
       next: () => {
-        this.newComptage = { numComptage: 1 };
+        // After create, keep the same type on the form:
+        this.newComptage = { numComptage: this.user?.defaultComptageType || 1 };
         this.loadComptages();
-        alert('Comptage ajouté avec succès');
+      
       },
       error: (err: any) => {
         console.error('Erreur création', err);
@@ -743,9 +763,8 @@ editComptage(c: Comptage): void {
         if (err.status === 401) {
           this.authSrv.logout();
           this.router.navigate(['//login']);
-        } else {
-          alert('Erreur lors de la suppression du comptage');
-        }
+        } 
+        
       }
     });
   }

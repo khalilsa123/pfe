@@ -13,7 +13,7 @@
             [class.active]="activeButton === 'inventory'" 
             (click)="toggleInventoryManagement()">
       <i class="fas fa-boxes me-2"></i>
-      {{ showInventoryManagement ? 'Masquer Inventaire' : 'Gestion des Inventaires' }}
+      {{ 'Gestion des Inventaires' }}
     </button>
 
     <!-- Bouton Gestion des Sessions d'Inventaire (Admin only) -->
@@ -22,7 +22,7 @@
             [class.active]="activeButton === 'session-inventaire'"
             (click)="toggleSessionInventaire()">
       <i class="fas fa-calendar-alt me-2"></i>
-      {{ showSessionInventaire ? 'Masquer Sessions' : 'Gestion des Sessions d\'Inventaire' }}
+      {{  'Gestion des Sessions d\'Inventaire' }}
     </button>
 
     <!-- Bouton Résultats de Comptage (Supervisor or Admin only) -->
@@ -181,7 +181,8 @@
         name="numComptage"
         class="form-control form-control-sm"
         required
-        [(ngModel)]="newComptage.numComptage">
+        [(ngModel)]="newComptage.numComptage"
+        [disabled]="user?.role === 'OPERATEUR'">
         <option [ngValue]="1">Premier Comptage</option>
         <option [ngValue]="2">Deuxième Comptage</option>
         <option [ngValue]="3">Troisième Comptage</option>
@@ -269,10 +270,7 @@
                             (click)="viewSessionComptages(session)">
                       <i class="fas fa-eye"></i> Voir Comptages
                     </button>
-                    <button class="btn btn-modifier btn-sm me-1"
-                            (click)="populateSession(session.id)">
-                      <i class="fas fa-sync"></i> Peupler
-                    </button>
+                    
                     <button class="btn btn-supprimer btn-sm"
                             (click)="deleteSession(session.id)">
                       <i class="fas fa-trash"></i> Supprimer
