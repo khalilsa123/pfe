@@ -2,7 +2,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { Comptage } from '../models/comptage.model';
 
 // URL de base pour toutes les requêtes API
@@ -33,14 +33,17 @@ export class ComptageService {
   }
   
   /** Récupérer tous les comptages (SUPERVISEUR/ADMIN) */
-  getAllComptages(): Observable<Comptage[]> {
-    return this.http.get<Comptage[]>(`${API_URL}/api/comptages`, this.getAuthOptions())
-      .pipe(catchError(err => {
-        console.error('Erreur lors de la récupération des comptages:', err);
+ getAllComptages(): Observable<Comptage[]> {
+  console.log('ComptageService - Calling API to get all comptages');
+  return this.http.get<Comptage[]>(`${API_URL}/api/comptages`, this.getAuthOptions())
+    .pipe(
+      tap(response => console.log('ComptageService - API response:', response)),
+      catchError(err => {
+        console.error('ComptageService - Error fetching comptages:', err);
         return throwError(() => err);
-      }));
-  }
-
+      })
+    );
+}
   /** Récupérer le nombre de comptages pour un opérateur */
   getComptageCountForOperateur(operateurId: number): Observable<number> {
     return this.getComptagesByOperateur(operateurId).pipe(

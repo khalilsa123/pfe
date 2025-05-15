@@ -208,153 +208,189 @@ export class ResultatComptageComponent implements OnInit {
       }
     });
   }
-  
-  processComptageData(): void {
-    // Grouper les comptages par référence (ref$lot$sous)
-    const comptageGroups = new Map<string, Comptage[]>();
-    
-    this.comptages.forEach(comptage => {
-      // Format de référence original: ref$qte$lot$sous
-      const parts = comptage.reference.split('$');
-      if (parts.length < 4) return;
-      
-      // Créer une clé composite ref$lot$sous pour le groupement
-      const ref = parts[0];
-      const lot = parts[2];
-      const sousLot = parts[3];
-      const groupKey = `${ref}${lot}${sousLot}`;
-      
-      if (!comptageGroups.has(groupKey)) {
-        comptageGroups.set(groupKey, []);
-      }
-      
-      comptageGroups.get(groupKey)!.push(comptage);
-    });
-    
-    // Créer les résultats de comptage
-    this.comptageResults = [];
-    
-    comptageGroups.forEach((comptages, groupKey) => {
-      // Trier par numComptage pour faciliter le traitement
-      comptages.sort((a, b) => a.numComptage - b.numComptage);
-      
-      // Extraire les informations de référence
-      const parts = comptages[0].reference.split('$');
-      const reference = comptages[0].reference;
-      const lot = parts[2] || '';
-      const sousLot = parts[3] || '';
-      
-      // Préparer les données de chaque comptage
-      const comptage1 = comptages.find(c => c.numComptage === 1);
-      const comptage2 = comptages.find(c => c.numComptage === 2);
-      const comptage3 = comptages.find(c => c.numComptage === 3);
-      
-      let comp1Summary: ComptageSummary | undefined;
-      let comp2Summary: ComptageSummary | undefined;
-      let comp3Summary: ComptageSummary | undefined;
-      
-      // Trouver les informations d'opérateur pour chaque comptage
-      if (comptage1) {
-        const operator = this.findOperator(comptage1.operateurId!);
-        comp1Summary = {
-          operatorId: comptage1.operateurId!,
-          operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage1.operateurId}`,
-          poids: comptage1.poids,
-          date: new Date(comptage1.timestamp!),
-          numComptage: comptage1.numComptage,
-          iteration: comptage1.iteration
-        };
-      }
-      
-      if (comptage2) {
-        const operator = this.findOperator(comptage2.operateurId!);
-        comp2Summary = {
-          operatorId: comptage2.operateurId!,
-          operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage2.operateurId}`,
-          poids: comptage2.poids,
-          date: new Date(comptage2.timestamp!),
-          numComptage: comptage2.numComptage,
-          iteration: comptage2.iteration
-        };
-      }
-      
-      if (comptage3) {
-        const operator = this.findOperator(comptage3.operateurId!);
-        comp3Summary = {
-          operatorId: comptage3.operateurId!,
-          operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage3.operateurId}`,
-          poids: comptage3.poids,
-          date: new Date(comptage3.timestamp!),
-          numComptage: comptage3.numComptage,
-          iteration: comptage3.iteration
-        };
-      }
-      
-      // Calculer le statut et la différence
-      let status: 'valid' | 'invalid' | 'needsThird' | 'validWithThird' | 'incomplete' = 'incomplete';
-      let difference: number | undefined;
-      let poidsFinal: number | undefined;
-      
-      // Si les deux premiers comptages existent
-      if (comp1Summary && comp2Summary) {
-        const poids1 = comp1Summary.poids;
-        const poids2 = comp2Summary.poids;
-        const maxPoids = Math.max(poids1, poids2);
-        
-        // Calcul de la différence en pourcentage
-        difference = maxPoids === 0 ? 0 : Math.abs(poids1 - poids2) / maxPoids * 100;
-        
-        if (difference < 5) {
-          // Moins de 5% de différence => valide
-          status = 'valid';
-          poidsFinal = Math.min(poids1, poids2);
-        } else {
-          // Plus de 5% de différence
-          if (comp3Summary) {
-            // Si 3ème comptage existe => valide avec le 3ème
-            status = 'validWithThird';
-            poidsFinal = comp3Summary.poids;
-          } else {
-            // Sinon => besoin d'un 3ème comptage
-            status = 'needsThird';
-          }
-        }
-      } else {
-        // Comptage incomplet (manque comptage1 ou comptage2)
-        status = 'incomplete';
-      }
-      
-      // Trouver la date de dernière mise à jour
-      const dates = [
-        comp1Summary?.date, 
-        comp2Summary?.date, 
-        comp3Summary?.date
-      ].filter(d => d !== undefined) as Date[];
-      
-      const lastUpdate = dates.length > 0 
-        ? new Date(Math.max(...dates.map(d => d.getTime())))
-        : new Date();
-      
-      // Créer l'objet résultat
-      const result: ComptageResult = {
-        reference,
-        lot,
-        sousLot,
-        comptage1: comp1Summary,
-        comptage2: comp2Summary,
-        comptage3: comp3Summary,
-        status,
-        difference,
-        poidsFinal,
-        lastUpdate
-      };
-      
-      this.comptageResults.push(result);
-    });
-    
-    // Appliquer les filtres initiaux
-    this.applyFilters();
+  parseReference(fullReference: string): { ref: string; qte: string; lot: string; sousLot: string } {
+  if (!fullReference) {
+    return { ref: '', qte: '', lot: '', sousLot: '' };
   }
+  
+  // Essayer d'abord avec le séparateur $
+  let parts = fullReference.split('$');
+  
+  // S'il n'y a pas assez de parties, essayer avec #
+  if (parts.length < 2) {
+    parts = fullReference.split('#');
+  }
+  
+  return {
+    ref: parts[0] || '',
+    qte: parts[1] || '0',
+    lot: parts.length > 2 ? parts[2] : '000',
+    sousLot: parts.length > 3 ? parts[3] : '001'
+  };
+}
+  
+ processComptageData(): void {
+  // Vérifier si nous avons des comptages à traiter
+  if (!this.comptages || this.comptages.length === 0) {
+    console.log('Aucun comptage à traiter');
+    this.comptageResults = [];
+    this.filteredResults = [];
+    return;
+  }
+  
+  console.log(`Traitement de ${this.comptages.length} comptages`);
+  
+  // Grouper les comptages par référence
+  const comptageGroups = new Map<string, Comptage[]>();
+  
+  this.comptages.forEach(comptage => {
+    if (!comptage.reference) {
+      console.log(`Ignoré : comptage avec référence vide`);
+      return;
+    }
+    
+    // Analyser la référence pour extraire ref, lot et sousLot
+    const parseResult = this.parseReference(comptage.reference);
+    const ref = parseResult.ref;
+    const lot = parseResult.lot || '000';
+    const sousLot = parseResult.sousLot || '001';
+    
+    // Utiliser un séparateur cohérent dans la clé de groupe
+    const groupKey = `${ref}$${lot}$${sousLot}`;
+    
+    if (!comptageGroups.has(groupKey)) {
+      comptageGroups.set(groupKey, []);
+    }
+    
+    comptageGroups.get(groupKey)!.push(comptage);
+  });
+  
+  // Créer les résultats de comptage
+  this.comptageResults = [];
+  
+  comptageGroups.forEach((comptages, groupKey) => {
+    // Trier par numComptage pour faciliter le traitement
+    comptages.sort((a, b) => a.numComptage - b.numComptage);
+    
+    // Extraire les informations de référence
+    const reference = comptages[0].reference;
+    const parts = this.parseReference(reference);
+    const lot = parts.lot || '';
+    const sousLot = parts.sousLot || '';
+    
+    // Préparer les données de chaque comptage
+    const comptage1 = comptages.find(c => c.numComptage === 1);
+    const comptage2 = comptages.find(c => c.numComptage === 2);
+    const comptage3 = comptages.find(c => c.numComptage === 3);
+    
+    let comp1Summary: ComptageSummary | undefined;
+    let comp2Summary: ComptageSummary | undefined;
+    let comp3Summary: ComptageSummary | undefined;
+    
+    // Trouver les informations d'opérateur pour chaque comptage
+    if (comptage1) {
+      const operator = this.findOperator(comptage1.operateurId!);
+      comp1Summary = {
+        operatorId: comptage1.operateurId!,
+        operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage1.operateurId}`,
+        poids: comptage1.poids,
+        date: new Date(comptage1.timestamp!),
+        numComptage: comptage1.numComptage,
+        iteration: comptage1.iteration
+      };
+    }
+    
+    if (comptage2) {
+      const operator = this.findOperator(comptage2.operateurId!);
+      comp2Summary = {
+        operatorId: comptage2.operateurId!,
+        operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage2.operateurId}`,
+        poids: comptage2.poids,
+        date: new Date(comptage2.timestamp!),
+        numComptage: comptage2.numComptage,
+        iteration: comptage2.iteration
+      };
+    }
+    
+    if (comptage3) {
+      const operator = this.findOperator(comptage3.operateurId!);
+      comp3Summary = {
+        operatorId: comptage3.operateurId!,
+        operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage3.operateurId}`,
+        poids: comptage3.poids,
+        date: new Date(comptage3.timestamp!),
+        numComptage: comptage3.numComptage,
+        iteration: comptage3.iteration
+      };
+    }
+    
+    // Calculer le statut et la différence
+    let status: 'valid' | 'invalid' | 'needsThird' | 'validWithThird' | 'incomplete' = 'incomplete';
+    let difference: number | undefined;
+    let poidsFinal: number | undefined;
+    
+    // Si les deux premiers comptages existent
+    if (comp1Summary && comp2Summary) {
+      const poids1 = comp1Summary.poids;
+      const poids2 = comp2Summary.poids;
+      const maxPoids = Math.max(poids1, poids2);
+      
+      // Calcul de la différence en pourcentage
+      difference = maxPoids === 0 ? 0 : Math.abs(poids1 - poids2) / maxPoids * 100;
+      
+      if (difference < 5) {
+        // Moins de 5% de différence => valide
+        status = 'valid';
+        poidsFinal = Math.min(poids1, poids2);
+      } else {
+        // Plus de 5% de différence
+        if (comp3Summary) {
+          // Si 3ème comptage existe => valide avec le 3ème
+          status = 'validWithThird';
+          poidsFinal = comp3Summary.poids;
+        } else {
+          // Sinon => besoin d'un 3ème comptage
+          status = 'needsThird';
+        }
+      }
+    } else {
+      // Comptage incomplet (manque comptage1 ou comptage2)
+      status = 'incomplete';
+    }
+    
+    // Trouver la date de dernière mise à jour
+    const dates = [
+      comp1Summary?.date, 
+      comp2Summary?.date, 
+      comp3Summary?.date
+    ].filter(d => d !== undefined) as Date[];
+    
+    const lastUpdate = dates.length > 0 
+      ? new Date(Math.max(...dates.map(d => d.getTime())))
+      : new Date();
+    
+    // Créer l'objet résultat
+    const result: ComptageResult = {
+      reference,
+      lot,
+      sousLot,
+      comptage1: comp1Summary,
+      comptage2: comp2Summary,
+      comptage3: comp3Summary,
+      status,
+      difference,
+      poidsFinal,
+      lastUpdate
+    };
+    
+    this.comptageResults.push(result);
+  });
+  
+  // Appliquer les filtres initiaux
+  this.applyFilters();
+  
+  console.log(`Traitement terminé : ${this.comptageResults.length} résultats générés`);
+}
   
   // Méthode pour trouver un opérateur dans le cache
   private findOperator(operatorId: number): User | undefined {
