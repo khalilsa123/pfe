@@ -30,6 +30,15 @@ public class ComptageController {
     @GetMapping("/comptages")
     public ResponseEntity<List<Comptage>> getAllComptages() {
         List<Comptage> all = comptageService.findAll();
+        System.out.println("ComptageController - getAllComptages count: " + all.size());
+
+        // Log a few examples if available
+        if (!all.isEmpty()) {
+            System.out.println("ComptageController - First comptage sample: " + all.get(0).getReference());
+        } else {
+            System.out.println("ComptageController - WARNING: No comptages found in database!");
+        }
+
         return ResponseEntity.ok(all);
     }
 
