@@ -1,7 +1,9 @@
 package com.example.loginpfe.controller;
 
 import com.example.loginpfe.Service.ComptageService;
+import com.example.loginpfe.Service.UserService;
 import com.example.loginpfe.entity.Comptage;
+import com.example.loginpfe.entity.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,15 +20,28 @@ import java.util.Map;
 public class ComptageController {
 
     private final ComptageService comptageService;
+    private final UserService userService;
 
-    public ComptageController(ComptageService comptageService) {
+    public ComptageController(ComptageService comptageService, UserService userService) {
         this.comptageService = comptageService;
+        this.userService = userService;
     }
 
     @GetMapping("/comptages")
     public ResponseEntity<List<Comptage>> getAllComptages() {
         List<Comptage> all = comptageService.findAll();
         return ResponseEntity.ok(all);
+    }
+
+    @PutMapping({"/operateurs/{id}/comptage-type", "/users/{id}/comptage-type"})
+    @PreAuthorize("hasAnyRole('SUPERVISEUR','ADMIN')")
+    public ResponseEntity<User> updateDefaultComptageType(
+            @PathVariable("id") Long userId,
+            @RequestBody Map<String, Integer> body) {
+
+        int defaultType = body.get("defaultComptageType");
+        User updated = userService.setDefaultComptageType(userId, defaultType);
+        return ResponseEntity.ok(updated);
     }
 
     @GetMapping("/comptages/debug")

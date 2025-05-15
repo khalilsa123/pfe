@@ -30,6 +30,15 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    public User setDefaultComptageType(Long userId, int defaultType) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setDefaultComptageType(defaultType);
+        return userRepository.save(user);
+    }
+
     /**
      * Change password by user ID, verifying old password and setting new password
      */
