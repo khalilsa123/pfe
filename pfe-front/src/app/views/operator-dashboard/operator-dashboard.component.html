@@ -355,12 +355,31 @@
         </div>
 
         <ng-container *ngIf="selectedSession">
-          <div class="table-container">
+          <div class="table-container" #sessionComptagesTable>
             <div class="table-header">
               <h4>Comptages de la Session: {{ selectedSession.nomSession }}</h4>
               <button class="btn btn-outline-secondary btn-sm" (click)="selectedSession = null; sessionComptages = []">
                 <i class="fas fa-times"></i> Fermer
               </button>
+            </div>
+            <!-- Ajout barre de recherche et bouton tri -->
+            <div class="filters-container mb-3">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Rechercher par référence, lot ou sous-lot..." 
+                           [(ngModel)]="sessionSearchTerm" (input)="filterSessionComptages()">
+                  </div>
+                </div>
+                <div class="col-md-6 text-end">
+                  <button class="btn btn-info"
+                          (click)="toggleSessionSortOrder()">
+                    <i class="fas me-1" [ngClass]="sessionSortAscending ? 'fa-sort-amount-down' : 'fa-sort-amount-up'"></i>
+                    {{ sessionSortAscending ? 'Plus ancien' : 'Plus récent' }}
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="table-responsive">
               <table class="table table-hover table-striped table-sm mb-0">

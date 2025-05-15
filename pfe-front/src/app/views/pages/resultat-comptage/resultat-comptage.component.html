@@ -134,26 +134,37 @@
             <button class="btn btn-stats" (click)="showStatistics()">
               <i class="fas fa-chart-pie me-2"></i>Statistiques d'Avancement
             </button>
-            <!-- Imprimer Button with Dropdown -->
-            <div class="dropdown">
+            <!-- Imprimer Button with Dropdown -->            <div class="dropdown">
               <button class="btn btn-print dropdown-toggle" type="button" id="imprimerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-file-excel me-2"></i>Imprimer
               </button>
-              <ul class="dropdown-menu" aria-labelledby="imprimerDropdown">
+              <ul class="dropdown-menu dropdown-menu-lg" aria-labelledby="imprimerDropdown">
+                <li><h6 class="dropdown-header">Types de rapport</h6></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('all'); $event.preventDefault()">Tous les comptages</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('valid'); $event.preventDefault()">Validés</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('needsThird'); $event.preventDefault()">Besoin 3e Comptage</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('incomplete'); $event.preventDefault()">Incomplets</a></li>
+                <li><div class="dropdown-divider"></div></li>
+                <li><h6 class="dropdown-header">Par type de comptage</h6></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('comptage1'); $event.preventDefault()">Comptage 1</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('comptage2'); $event.preventDefault()">Comptage 2</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('comptage3'); $event.preventDefault()">Comptage 3</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('comptageFinal'); $event.preventDefault()">Comptage Final</a></li>
-                <li><hr class="dropdown-divider"></li>
+                <li><div class="dropdown-divider"></div></li>
+                <li><h6 class="dropdown-header">Options d'export</h6></li>
                 <li class="dropdown-item">
                   <div class="form-check">
                     <input class="form-check-input" type="checkbox" [(ngModel)]="includeOperatorNames" id="includeOperatorNamesMain">
                     <label class="form-check-label" for="includeOperatorNamesMain">
                       Inclure le nom des opérateurs
+                    </label>
+                  </div>
+                </li>
+                <li class="dropdown-item">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" [(ngModel)]="includeTypeMatiere" id="includeTypeMatiere">
+                    <label class="form-check-label" for="includeTypeMatiere">
+                      Inclure type de matière
                     </label>
                   </div>
                 </li>
@@ -205,11 +216,11 @@
         <div class="table-container">
           <div class="table-responsive">
             <table class="table table-striped">
-              <thead>
-                <tr>
+              <thead>                <tr>
                   <th>Référence</th>
                   <th>Lot</th>
                   <th>Sous-lot</th>
+                  <th>Type de matière</th>
                   <th class="comptage-col">
                     <div class="comptage-header">
                       <span>1er Comptage</span>
@@ -248,10 +259,10 @@
                     [ngClass]="{'valid-row': result.status === 'valid', 
                                 'invalid-row': result.status === 'invalid',
                                 'needs-third-row': result.status === 'needsThird',
-                                'incomplete-row': result.status === 'incomplete'}">
-                  <td>{{ extractReference(result.reference) }}</td>
+                                'incomplete-row': result.status === 'incomplete'}">                  <td>{{ extractReference(result.reference) }}</td>
                   <td>{{ result.lot }}</td>
                   <td>{{ result.sousLot }}</td>
+                  <td>{{ result.typeMatiere || 'Non spécifié' }}</td>
                   
                   <!-- 1er Comptage -->
                   <td class="comptage-data" *ngIf="result.comptage1">
@@ -401,12 +412,12 @@
           <h6>Aperçu des données</h6>
           <div class="table-responsive">
             <table class="table table-striped">
-              <thead>
-                <tr>
+              <thead>                <tr>
                   <th>Type de comptage</th>
                   <th>Référence</th>
                   <th>Lot</th>
                   <th>Sous-lot</th>
+                  <th *ngIf="includeTypeMatiere">Type de matière</th>
                   <th>Poids (g)</th>
                   <th>Opérateur</th>
                   <th *ngIf="selectedExportType !== 'comptageFinal'">Date</th>
@@ -415,10 +426,10 @@
               </thead>
               <tbody>
                 <tr *ngFor="let entry of previewResults">
-                  <td>{{ entry.type }}</td>
-                  <td>{{ entry.reference }}</td>
+                  <td>{{ entry.type }}</td>                  <td>{{ entry.reference }}</td>
                   <td>{{ entry.lot }}</td>
                   <td>{{ entry.sousLot }}</td>
+                  <td *ngIf="includeTypeMatiere">{{ entry.typeMatiere || 'Non spécifié' }}</td>
                   <td>{{ entry.poids }}</td>
                   <td>{{ entry.operator }}</td>
                   <td *ngIf="selectedExportType !== 'comptageFinal'">{{ entry.date }}</td>

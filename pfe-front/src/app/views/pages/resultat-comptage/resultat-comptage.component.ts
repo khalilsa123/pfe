@@ -27,6 +27,7 @@ interface ComptageResult {
   reference: string;  // Format original ref$qte$lot$sous
   lot: string;
   sousLot: string;
+  typeMatiere?: string;
   comptage1?: ComptageSummary;
   comptage2?: ComptageSummary;
   comptage3?: ComptageSummary;
@@ -69,6 +70,7 @@ export class ResultatComptageComponent implements OnInit {
   
   // Export options for the Imprimer button
   includeOperatorNames = true; // Default to true
+  includeTypeMatiere = true;
   selectedExportType: string | null = null; // To track the export type for preview
   
   // Menu variables from OperatorDashboardComponent

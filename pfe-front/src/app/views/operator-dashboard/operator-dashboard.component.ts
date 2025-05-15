@@ -60,6 +60,8 @@ interface ComptageWithOperator extends Comptage {
 })
 export class OperatorDashboardComponent implements OnInit {
    @ViewChild('sessionComptagesTable', { read: ElementRef }) sessionComptagesTable?: ElementRef;
+  sessionSearchTerm = '';
+  sessionSortAscending = false;
   currentPage = 1;
   itemsPerPage = 15;
   paginatedComptages: ComptageWithOperator[] = [];
@@ -866,4 +868,37 @@ onUsersPageChange(page: number): void {
     }
   });
 }
+
+  toggleSessionSortOrder(): void {
+    this.sessionSortAscending = !this.sessionSortAscending;
+    this.sortSessionComptages();
+  }
+
+  sortSessionComptages(): void {
+    this.sessionComptages.sort((a, b) => {
+      const dateA = new Date(a.timestamp!).getTime();
+      const dateB = new Date(b.timestamp!).getTime();
+      return this.sessionSortAscending ? dateA - dateB : dateB - dateA;
+    });
+    this.updateSessionComptagesPagination();
+  }
+
+  filterSessionComptages(): void {
+    if (!this.sessionSearchTerm) {
+      // Reset to original data
+      this.updateSessionComptagesPagination();
+      return;
+    }
+    
+    const term = this.sessionSearchTerm.toLowerCase();
+    const filtered = this.sessionComptages.filter(c => {
+      const parsed = this.parseReference(c.reference);
+      return parsed.ref.toLowerCase().includes(term) || 
+             parsed.lot.toLowerCase().includes(term) || 
+             parsed.sousLot.toLowerCase().includes(term);
+    });
+    
+    this.paginatedSessionComptages = filtered.slice(0, this.itemsPerPage);
+    this.sessionComptagesCurrentPage = 1;
+  }
 }
