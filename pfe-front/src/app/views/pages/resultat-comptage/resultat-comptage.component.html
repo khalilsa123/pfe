@@ -1,3 +1,4 @@
+<!-- Modification du template HTML - resultat-comptage.component.html -->
 <div class="wrapper">
   <!-- SIDEBAR -->
   <aside class="sidebar">
@@ -134,7 +135,8 @@
             <button class="btn btn-stats" (click)="showStatistics()">
               <i class="fas fa-chart-pie me-2"></i>Statistiques d'Avancement
             </button>
-            <!-- Imprimer Button with Dropdown -->            <div class="dropdown">
+            <!-- Imprimer Button with Dropdown -->            
+            <div class="dropdown">
               <button class="btn btn-print dropdown-toggle" type="button" id="imprimerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-file-excel me-2"></i>Imprimer
               </button>
@@ -143,7 +145,6 @@
                 <li><a class="dropdown-item" href="#" (click)="showPreview('all'); $event.preventDefault()">Tous les comptages</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('valid'); $event.preventDefault()">Validés</a></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('needsThird'); $event.preventDefault()">Besoin 3e Comptage</a></li>
-                <li><a class="dropdown-item" href="#" (click)="showPreview('incomplete'); $event.preventDefault()">Incomplets</a></li>
                 <li><div class="dropdown-divider"></div></li>
                 <li><h6 class="dropdown-header">Par type de comptage</h6></li>
                 <li><a class="dropdown-item" href="#" (click)="showPreview('comptage1'); $event.preventDefault()">Comptage 1</a></li>
@@ -185,6 +186,7 @@
             </div>
             <div class="col-md-8">
               <div class="d-flex justify-content-end gap-2">
+                <!-- Modification des boutons de filtre (suppression des options invalide/incomplet) -->
                 <div class="btn-group">
                   <button type="button" class="btn btn-filter" (click)="filterByStatus('all')"
                           [class.active]="currentStatusFilter === 'all'">
@@ -193,10 +195,6 @@
                   <button type="button" class="btn btn-filter" (click)="filterByStatus('valid')"
                           [class.active]="currentStatusFilter === 'valid'">
                     Valides
-                  </button>
-                  <button type="button" class="btn btn-filter" (click)="filterByStatus('invalid')"
-                          [class.active]="currentStatusFilter === 'invalid'">
-                    Invalides
                   </button>
                   <button type="button" class="btn btn-filter" (click)="filterByStatus('needsThird')"
                           [class.active]="currentStatusFilter === 'needsThird'">
@@ -216,7 +214,8 @@
         <div class="table-container">
           <div class="table-responsive">
             <table class="table table-striped">
-              <thead>                <tr>
+              <thead>                
+                <tr>
                   <th>Référence</th>
                   <th>Lot</th>
                   <th>Sous-lot</th>
@@ -257,9 +256,8 @@
               <tbody>
                 <tr *ngFor="let result of filteredResults" 
                     [ngClass]="{'valid-row': result.status === 'valid', 
-                                'invalid-row': result.status === 'invalid',
-                                'needs-third-row': result.status === 'needsThird',
-                                'incomplete-row': result.status === 'incomplete'}">                  <td>{{ extractReference(result.reference) }}</td>
+                                'needs-third-row': result.status === 'needsThird'}">                  
+                  <td>{{ extractReference(result.reference) }}</td>
                   <td>{{ result.lot }}</td>
                   <td>{{ result.sousLot }}</td>
                   <td>{{ result.typeMatiere || 'Non spécifié' }}</td>
@@ -342,12 +340,6 @@
                     <span *ngIf="result.status === 'needsThird'" class="awaiting-text">
                       En attente du 3e comptage
                     </span>
-                    <span *ngIf="result.status === 'incomplete'" class="awaiting-text">
-                      Comptage incomplet
-                    </span>
-                    <span *ngIf="result.status === 'invalid'" class="invalid-text">
-                      Comptage invalide
-                    </span>
                   </td>
                   
                   <td>{{ result.lastUpdate | date:'dd/MM/yyyy HH:mm' }}</td>
@@ -412,33 +404,35 @@
           <h6>Aperçu des données</h6>
           <div class="table-responsive">
             <table class="table table-striped">
-              <thead>                <tr>
+              <thead>                
+                <tr>
+                  <th>Type de matière</th>
                   <th>Type de comptage</th>
                   <th>Référence</th>
                   <th>Lot</th>
                   <th>Sous-lot</th>
-                  <th *ngIf="includeTypeMatiere">Type de matière</th>
                   <th>Poids (g)</th>
                   <th>Opérateur</th>
                   <th *ngIf="selectedExportType !== 'comptageFinal'">Date</th>
-                  <th *ngIf="selectedExportType === 'all' || selectedExportType === 'valid' || selectedExportType === 'invalid' || selectedExportType === 'needsThird' || selectedExportType === 'incomplete'">Statut</th>
+                  <th *ngIf="selectedExportType === 'all' || selectedExportType === 'valid' || selectedExportType === 'needsThird'">Statut</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let entry of previewResults">
-                  <td>{{ entry.type }}</td>                  <td>{{ entry.reference }}</td>
+                  <td>{{ entry.typeMatiere }}</td>
+                  <td>{{ entry.type }}</td>                  
+                  <td>{{ entry.reference }}</td>
                   <td>{{ entry.lot }}</td>
                   <td>{{ entry.sousLot }}</td>
-                  <td *ngIf="includeTypeMatiere">{{ entry.typeMatiere || 'Non spécifié' }}</td>
                   <td>{{ entry.poids }}</td>
                   <td>{{ entry.operator }}</td>
                   <td *ngIf="selectedExportType !== 'comptageFinal'">{{ entry.date }}</td>
-                  <td *ngIf="selectedExportType === 'all' || selectedExportType === 'valid' || selectedExportType === 'invalid' || selectedExportType === 'needsThird' || selectedExportType === 'incomplete'">
+                  <td *ngIf="selectedExportType === 'all' || selectedExportType === 'valid' || selectedExportType === 'needsThird'">
                     {{ entry.status || '-' }}
                   </td>
                 </tr>
                 <tr *ngIf="previewResults.length === 0">
-                  <td [attr.colspan]="selectedExportType === 'comptageFinal' ? 6 : (selectedExportType === 'comptage1' || selectedExportType === 'comptage2' || selectedExportType === 'comptage3') ? 7 : 8" class="text-center py-3">
+                  <td [attr.colspan]="selectedExportType === 'comptageFinal' ? 7 : (selectedExportType === 'comptage1' || selectedExportType === 'comptage2' || selectedExportType === 'comptage3') ? 8 : 9" class="text-center py-3">
                     <div class="no-results">
                       <i class="fas fa-search mb-2"></i>
                       <p>Aucun résultat à afficher</p>
@@ -457,3 +451,35 @@
     </div>
   </div>
 </div>
+
+<!-- Modal pour sélectionner un opérateur pour le 3e comptage -->
+<div class="modal fade" [class.show]="showOperatorsList" [style.display]="showOperatorsList ? 'block' : 'none'" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Sélection d'un opérateur pour le 3e comptage</h5>
+        <button type="button" class="btn-close" (click)="showOperatorsList = false" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Sélectionnez un opérateur pour effectuer le 3e comptage de la référence: 
+          <strong>{{ selectedResultForThirdCount?.reference }}</strong></p>
+        <div class="list-group">
+          <button *ngFor="let op of availableOperators" 
+                  type="button" class="list-group-item list-group-item-action"
+                  (click)="assignOperatorForThirdCount(op.id!)">
+            {{ op.firstname }} {{ op.lastname }}
+          </button>
+        </div>
+        <div *ngIf="availableOperators.length === 0" class="text-center p-3">
+          <p>Aucun opérateur disponible</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showOperatorsList = false">Annuler</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay pour le modal d'opérateurs -->
+<div class="modal-backdrop fade show" *ngIf="showOperatorsList"></div>

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthentificationnServiceService } from '../../../services/authentificationn.service';
 import { User } from '../../../models/user.model';
 
@@ -24,7 +25,8 @@ export class RegisterComponent implements OnInit {
     private authService: AuthentificationnServiceService,
     private route: ActivatedRoute,
     private router: Router,
-    private location: Location
+    private location: Location,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -68,15 +70,15 @@ export class RegisterComponent implements OnInit {
     return password.value === confirmPassword.value ? null : { passwordMismatch: true };
   }
 
-  onSubmit(): void {
+  registerDirectly(): void {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
     this.isSubmitting = true;
     
-    // Créer un objet sans le champ confirmPassword
-    const userToRegister = {
+    // Format data exactly like Postman
+    const userData = {
       username: this.registerForm.value.username,
       firstname: this.registerForm.value.firstname,
       lastname: this.registerForm.value.lastname,
@@ -84,15 +86,54 @@ export class RegisterComponent implements OnInit {
       role: this.registerForm.value.role
     };
     
-    this.authService.register(userToRegister)
+    console.log('Sending registration data directly:', userData);
+    
+    // Send directly without interceptors
+    this.http.post('http://localhost:8080/auth/register', userData, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }).subscribe({
+      next: (response) => {
+        console.log('Registration successful:', response);
+        this.isSignUpFailed = false;
+        this.router.navigate(['/operator-dashboard']);
+      },
+      error: (err) => {
+        console.error('Direct registration error:', err);
+        this.errorMessage = err.error?.message || 'Error registering';
+        this.isSignUpFailed = true;
+      }
+    }).add(() => this.isSubmitting = false);
+  }
+
+  onSubmit(): void {
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      return;
+    }
+    
+    this.isSubmitting = true;
+    console.log('Registration data:', this.registerForm.value); // Log form data
+    
+    const userData = {
+      username: this.registerForm.value.username,
+      firstname: this.registerForm.value.firstname,
+      lastname: this.registerForm.value.lastname,
+      password: this.registerForm.value.password,
+      role: this.registerForm.value.role
+    };
+
+    this.authService.register(userData)
       .subscribe({
         next: () => {
+          console.log('Registration successful');
           this.isSignUpFailed = false;
-          // après création, on revient à la liste
           this.router.navigate(['/operator-dashboard']);
         },
         error: err => {
-          this.errorMessage   = err.error?.message || 'Erreur d\'inscription';
+          console.error('Registration error:', err); // Log the full error
+          this.errorMessage = err.error?.message || 'Registration error';
           this.isSignUpFailed = true;
         }
       })

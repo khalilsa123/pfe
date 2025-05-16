@@ -10,4 +10,6 @@ export interface Comptage {
   operateurId?: number;
   timestamp?: string;
   iteration?: number; // Track how many times this counting has been performed
+ 
+  typeMatiere?: string;
 }

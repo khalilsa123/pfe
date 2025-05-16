@@ -33,7 +33,7 @@ export class AuthentificationnServiceService {
   register(user: User): Observable<string> {
     return this.http.post(
       `${AUTH_API}/register`,
-      JSON.stringify(user),
+      user,
       { responseType: 'text' }
     ).pipe(catchError(err => throwError(() => err)));
   }

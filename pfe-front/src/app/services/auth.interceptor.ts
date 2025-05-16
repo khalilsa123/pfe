@@ -15,9 +15,9 @@ import { Router } from '@angular/router';
 export class AuthInterceptor implements HttpInterceptor {
   constructor(private router: Router) {}
 
-  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    // Skip interception for login and registration endpoints
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {    // Skip interception for login and registration endpoints
     if (request.url.includes('/auth/login') || request.url.includes('/auth/register')) {
+      console.log('Skipping auth for:', request.url);
       return next.handle(request);
     }
 

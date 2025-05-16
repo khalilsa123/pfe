@@ -31,7 +31,7 @@ interface ComptageResult {
   comptage1?: ComptageSummary;
   comptage2?: ComptageSummary;
   comptage3?: ComptageSummary;
-  status: 'valid' | 'invalid' | 'needsThird' | 'validWithThird' | 'incomplete';
+  status: 'valid' | 'needsThird' | 'validWithThird'; // Statuts simplifiés
   difference?: number;  // Différence en pourcentage entre comptage1 et comptage2
   poidsFinal?: number;
   lastUpdate: Date;
@@ -44,7 +44,7 @@ interface ComptageResult {
     CommonModule, 
     FormsModule,
     StatisticsDashboardComponent,
-   // ExportDashboardComponent
+    // ExportDashboardComponent
   ],
   templateUrl: './resultat-comptage.component.html',
   encapsulation: ViewEncapsulation.None,
@@ -63,10 +63,15 @@ export class ResultatComptageComponent implements OnInit {
   filteredResults: ComptageResult[] = [];
   previewResults: any[] = []; // For preview table
   
+  // Nouvelles propriétés pour la sélection d'opérateur
+  selectedResultForThirdCount: ComptageResult | null = null;
+  showOperatorsList = false;
+  availableOperators: User[] = [];
+  
   // Filters and sorting
   searchTerm = '';
   sortAscending = false;
-  currentStatusFilter: 'all' | 'valid' | 'invalid' | 'needsThird' = 'all';
+  currentStatusFilter: 'all' | 'valid' | 'needsThird' = 'all';
   
   // Export options for the Imprimer button
   includeOperatorNames = true; // Default to true
@@ -210,189 +215,193 @@ export class ResultatComptageComponent implements OnInit {
       }
     });
   }
+  
   parseReference(fullReference: string): { ref: string; qte: string; lot: string; sousLot: string } {
-  if (!fullReference) {
-    return { ref: '', qte: '', lot: '', sousLot: '' };
+    if (!fullReference) {
+      return { ref: '', qte: '', lot: '', sousLot: '' };
+    }
+    
+    // Essayer d'abord avec le séparateur $
+    let parts = fullReference.split('$');
+    
+    // S'il n'y a pas assez de parties, essayer avec #
+    if (parts.length < 2) {
+      parts = fullReference.split('#');
+    }
+    
+    return {
+      ref: parts[0] || '',
+      qte: parts[1] || '0',
+      lot: parts.length > 2 ? parts[2] : '000',
+      sousLot: parts.length > 3 ? parts[3] : '001'
+    };
   }
   
-  // Essayer d'abord avec le séparateur $
-  let parts = fullReference.split('$');
-  
-  // S'il n'y a pas assez de parties, essayer avec #
-  if (parts.length < 2) {
-    parts = fullReference.split('#');
-  }
-  
-  return {
-    ref: parts[0] || '',
-    qte: parts[1] || '0',
-    lot: parts.length > 2 ? parts[2] : '000',
-    sousLot: parts.length > 3 ? parts[3] : '001'
-  };
-}
-  
- processComptageData(): void {
-  // Vérifier si nous avons des comptages à traiter
-  if (!this.comptages || this.comptages.length === 0) {
-    console.log('Aucun comptage à traiter');
-    this.comptageResults = [];
-    this.filteredResults = [];
-    return;
-  }
-  
-  console.log(`Traitement de ${this.comptages.length} comptages`);
-  
-  // Grouper les comptages par référence
-  const comptageGroups = new Map<string, Comptage[]>();
-  
-  this.comptages.forEach(comptage => {
-    if (!comptage.reference) {
-      console.log(`Ignoré : comptage avec référence vide`);
+  processComptageData(): void {
+    // Vérifier si nous avons des comptages à traiter
+    if (!this.comptages || this.comptages.length === 0) {
+      console.log('Aucun comptage à traiter');
+      this.comptageResults = [];
+      this.filteredResults = [];
       return;
     }
     
-    // Analyser la référence pour extraire ref, lot et sousLot
-    const parseResult = this.parseReference(comptage.reference);
-    const ref = parseResult.ref;
-    const lot = parseResult.lot || '000';
-    const sousLot = parseResult.sousLot || '001';
+    console.log(`Traitement de ${this.comptages.length} comptages`);
     
-    // Utiliser un séparateur cohérent dans la clé de groupe
-    const groupKey = `${ref}$${lot}$${sousLot}`;
+    // Grouper les comptages par référence
+    const comptageGroups = new Map<string, Comptage[]>();
     
-    if (!comptageGroups.has(groupKey)) {
-      comptageGroups.set(groupKey, []);
-    }
-    
-    comptageGroups.get(groupKey)!.push(comptage);
-  });
-  
-  // Créer les résultats de comptage
-  this.comptageResults = [];
-  
-  comptageGroups.forEach((comptages, groupKey) => {
-    // Trier par numComptage pour faciliter le traitement
-    comptages.sort((a, b) => a.numComptage - b.numComptage);
-    
-    // Extraire les informations de référence
-    const reference = comptages[0].reference;
-    const parts = this.parseReference(reference);
-    const lot = parts.lot || '';
-    const sousLot = parts.sousLot || '';
-    
-    // Préparer les données de chaque comptage
-    const comptage1 = comptages.find(c => c.numComptage === 1);
-    const comptage2 = comptages.find(c => c.numComptage === 2);
-    const comptage3 = comptages.find(c => c.numComptage === 3);
-    
-    let comp1Summary: ComptageSummary | undefined;
-    let comp2Summary: ComptageSummary | undefined;
-    let comp3Summary: ComptageSummary | undefined;
-    
-    // Trouver les informations d'opérateur pour chaque comptage
-    if (comptage1) {
-      const operator = this.findOperator(comptage1.operateurId!);
-      comp1Summary = {
-        operatorId: comptage1.operateurId!,
-        operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage1.operateurId}`,
-        poids: comptage1.poids,
-        date: new Date(comptage1.timestamp!),
-        numComptage: comptage1.numComptage,
-        iteration: comptage1.iteration
-      };
-    }
-    
-    if (comptage2) {
-      const operator = this.findOperator(comptage2.operateurId!);
-      comp2Summary = {
-        operatorId: comptage2.operateurId!,
-        operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage2.operateurId}`,
-        poids: comptage2.poids,
-        date: new Date(comptage2.timestamp!),
-        numComptage: comptage2.numComptage,
-        iteration: comptage2.iteration
-      };
-    }
-    
-    if (comptage3) {
-      const operator = this.findOperator(comptage3.operateurId!);
-      comp3Summary = {
-        operatorId: comptage3.operateurId!,
-        operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage3.operateurId}`,
-        poids: comptage3.poids,
-        date: new Date(comptage3.timestamp!),
-        numComptage: comptage3.numComptage,
-        iteration: comptage3.iteration
-      };
-    }
-    
-    // Calculer le statut et la différence
-    let status: 'valid' | 'invalid' | 'needsThird' | 'validWithThird' | 'incomplete' = 'incomplete';
-    let difference: number | undefined;
-    let poidsFinal: number | undefined;
-    
-    // Si les deux premiers comptages existent
-    if (comp1Summary && comp2Summary) {
-      const poids1 = comp1Summary.poids;
-      const poids2 = comp2Summary.poids;
-      const maxPoids = Math.max(poids1, poids2);
-      
-      // Calcul de la différence en pourcentage
-      difference = maxPoids === 0 ? 0 : Math.abs(poids1 - poids2) / maxPoids * 100;
-      
-      if (difference < 5) {
-        // Moins de 5% de différence => valide
-        status = 'valid';
-        poidsFinal = Math.min(poids1, poids2);
-      } else {
-        // Plus de 5% de différence
-        if (comp3Summary) {
-          // Si 3ème comptage existe => valide avec le 3ème
-          status = 'validWithThird';
-          poidsFinal = comp3Summary.poids;
-        } else {
-          // Sinon => besoin d'un 3ème comptage
-          status = 'needsThird';
-        }
+    this.comptages.forEach(comptage => {
+      if (!comptage.reference) {
+        console.log(`Ignoré : comptage avec référence vide`);
+        return;
       }
-    } else {
-      // Comptage incomplet (manque comptage1 ou comptage2)
-      status = 'incomplete';
-    }
+      
+      // Analyser la référence pour extraire ref, lot et sousLot
+      const parseResult = this.parseReference(comptage.reference);
+      const ref = parseResult.ref;
+      const lot = parseResult.lot || '000';
+      const sousLot = parseResult.sousLot || '001';
+      
+      // Utiliser un séparateur cohérent dans la clé de groupe
+      const groupKey = `${ref}$${lot}$${sousLot}`;
+      
+      if (!comptageGroups.has(groupKey)) {
+        comptageGroups.set(groupKey, []);
+      }
+      
+      comptageGroups.get(groupKey)!.push(comptage);
+    });
     
-    // Trouver la date de dernière mise à jour
-    const dates = [
-      comp1Summary?.date, 
-      comp2Summary?.date, 
-      comp3Summary?.date
-    ].filter(d => d !== undefined) as Date[];
+    // Créer les résultats de comptage
+    this.comptageResults = [];
     
-    const lastUpdate = dates.length > 0 
-      ? new Date(Math.max(...dates.map(d => d.getTime())))
-      : new Date();
+    comptageGroups.forEach((comptages, groupKey) => {
+      // Trier par numComptage pour faciliter le traitement
+      comptages.sort((a, b) => a.numComptage - b.numComptage);
+      
+      // Extraire les informations de référence
+      const reference = comptages[0].reference;
+      const parts = this.parseReference(reference);
+      const lot = parts.lot || '';
+      const sousLot = parts.sousLot || '';
+      const typeMatiere = comptages[0].typeMatiere || 'Non spécifié';
+      
+      // Préparer les données de chaque comptage
+      const comptage1 = comptages.find(c => c.numComptage === 1);
+      const comptage2 = comptages.find(c => c.numComptage === 2);
+      const comptage3 = comptages.find(c => c.numComptage === 3);
+      
+      let comp1Summary: ComptageSummary | undefined;
+      let comp2Summary: ComptageSummary | undefined;
+      let comp3Summary: ComptageSummary | undefined;
+      
+      // Trouver les informations d'opérateur pour chaque comptage
+      if (comptage1) {
+        const operator = this.findOperator(comptage1.operateurId!);
+        comp1Summary = {
+          operatorId: comptage1.operateurId!,
+          operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage1.operateurId}`,
+          poids: comptage1.poids,
+          date: new Date(comptage1.timestamp!),
+          numComptage: comptage1.numComptage,
+          iteration: comptage1.iteration
+        };
+      }
+      
+      if (comptage2) {
+        const operator = this.findOperator(comptage2.operateurId!);
+        comp2Summary = {
+          operatorId: comptage2.operateurId!,
+          operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage2.operateurId}`,
+          poids: comptage2.poids,
+          date: new Date(comptage2.timestamp!),
+          numComptage: comptage2.numComptage,
+          iteration: comptage2.iteration
+        };
+      }
+      
+      if (comptage3) {
+        const operator = this.findOperator(comptage3.operateurId!);
+        comp3Summary = {
+          operatorId: comptage3.operateurId!,
+          operatorName: operator ? `${operator.firstname} ${operator.lastname}` : `Opérateur #${comptage3.operateurId}`,
+          poids: comptage3.poids,
+          date: new Date(comptage3.timestamp!),
+          numComptage: comptage3.numComptage,
+          iteration: comptage3.iteration
+        };
+      }
+      
+      // Calculer le statut et la différence
+      // Statuts simplifiés: valid, validWithThird, needsThird
+      let status: 'valid' | 'needsThird' | 'validWithThird' = 'needsThird'; // Par défaut besoin d'un 3e comptage
+      let difference: number | undefined;
+      let poidsFinal: number | undefined;
+      
+      // Si les deux premiers comptages existent
+      if (comp1Summary && comp2Summary) {
+        const poids1 = comp1Summary.poids;
+        const poids2 = comp2Summary.poids;
+        const maxPoids = Math.max(poids1, poids2);
+        
+        // Calcul de la différence en pourcentage
+        difference = maxPoids === 0 ? 0 : Math.abs(poids1 - poids2) / maxPoids * 100;
+        
+        if (difference < 5) {
+          // Moins de 5% de différence => valide
+          status = 'valid';
+          poidsFinal = Math.min(poids1, poids2);
+        } else {
+          // Plus de 5% de différence
+          if (comp3Summary) {
+            // Si 3ème comptage existe => valide avec le 3ème
+            status = 'validWithThird';
+            poidsFinal = comp3Summary.poids;
+          } else {
+            // Sinon => besoin d'un 3ème comptage
+            status = 'needsThird';
+          }
+        }
+      } else {
+        // Comptage incomplet - Besoin d'un 3e comptage
+        status = 'needsThird';
+      }
+      
+      // Trouver la date de dernière mise à jour
+      const dates = [
+        comp1Summary?.date, 
+        comp2Summary?.date, 
+        comp3Summary?.date
+      ].filter(d => d !== undefined) as Date[];
+      
+      const lastUpdate = dates.length > 0 
+        ? new Date(Math.max(...dates.map(d => d.getTime())))
+        : new Date();
+      
+      // Créer l'objet résultat
+      const result: ComptageResult = {
+        reference,
+        lot,
+        sousLot,
+        typeMatiere,
+        comptage1: comp1Summary,
+        comptage2: comp2Summary,
+        comptage3: comp3Summary,
+        status,
+        difference,
+        poidsFinal,
+        lastUpdate
+      };
+      
+      this.comptageResults.push(result);
+    });
     
-    // Créer l'objet résultat
-    const result: ComptageResult = {
-      reference,
-      lot,
-      sousLot,
-      comptage1: comp1Summary,
-      comptage2: comp2Summary,
-      comptage3: comp3Summary,
-      status,
-      difference,
-      poidsFinal,
-      lastUpdate
-    };
+    // Appliquer les filtres initiaux
+    this.applyFilters();
     
-    this.comptageResults.push(result);
-  });
-  
-  // Appliquer les filtres initiaux
-  this.applyFilters();
-  
-  console.log(`Traitement terminé : ${this.comptageResults.length} résultats générés`);
-}
+    console.log(`Traitement terminé : ${this.comptageResults.length} résultats générés`);
+  }
   
   // Méthode pour trouver un opérateur dans le cache
   private findOperator(operatorId: number): User | undefined {
@@ -437,9 +446,6 @@ export class ResultatComptageComponent implements OnInit {
         case 'valid':
           results = results.filter(r => r.status === 'valid' || r.status === 'validWithThird');
           break;
-        case 'invalid':
-          results = results.filter(r => r.status === 'incomplete');
-          break;
         case 'needsThird':
           results = results.filter(r => r.status === 'needsThird');
           break;
@@ -456,7 +462,7 @@ export class ResultatComptageComponent implements OnInit {
     this.filteredResults = results;
   }
   
-  filterByStatus(status: 'all' | 'valid' | 'invalid' | 'needsThird'): void {
+  filterByStatus(status: 'all' | 'valid' | 'needsThird'): void {
     this.currentStatusFilter = status;
     this.applyFilters();
   }
@@ -474,13 +480,8 @@ export class ResultatComptageComponent implements OnInit {
       case 'validWithThird':
         return 'status-valid-third';
       case 'needsThird':
-        return 'status-needs-third';
-      case 'incomplete':
-        return 'status-incomplete';
-      case 'invalid':
-        return 'status-invalid';
       default:
-        return '';
+        return 'status-needs-third';
     }
   }
   
@@ -491,25 +492,42 @@ export class ResultatComptageComponent implements OnInit {
       case 'validWithThird':
         return 'Validé (3e comptage)';
       case 'needsThird':
-        return 'Besoin 3e comptage';
-      case 'incomplete':
-        return 'Incomplet';
-      case 'invalid':
-        return 'Invalide';
       default:
-        return status;
+        return 'Besoin 3e comptage';
     }
   }
   
   // Actions sur les comptages
   doThirdCount(result: ComptageResult): void {
+    this.selectedResultForThirdCount = result;
+    this.showOperatorsList = true;
+    
+    // Charger la liste des opérateurs
+    this.authService.getUsersByRole('OPERATEUR').subscribe({
+      next: (users) => {
+        this.availableOperators = users;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des opérateurs:', err);
+        this.showOperatorsList = false;
+      }
+    });
+  }
+  
+  assignOperatorForThirdCount(operatorId: number): void {
+    if (!this.selectedResultForThirdCount) return;
+    
     // Naviguer vers la page de comptage avec les informations pré-remplies
     this.router.navigate(['/operator-dashboard'], { 
       queryParams: { 
-        reference: result.reference,
-        numComptage: 3
+        reference: this.selectedResultForThirdCount.reference,
+        numComptage: 3,
+        operatorId: operatorId
       }
     });
+    
+    this.showOperatorsList = false;
+    this.selectedResultForThirdCount = null;
   }
   
   validateFinalCount(result: ComptageResult): void {
@@ -538,14 +556,8 @@ export class ResultatComptageComponent implements OnInit {
       case 'valid':
         resultsToPreview = resultsToPreview.filter(r => r.status === 'valid' || r.status === 'validWithThird');
         break;
-      case 'invalid':
-        resultsToPreview = resultsToPreview.filter(r => r.status === 'incomplete');
-        break;
       case 'needsThird':
         resultsToPreview = resultsToPreview.filter(r => r.status === 'needsThird');
-        break;
-      case 'incomplete':
-        resultsToPreview = resultsToPreview.filter(r => r.status === 'incomplete');
         break;
       case 'comptage1':
         resultsToPreview = resultsToPreview.filter(r => !!r.comptage1);
@@ -564,6 +576,14 @@ export class ResultatComptageComponent implements OnInit {
         break;
     }
 
+    // Tri par type de matière
+    resultsToPreview.sort((a, b) => {
+      if (a.typeMatiere && b.typeMatiere) {
+        return a.typeMatiere.localeCompare(b.typeMatiere);
+      }
+      return 0;
+    });
+
     if (exportType === 'comptage1') {
       resultsToPreview.forEach(result => {
         previewData.push({
@@ -571,6 +591,7 @@ export class ResultatComptageComponent implements OnInit {
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
+          typeMatiere: result.typeMatiere || 'Non spécifié',
           poids: result.comptage1?.poids || '-',
           operator: this.includeOperatorNames ? (result.comptage1?.operatorName || '-') : (result.comptage1?.operatorId || '-'),
           date: result.comptage1?.date.toLocaleString() || '-'
@@ -583,6 +604,7 @@ export class ResultatComptageComponent implements OnInit {
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
+          typeMatiere: result.typeMatiere || 'Non spécifié',
           poids: result.comptage2?.poids || '-',
           operator: this.includeOperatorNames ? (result.comptage2?.operatorName || '-') : (result.comptage2?.operatorId || '-'),
           date: result.comptage2?.date.toLocaleString() || '-'
@@ -595,6 +617,7 @@ export class ResultatComptageComponent implements OnInit {
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
+          typeMatiere: result.typeMatiere || 'Non spécifié',
           poids: result.comptage3?.poids || '-',
           operator: this.includeOperatorNames ? (result.comptage3?.operatorName || '-') : (result.comptage3?.operatorId || '-'),
           date: result.comptage3?.date.toLocaleString() || '-'
@@ -607,6 +630,7 @@ export class ResultatComptageComponent implements OnInit {
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
+          typeMatiere: result.typeMatiere || 'Non spécifié',
           poids: result.poidsFinal || '-',
           operator: '-',
           date: result.lastUpdate.toLocaleString()
@@ -620,6 +644,7 @@ export class ResultatComptageComponent implements OnInit {
             reference: this.extractReference(result.reference),
             lot: result.lot,
             sousLot: result.sousLot,
+            typeMatiere: result.typeMatiere || 'Non spécifié',
             poids: result.comptage1.poids,
             operator: this.includeOperatorNames ? result.comptage1.operatorName : result.comptage1.operatorId,
             date: result.comptage1.date.toLocaleString(),
@@ -632,6 +657,7 @@ export class ResultatComptageComponent implements OnInit {
             reference: this.extractReference(result.reference),
             lot: result.lot,
             sousLot: result.sousLot,
+            typeMatiere: result.typeMatiere || 'Non spécifié',
             poids: result.comptage2.poids,
             operator: this.includeOperatorNames ? result.comptage2.operatorName : result.comptage2.operatorId,
             date: result.comptage2.date.toLocaleString(),
@@ -644,18 +670,20 @@ export class ResultatComptageComponent implements OnInit {
             reference: this.extractReference(result.reference),
             lot: result.lot,
             sousLot: result.sousLot,
+            typeMatiere: result.typeMatiere || 'Non spécifié',
             poids: result.comptage3.poids,
             operator: this.includeOperatorNames ? result.comptage3.operatorName : result.comptage3.operatorId,
             date: result.comptage3.date.toLocaleString(),
             status: this.getStatusText(result.status)
           });
         }
-        if (!result.comptage1 && (result.status === 'incomplete')) {
+        if (!result.comptage1 && (result.status === 'needsThird')) {
           previewData.push({
             type: 'Résultat Final',
             reference: this.extractReference(result.reference),
             lot: result.lot,
             sousLot: result.sousLot,
+            typeMatiere: result.typeMatiere || 'Non spécifié',
             poids: '-',
             operator: '-',
             date: result.lastUpdate.toLocaleString(),
@@ -684,20 +712,10 @@ export class ResultatComptageComponent implements OnInit {
         filename += '_Valides';
         sheetName = 'Validés';
         break;
-      case 'invalid':
-        resultsToExport = resultsToExport.filter(r => r.status === 'incomplete');
-        filename += '_Invalides';
-        sheetName = 'Invalides';
-        break;
       case 'needsThird':
         resultsToExport = resultsToExport.filter(r => r.status === 'needsThird');
         filename += '_Besoin3eComptage';
         sheetName = 'Besoin 3e Comptage';
-        break;
-      case 'incomplete':
-        resultsToExport = resultsToExport.filter(r => r.status === 'incomplete');
-        filename += '_Incomplets';
-        sheetName = 'Incomplets';
         break;
       case 'comptage1':
         resultsToExport = resultsToExport.filter(r => !!r.comptage1);
@@ -725,11 +743,20 @@ export class ResultatComptageComponent implements OnInit {
         break;
     }
 
+    // Tri par type de matière
+    resultsToExport.sort((a, b) => {
+      if (a.typeMatiere && b.typeMatiere) {
+        return a.typeMatiere.localeCompare(b.typeMatiere);
+      }
+      return 0;
+    });
+
     // Prepare data for export
     if (this.selectedExportType === 'comptage1') {
       data = resultsToExport.map(result => ({
-        Référence: this.extractReference(result.reference),
-        Lot: result.lot,
+        'Type de matière': result.typeMatiere || 'Non spécifié',
+        'Référence': this.extractReference(result.reference),
+        'Lot': result.lot,
         'Sous-lot': result.sousLot,
         'Poids Comptage 1 (g)': result.comptage1?.poids || '-',
         'Opérateur Comptage 1': this.includeOperatorNames ? (result.comptage1?.operatorName || '-') : (result.comptage1?.operatorId || '-'),
@@ -737,8 +764,9 @@ export class ResultatComptageComponent implements OnInit {
       }));
     } else if (this.selectedExportType === 'comptage2') {
       data = resultsToExport.map(result => ({
-        Référence: this.extractReference(result.reference),
-        Lot: result.lot,
+        'Type de matière': result.typeMatiere || 'Non spécifié',
+        'Référence': this.extractReference(result.reference),
+        'Lot': result.lot,
         'Sous-lot': result.sousLot,
         'Poids Comptage 2 (g)': result.comptage2?.poids || '-',
         'Opérateur Comptage 2': this.includeOperatorNames ? (result.comptage2?.operatorName || '-') : (result.comptage2?.operatorId || '-'),
@@ -746,8 +774,9 @@ export class ResultatComptageComponent implements OnInit {
       }));
     } else if (this.selectedExportType === 'comptage3') {
       data = resultsToExport.map(result => ({
-        Référence: this.extractReference(result.reference),
-        Lot: result.lot,
+        'Type de matière': result.typeMatiere || 'Non spécifié',
+        'Référence': this.extractReference(result.reference),
+        'Lot': result.lot,
         'Sous-lot': result.sousLot,
         'Poids Comptage 3 (g)': result.comptage3?.poids || '-',
         'Opérateur Comptage 3': this.includeOperatorNames ? (result.comptage3?.operatorName || '-') : (result.comptage3?.operatorId || '-'),
@@ -755,8 +784,9 @@ export class ResultatComptageComponent implements OnInit {
       }));
     } else if (this.selectedExportType === 'comptageFinal') {
       data = resultsToExport.map(result => ({
-        Référence: this.extractReference(result.reference),
-        Lot: result.lot,
+        'Type de matière': result.typeMatiere || 'Non spécifié',
+        'Référence': this.extractReference(result.reference),
+        'Lot': result.lot,
         'Sous-lot': result.sousLot,
         'Poids Final (g)': result.poidsFinal || '-',
         'Dernière Mise à Jour': result.lastUpdate.toLocaleString()
@@ -766,54 +796,58 @@ export class ResultatComptageComponent implements OnInit {
         const rows: any[] = [];
         if (result.comptage1) {
           rows.push({
+            'Type de matière': result.typeMatiere || 'Non spécifié',
             'Type de comptage': 'Premier Comptage',
-            Référence: this.extractReference(result.reference),
-            Lot: result.lot,
+            'Référence': this.extractReference(result.reference),
+            'Lot': result.lot,
             'Sous-lot': result.sousLot,
             'Poids (g)': result.comptage1.poids,
-            Opérateur: this.includeOperatorNames ? result.comptage1.operatorName : result.comptage1.operatorId,
+            'Opérateur': this.includeOperatorNames ? result.comptage1.operatorName : result.comptage1.operatorId,
             'Poids Final (g)': result.poidsFinal || '-',
-            Date: result.comptage1.date.toLocaleString(),
-            Statut: this.getStatusText(result.status)
+            'Date': result.comptage1.date.toLocaleString(),
+            'Statut': this.getStatusText(result.status)
           });
         }
         if (result.comptage2) {
           rows.push({
+            'Type de matière': result.typeMatiere || 'Non spécifié',
             'Type de comptage': 'Deuxième Comptage',
-            Référence: this.extractReference(result.reference),
-            Lot: result.lot,
+            'Référence': this.extractReference(result.reference),
+            'Lot': result.lot,
             'Sous-lot': result.sousLot,
             'Poids (g)': result.comptage2.poids,
-            Opérateur: this.includeOperatorNames ? result.comptage2.operatorName : result.comptage2.operatorId,
+            'Opérateur': this.includeOperatorNames ? result.comptage2.operatorName : result.comptage2.operatorId,
             'Poids Final (g)': result.poidsFinal || '-',
-            Date: result.comptage2.date.toLocaleString(),
-            Statut: this.getStatusText(result.status)
+            'Date': result.comptage2.date.toLocaleString(),
+            'Statut': this.getStatusText(result.status)
           });
         }
         if (result.comptage3) {
           rows.push({
+            'Type de matière': result.typeMatiere || 'Non spécifié',
             'Type de comptage': 'Troisième Comptage',
-            Référence: this.extractReference(result.reference),
-            Lot: result.lot,
+            'Référence': this.extractReference(result.reference),
+            'Lot': result.lot,
             'Sous-lot': result.sousLot,
             'Poids (g)': result.comptage3.poids,
-            Opérateur: this.includeOperatorNames ? result.comptage3.operatorName : result.comptage3.operatorId,
+            'Opérateur': this.includeOperatorNames ? result.comptage3.operatorName : result.comptage3.operatorId,
             'Poids Final (g)': result.poidsFinal || '-',
-            Date: result.comptage3.date.toLocaleString(),
-            Statut: this.getStatusText(result.status)
+            'Date': result.comptage3.date.toLocaleString(),
+            'Statut': this.getStatusText(result.status)
           });
         }
-        if (!result.comptage1 && (result.status === 'incomplete')) {
+        if (!result.comptage1 && (result.status === 'needsThird')) {
           rows.push({
+            'Type de matière': result.typeMatiere || 'Non spécifié',
             'Type de comptage': 'Résultat Final',
-            Référence: this.extractReference(result.reference),
-            Lot: result.lot,
+            'Référence': this.extractReference(result.reference),
+            'Lot': result.lot,
             'Sous-lot': result.sousLot,
             'Poids (g)': '-',
-            Opérateur: '-',
+            'Opérateur': '-',
             'Poids Final (g)': '-',
-            Date: result.lastUpdate.toLocaleString(),
-            Statut: this.getStatusText(result.status)
+            'Date': result.lastUpdate.toLocaleString(),
+            'Statut': this.getStatusText(result.status)
           });
         }
         return rows;
@@ -826,35 +860,19 @@ export class ResultatComptageComponent implements OnInit {
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
     // Set column widths
-    if (this.selectedExportType === 'comptage1') {
+    if (this.selectedExportType === 'comptage1' || this.selectedExportType === 'comptage2' || this.selectedExportType === 'comptage3') {
       ws['!cols'] = [
+        { wch: 15 }, // Type de matière
         { wch: 15 }, // Référence
         { wch: 10 }, // Lot
         { wch: 10 }, // Sous-lot
-        { wch: 20 }, // Poids Comptage 1
-        { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur Comptage 1
-        { wch: 25 }  // Date Comptage 1
-      ];
-    } else if (this.selectedExportType === 'comptage2') {
-      ws['!cols'] = [
-        { wch: 15 }, // Référence
-        { wch: 10 }, // Lot
-        { wch: 10 }, // Sous-lot
-        { wch: 20 }, // Poids Comptage 2
-        { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur Comptage 2
-        { wch: 25 }  // Date Comptage 2
-      ];
-    } else if (this.selectedExportType === 'comptage3') {
-      ws['!cols'] = [
-        { wch: 15 }, // Référence
-        { wch: 10 }, // Lot
-        { wch: 10 }, // Sous-lot
-        { wch: 20 }, // Poids Comptage 3
-        { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur Comptage 3
-        { wch: 25 }  // Date Comptage 3
+        { wch: 20 }, // Poids Comptage
+        { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur
+        { wch: 25 }  // Date
       ];
     } else if (this.selectedExportType === 'comptageFinal') {
       ws['!cols'] = [
+        { wch: 15 }, // Type de matière
         { wch: 15 }, // Référence
         { wch: 10 }, // Lot
         { wch: 10 }, // Sous-lot
@@ -863,6 +881,7 @@ export class ResultatComptageComponent implements OnInit {
       ];
     } else {
       ws['!cols'] = [
+        { wch: 15 }, // Type de matière
         { wch: 20 }, // Type de comptage
         { wch: 15 }, // Référence
         { wch: 10 }, // Lot
