@@ -31,7 +31,7 @@ interface ComptageResult {
   comptage1?: ComptageSummary;
   comptage2?: ComptageSummary;
   comptage3?: ComptageSummary;
-  status: 'valid' | 'needsThird' | 'validWithThird'; // Statuts simplifiés
+  status: 'valid' | 'needsThird' | 'validWithThird' | 'incomplete'; // Statuts simplifiés
   difference?: number;  // Différence en pourcentage entre comptage1 et comptage2
   poidsFinal?: number;
   lastUpdate: Date;
@@ -75,7 +75,9 @@ export class ResultatComptageComponent implements OnInit {
   
   // Export options for the Imprimer button
   includeOperatorNames = true; // Default to true
-  includeTypeMatiere = true;
+  // Nouvelles propriétés
+includeCoseMatiere = true;
+includeFileMatiere = true;
   selectedExportType: string | null = null; // To track the export type for preview
   
   // Menu variables from OperatorDashboardComponent
@@ -548,353 +550,400 @@ export class ResultatComptageComponent implements OnInit {
   }
 
   // Prepare data for preview based on export type
-  preparePreviewData(exportType: string): any[] {
-    let resultsToPreview = [...this.comptageResults];
-    const previewData: any[] = [];
+ preparePreviewData(exportType: string): any[] {
+  let resultsToPreview = [...this.comptageResults];
+  const previewData: any[] = [];
 
-    switch (exportType) {
-      case 'valid':
-        resultsToPreview = resultsToPreview.filter(r => r.status === 'valid' || r.status === 'validWithThird');
-        break;
-      case 'needsThird':
-        resultsToPreview = resultsToPreview.filter(r => r.status === 'needsThird');
-        break;
-      case 'comptage1':
-        resultsToPreview = resultsToPreview.filter(r => !!r.comptage1);
-        break;
-      case 'comptage2':
-        resultsToPreview = resultsToPreview.filter(r => !!r.comptage2);
-        break;
-      case 'comptage3':
-        resultsToPreview = resultsToPreview.filter(r => !!r.comptage3);
-        break;
-      case 'comptageFinal':
-        resultsToPreview = resultsToPreview.filter(r => r.status === 'valid' || r.status === 'validWithThird');
-        break;
-      case 'all':
-      default:
-        break;
-    }
+  // Filtrage selon le type d'export
+  switch (exportType) {
+    case 'valid':
+      resultsToPreview = resultsToPreview.filter(r => r.status === 'valid' || r.status === 'validWithThird');
+      break;
+    case 'invalid':
+      resultsToPreview = resultsToPreview.filter(r => r.status === 'incomplete');
+      break;
+    case 'needsThird':
+      resultsToPreview = resultsToPreview.filter(r => r.status === 'needsThird');
+      break;
+    case 'incomplete':
+      resultsToPreview = resultsToPreview.filter(r => r.status === 'incomplete');
+      break;
+    case 'comptage1':
+      resultsToPreview = resultsToPreview.filter(r => !!r.comptage1);
+      break;
+    case 'comptage2':
+      resultsToPreview = resultsToPreview.filter(r => !!r.comptage2);
+      break;
+    case 'comptage3':
+      resultsToPreview = resultsToPreview.filter(r => !!r.comptage3);
+      break;
+    case 'comptageFinal':
+      resultsToPreview = resultsToPreview.filter(r => r.status === 'valid' || r.status === 'validWithThird');
+      break;
+    case 'all':
+    default:
+      break;
+  }
 
-    // Tri par type de matière
-    resultsToPreview.sort((a, b) => {
-      if (a.typeMatiere && b.typeMatiere) {
-        return a.typeMatiere.localeCompare(b.typeMatiere);
-      }
-      return 0;
+  // Filtrer par type de matière selon les options cochées
+  resultsToPreview = resultsToPreview.filter(result => {
+    const typeMatiere = result.typeMatiere?.toLowerCase() || '';
+    return (typeMatiere.includes('cose') && this.includeCoseMatiere) || 
+           (typeMatiere.includes('file') && this.includeFileMatiere) || 
+           (!typeMatiere.includes('cose') && !typeMatiere.includes('file'));
+  });
+
+  // Prépare les données pour l'aperçu selon le type d'export
+  if (exportType === 'comptage1') {
+    resultsToPreview.forEach(result => {
+      previewData.push({
+        type: 'Premier Comptage',
+        reference: this.extractReference(result.reference),
+        lot: result.lot,
+        sousLot: result.sousLot,
+        typeMatiere: result.typeMatiere || 'Non spécifié',
+        poids: result.comptage1?.poids || '-',
+        operator: this.includeOperatorNames ? (result.comptage1?.operatorName || '-') : (result.comptage1?.operatorId || '-'),
+        date: result.comptage1?.date.toLocaleString() || '-'
+      });
     });
-
-    if (exportType === 'comptage1') {
-      resultsToPreview.forEach(result => {
+  } else if (exportType === 'comptage2') {
+    resultsToPreview.forEach(result => {
+      previewData.push({
+        type: 'Deuxième Comptage',
+        reference: this.extractReference(result.reference),
+        lot: result.lot,
+        sousLot: result.sousLot,
+        typeMatiere: result.typeMatiere || 'Non spécifié',
+        poids: result.comptage2?.poids || '-',
+        operator: this.includeOperatorNames ? (result.comptage2?.operatorName || '-') : (result.comptage2?.operatorId || '-'),
+        date: result.comptage2?.date.toLocaleString() || '-'
+      });
+    });
+  } else if (exportType === 'comptage3') {
+    resultsToPreview.forEach(result => {
+      previewData.push({
+        type: 'Troisième Comptage',
+        reference: this.extractReference(result.reference),
+        lot: result.lot,
+        sousLot: result.sousLot,
+        typeMatiere: result.typeMatiere || 'Non spécifié',
+        poids: result.comptage3?.poids || '-',
+        operator: this.includeOperatorNames ? (result.comptage3?.operatorName || '-') : (result.comptage3?.operatorId || '-'),
+        date: result.comptage3?.date.toLocaleString() || '-'
+      });
+    });
+  } else if (exportType === 'comptageFinal') {
+    resultsToPreview.forEach(result => {
+      previewData.push({
+        type: 'Résultat Final',
+        reference: this.extractReference(result.reference),
+        lot: result.lot,
+        sousLot: result.sousLot,
+        typeMatiere: result.typeMatiere || 'Non spécifié',
+        poids: result.poidsFinal || '-',
+        operator: '-',
+        date: result.lastUpdate.toLocaleString()
+      });
+    });
+  } else {
+    resultsToPreview.forEach(result => {
+      if (result.comptage1) {
         previewData.push({
           type: 'Premier Comptage',
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
           typeMatiere: result.typeMatiere || 'Non spécifié',
-          poids: result.comptage1?.poids || '-',
-          operator: this.includeOperatorNames ? (result.comptage1?.operatorName || '-') : (result.comptage1?.operatorId || '-'),
-          date: result.comptage1?.date.toLocaleString() || '-'
+          poids: result.comptage1.poids,
+          operator: this.includeOperatorNames ? result.comptage1.operatorName : result.comptage1.operatorId,
+          date: result.comptage1.date.toLocaleString(),
+          status: this.getStatusText(result.status)
         });
-      });
-    } else if (exportType === 'comptage2') {
-      resultsToPreview.forEach(result => {
+      }
+      if (result.comptage2) {
         previewData.push({
           type: 'Deuxième Comptage',
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
           typeMatiere: result.typeMatiere || 'Non spécifié',
-          poids: result.comptage2?.poids || '-',
-          operator: this.includeOperatorNames ? (result.comptage2?.operatorName || '-') : (result.comptage2?.operatorId || '-'),
-          date: result.comptage2?.date.toLocaleString() || '-'
+          poids: result.comptage2.poids,
+          operator: this.includeOperatorNames ? result.comptage2.operatorName : result.comptage2.operatorId,
+          date: result.comptage2.date.toLocaleString(),
+          status: this.getStatusText(result.status)
         });
-      });
-    } else if (exportType === 'comptage3') {
-      resultsToPreview.forEach(result => {
+      }
+      if (result.comptage3) {
         previewData.push({
           type: 'Troisième Comptage',
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
           typeMatiere: result.typeMatiere || 'Non spécifié',
-          poids: result.comptage3?.poids || '-',
-          operator: this.includeOperatorNames ? (result.comptage3?.operatorName || '-') : (result.comptage3?.operatorId || '-'),
-          date: result.comptage3?.date.toLocaleString() || '-'
+          poids: result.comptage3.poids,
+          operator: this.includeOperatorNames ? result.comptage3.operatorName : result.comptage3.operatorId,
+          date: result.comptage3.date.toLocaleString(),
+          status: this.getStatusText(result.status)
         });
-      });
-    } else if (exportType === 'comptageFinal') {
-      resultsToPreview.forEach(result => {
+      }
+      if (!result.comptage1 && (result.status === 'needsThird')) {
         previewData.push({
           type: 'Résultat Final',
           reference: this.extractReference(result.reference),
           lot: result.lot,
           sousLot: result.sousLot,
           typeMatiere: result.typeMatiere || 'Non spécifié',
-          poids: result.poidsFinal || '-',
+          poids: '-',
           operator: '-',
-          date: result.lastUpdate.toLocaleString()
+          date: result.lastUpdate.toLocaleString(),
+          status: this.getStatusText(result.status)
         });
-      });
-    } else {
-      resultsToPreview.forEach(result => {
-        if (result.comptage1) {
-          previewData.push({
-            type: 'Premier Comptage',
-            reference: this.extractReference(result.reference),
-            lot: result.lot,
-            sousLot: result.sousLot,
-            typeMatiere: result.typeMatiere || 'Non spécifié',
-            poids: result.comptage1.poids,
-            operator: this.includeOperatorNames ? result.comptage1.operatorName : result.comptage1.operatorId,
-            date: result.comptage1.date.toLocaleString(),
-            status: this.getStatusText(result.status)
-          });
-        }
-        if (result.comptage2) {
-          previewData.push({
-            type: 'Deuxième Comptage',
-            reference: this.extractReference(result.reference),
-            lot: result.lot,
-            sousLot: result.sousLot,
-            typeMatiere: result.typeMatiere || 'Non spécifié',
-            poids: result.comptage2.poids,
-            operator: this.includeOperatorNames ? result.comptage2.operatorName : result.comptage2.operatorId,
-            date: result.comptage2.date.toLocaleString(),
-            status: this.getStatusText(result.status)
-          });
-        }
-        if (result.comptage3) {
-          previewData.push({
-            type: 'Troisième Comptage',
-            reference: this.extractReference(result.reference),
-            lot: result.lot,
-            sousLot: result.sousLot,
-            typeMatiere: result.typeMatiere || 'Non spécifié',
-            poids: result.comptage3.poids,
-            operator: this.includeOperatorNames ? result.comptage3.operatorName : result.comptage3.operatorId,
-            date: result.comptage3.date.toLocaleString(),
-            status: this.getStatusText(result.status)
-          });
-        }
-        if (!result.comptage1 && (result.status === 'needsThird')) {
-          previewData.push({
-            type: 'Résultat Final',
-            reference: this.extractReference(result.reference),
-            lot: result.lot,
-            sousLot: result.sousLot,
-            typeMatiere: result.typeMatiere || 'Non spécifié',
-            poids: '-',
-            operator: '-',
-            date: result.lastUpdate.toLocaleString(),
-            status: this.getStatusText(result.status)
-          });
-        }
-      });
-    }
-
-    return previewData;
+      }
+    });
   }
+
+  return previewData;
+}
 
   // Export to Excel after preview
   exportToExcel(): void {
-    if (!this.selectedExportType) return;
+  if (!this.selectedExportType) return;
 
-    let data: any[] = [];
-    let filename = 'Resultats_Comptage';
-    let sheetName = 'Résultats';
+  let data: any[] = [];
+  let filename = 'Resultats_Comptage';
+  let sheetName = 'Résultats';
 
-    // Use the same filtered data as the preview
-    let resultsToExport = [...this.comptageResults];
-    switch (this.selectedExportType) {
-      case 'valid':
-        resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
-        filename += '_Valides';
-        sheetName = 'Validés';
-        break;
-      case 'needsThird':
+  // Filtrage selon le type d'export sélectionné
+  let resultsToExport = [...this.comptageResults];
+  
+  // Appliquer le filtrage par type de matière
+  resultsToExport = resultsToExport.filter(result => {
+    const typeMatiere = result.typeMatiere?.toLowerCase() || '';
+    return (typeMatiere.includes('cose') && this.includeCoseMatiere) || 
+           (typeMatiere.includes('file') && this.includeFileMatiere) || 
+           (!typeMatiere.includes('cose') && !typeMatiere.includes('file'));
+  });
+
+  // Filtrage supplémentaire selon le type de rapport
+  switch (this.selectedExportType) {
+    case 'valid':
+      resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
+      filename += '_Valides';
+      sheetName = 'Validés';
+      break;
+    case 'invalid':
         resultsToExport = resultsToExport.filter(r => r.status === 'needsThird');
-        filename += '_Besoin3eComptage';
-        sheetName = 'Besoin 3e Comptage';
+        filename += '_Invalides';
+        sheetName = 'Invalides';
         break;
-      case 'comptage1':
-        resultsToExport = resultsToExport.filter(r => !!r.comptage1);
-        filename += '_Comptage1';
-        sheetName = 'Comptage 1';
-        break;
-      case 'comptage2':
-        resultsToExport = resultsToExport.filter(r => !!r.comptage2);
-        filename += '_Comptage2';
-        sheetName = 'Comptage 2';
-        break;
-      case 'comptage3':
-        resultsToExport = resultsToExport.filter(r => !!r.comptage3);
-        filename += '_Comptage3';
-        sheetName = 'Comptage 3';
-        break;
-      case 'comptageFinal':
-        resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
-        filename += '_ComptageFinal';
-        sheetName = 'Comptage Final';
-        break;
-      case 'all':
-      default:
-        filename += '_Complet';
-        break;
-    }
-
-    // Tri par type de matière
-    resultsToExport.sort((a, b) => {
-      if (a.typeMatiere && b.typeMatiere) {
-        return a.typeMatiere.localeCompare(b.typeMatiere);
-      }
-      return 0;
-    });
-
-    // Prepare data for export
-    if (this.selectedExportType === 'comptage1') {
-      data = resultsToExport.map(result => ({
-        'Type de matière': result.typeMatiere || 'Non spécifié',
-        'Référence': this.extractReference(result.reference),
-        'Lot': result.lot,
-        'Sous-lot': result.sousLot,
-        'Poids Comptage 1 (g)': result.comptage1?.poids || '-',
-        'Opérateur Comptage 1': this.includeOperatorNames ? (result.comptage1?.operatorName || '-') : (result.comptage1?.operatorId || '-'),
-        'Date Comptage 1': result.comptage1?.date.toLocaleString() || '-'
-      }));
-    } else if (this.selectedExportType === 'comptage2') {
-      data = resultsToExport.map(result => ({
-        'Type de matière': result.typeMatiere || 'Non spécifié',
-        'Référence': this.extractReference(result.reference),
-        'Lot': result.lot,
-        'Sous-lot': result.sousLot,
-        'Poids Comptage 2 (g)': result.comptage2?.poids || '-',
-        'Opérateur Comptage 2': this.includeOperatorNames ? (result.comptage2?.operatorName || '-') : (result.comptage2?.operatorId || '-'),
-        'Date Comptage 2': result.comptage2?.date.toLocaleString() || '-'
-      }));
-    } else if (this.selectedExportType === 'comptage3') {
-      data = resultsToExport.map(result => ({
-        'Type de matière': result.typeMatiere || 'Non spécifié',
-        'Référence': this.extractReference(result.reference),
-        'Lot': result.lot,
-        'Sous-lot': result.sousLot,
-        'Poids Comptage 3 (g)': result.comptage3?.poids || '-',
-        'Opérateur Comptage 3': this.includeOperatorNames ? (result.comptage3?.operatorName || '-') : (result.comptage3?.operatorId || '-'),
-        'Date Comptage 3': result.comptage3?.date.toLocaleString() || '-'
-      }));
-    } else if (this.selectedExportType === 'comptageFinal') {
-      data = resultsToExport.map(result => ({
-        'Type de matière': result.typeMatiere || 'Non spécifié',
-        'Référence': this.extractReference(result.reference),
-        'Lot': result.lot,
-        'Sous-lot': result.sousLot,
-        'Poids Final (g)': result.poidsFinal || '-',
-        'Dernière Mise à Jour': result.lastUpdate.toLocaleString()
-      }));
-    } else {
-      data = resultsToExport.flatMap(result => {
-        const rows: any[] = [];
-        if (result.comptage1) {
-          rows.push({
-            'Type de matière': result.typeMatiere || 'Non spécifié',
-            'Type de comptage': 'Premier Comptage',
-            'Référence': this.extractReference(result.reference),
-            'Lot': result.lot,
-            'Sous-lot': result.sousLot,
-            'Poids (g)': result.comptage1.poids,
-            'Opérateur': this.includeOperatorNames ? result.comptage1.operatorName : result.comptage1.operatorId,
-            'Poids Final (g)': result.poidsFinal || '-',
-            'Date': result.comptage1.date.toLocaleString(),
-            'Statut': this.getStatusText(result.status)
-          });
-        }
-        if (result.comptage2) {
-          rows.push({
-            'Type de matière': result.typeMatiere || 'Non spécifié',
-            'Type de comptage': 'Deuxième Comptage',
-            'Référence': this.extractReference(result.reference),
-            'Lot': result.lot,
-            'Sous-lot': result.sousLot,
-            'Poids (g)': result.comptage2.poids,
-            'Opérateur': this.includeOperatorNames ? result.comptage2.operatorName : result.comptage2.operatorId,
-            'Poids Final (g)': result.poidsFinal || '-',
-            'Date': result.comptage2.date.toLocaleString(),
-            'Statut': this.getStatusText(result.status)
-          });
-        }
-        if (result.comptage3) {
-          rows.push({
-            'Type de matière': result.typeMatiere || 'Non spécifié',
-            'Type de comptage': 'Troisième Comptage',
-            'Référence': this.extractReference(result.reference),
-            'Lot': result.lot,
-            'Sous-lot': result.sousLot,
-            'Poids (g)': result.comptage3.poids,
-            'Opérateur': this.includeOperatorNames ? result.comptage3.operatorName : result.comptage3.operatorId,
-            'Poids Final (g)': result.poidsFinal || '-',
-            'Date': result.comptage3.date.toLocaleString(),
-            'Statut': this.getStatusText(result.status)
-          });
-        }
-        if (!result.comptage1 && (result.status === 'needsThird')) {
-          rows.push({
-            'Type de matière': result.typeMatiere || 'Non spécifié',
-            'Type de comptage': 'Résultat Final',
-            'Référence': this.extractReference(result.reference),
-            'Lot': result.lot,
-            'Sous-lot': result.sousLot,
-            'Poids (g)': '-',
-            'Opérateur': '-',
-            'Poids Final (g)': '-',
-            'Date': result.lastUpdate.toLocaleString(),
-            'Statut': this.getStatusText(result.status)
-          });
-        }
-        return rows;
-      });
-    }
-
-    // Generate Excel file
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
-    // Set column widths
-    if (this.selectedExportType === 'comptage1' || this.selectedExportType === 'comptage2' || this.selectedExportType === 'comptage3') {
-      ws['!cols'] = [
-        { wch: 15 }, // Type de matière
-        { wch: 15 }, // Référence
-        { wch: 10 }, // Lot
-        { wch: 10 }, // Sous-lot
-        { wch: 20 }, // Poids Comptage
-        { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur
-        { wch: 25 }  // Date
-      ];
-    } else if (this.selectedExportType === 'comptageFinal') {
-      ws['!cols'] = [
-        { wch: 15 }, // Type de matière
-        { wch: 15 }, // Référence
-        { wch: 10 }, // Lot
-        { wch: 10 }, // Sous-lot
-        { wch: 20 }, // Poids Final
-        { wch: 25 }  // Dernière Mise à Jour
-      ];
-    } else {
-      ws['!cols'] = [
-        { wch: 15 }, // Type de matière
-        { wch: 20 }, // Type de comptage
-        { wch: 15 }, // Référence
-        { wch: 10 }, // Lot
-        { wch: 10 }, // Sous-lot
-        { wch: 15 }, // Poids (g)
-        { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur
-        { wch: 15 }, // Poids Final (g)
-        { wch: 25 }, // Date
-        { wch: 20 }  // Statut
-      ];
-    }
-
-    XLSX.writeFile(wb, `${filename}.xlsx`);
-    this.prevModal?.hide();
+    case 'needsThird':
+      resultsToExport = resultsToExport.filter(r => r.status === 'needsThird');
+      filename += '_Besoin3eComptage';
+      sheetName = 'Besoin 3e Comptage';
+      break;
+    case 'incomplete':
+      resultsToExport = resultsToExport.filter(r => r.status === 'incomplete');
+      filename += '_Incomplets';
+      sheetName = 'Incomplets';
+      break;
+    case 'comptage1':
+      resultsToExport = resultsToExport.filter(r => !!r.comptage1);
+      filename += '_Comptage1';
+      sheetName = 'Comptage 1';
+      break;
+    case 'comptage2':
+      resultsToExport = resultsToExport.filter(r => !!r.comptage2);
+      filename += '_Comptage2';
+      sheetName = 'Comptage 2';
+      break;
+    case 'comptage3':
+      resultsToExport = resultsToExport.filter(r => !!r.comptage3);
+      filename += '_Comptage3';
+      sheetName = 'Comptage 3';
+      break;
+    case 'comptageFinal':
+      resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
+      filename += '_ComptageFinal';
+      sheetName = 'Comptage Final';
+      break;
+    case 'all':
+    default:
+      filename += '_Complet';
+      break;
   }
+
+  // Ajouter un indicateur pour les types de matière inclus
+  if (this.includeCoseMatiere && !this.includeFileMatiere) {
+    filename += '_CoseOnly';
+  } else if (!this.includeCoseMatiere && this.includeFileMatiere) {
+    filename += '_FileOnly';
+  }
+
+  // Préparation des données d'export
+  if (this.selectedExportType === 'comptage1') {
+    data = resultsToExport.map(result => ({
+      Référence: this.extractReference(result.reference),
+      Lot: result.lot,
+      'Sous-lot': result.sousLot,
+      'Type de matière': result.typeMatiere || 'Non spécifié',
+      'Poids Comptage 1 (g)': result.comptage1?.poids || '-',
+      'Opérateur Comptage 1': this.includeOperatorNames ? (result.comptage1?.operatorName || '-') : (result.comptage1?.operatorId || '-'),
+      'Date Comptage 1': result.comptage1?.date.toLocaleString() || '-'
+    }));
+  } else if (this.selectedExportType === 'comptage2') {
+    data = resultsToExport.map(result => ({
+      Référence: this.extractReference(result.reference),
+      Lot: result.lot,
+      'Sous-lot': result.sousLot,
+      'Type de matière': result.typeMatiere || 'Non spécifié',
+      'Poids Comptage 2 (g)': result.comptage2?.poids || '-',
+      'Opérateur Comptage 2': this.includeOperatorNames ? (result.comptage2?.operatorName || '-') : (result.comptage2?.operatorId || '-'),
+      'Date Comptage 2': result.comptage2?.date.toLocaleString() || '-'
+    }));
+  } else if (this.selectedExportType === 'comptage3') {
+    data = resultsToExport.map(result => ({
+      Référence: this.extractReference(result.reference),
+      Lot: result.lot,
+      'Sous-lot': result.sousLot,
+      'Type de matière': result.typeMatiere || 'Non spécifié',
+      'Poids Comptage 3 (g)': result.comptage3?.poids || '-',
+      'Opérateur Comptage 3': this.includeOperatorNames ? (result.comptage3?.operatorName || '-') : (result.comptage3?.operatorId || '-'),
+      'Date Comptage 3': result.comptage3?.date.toLocaleString() || '-'
+    }));
+  } else if (this.selectedExportType === 'comptageFinal') {
+    data = resultsToExport.map(result => ({
+      Référence: this.extractReference(result.reference),
+      Lot: result.lot,
+      'Sous-lot': result.sousLot,
+      'Type de matière': result.typeMatiere || 'Non spécifié',
+      'Poids Final (g)': result.poidsFinal || '-',
+      'Dernière Mise à Jour': result.lastUpdate.toLocaleString()
+    }));
+  } else {
+    data = resultsToExport.flatMap(result => {
+      const rows: any[] = [];
+      if (result.comptage1) {
+        rows.push({
+          'Type de comptage': 'Premier Comptage',
+          Référence: this.extractReference(result.reference),
+          Lot: result.lot,
+          'Sous-lot': result.sousLot,
+          'Type de matière': result.typeMatiere || 'Non spécifié',
+          'Poids (g)': result.comptage1.poids,
+          Opérateur: this.includeOperatorNames ? result.comptage1.operatorName : result.comptage1.operatorId,
+          'Poids Final (g)': result.poidsFinal || '-',
+          Date: result.comptage1.date.toLocaleString(),
+          Statut: this.getStatusText(result.status)
+        });
+      }
+      if (result.comptage2) {
+        rows.push({
+          'Type de comptage': 'Deuxième Comptage',
+          Référence: this.extractReference(result.reference),
+          Lot: result.lot,
+          'Sous-lot': result.sousLot,
+          'Type de matière': result.typeMatiere || 'Non spécifié',
+          'Poids (g)': result.comptage2.poids,
+          Opérateur: this.includeOperatorNames ? result.comptage2.operatorName : result.comptage2.operatorId,
+          'Poids Final (g)': result.poidsFinal || '-',
+          Date: result.comptage2.date.toLocaleString(),
+          Statut: this.getStatusText(result.status)
+        });
+      }
+      if (result.comptage3) {
+        rows.push({
+          'Type de comptage': 'Troisième Comptage',
+          Référence: this.extractReference(result.reference),
+          Lot: result.lot,
+          'Sous-lot': result.sousLot,
+          'Type de matière': result.typeMatiere || 'Non spécifié',
+          'Poids (g)': result.comptage3.poids,
+          Opérateur: this.includeOperatorNames ? result.comptage3.operatorName : result.comptage3.operatorId,
+          'Poids Final (g)': result.poidsFinal || '-',
+          Date: result.comptage3.date.toLocaleString(),
+          Statut: this.getStatusText(result.status)
+        });
+      }
+      if (!result.comptage1 && (result.status === 'incomplete')) {
+        rows.push({
+          'Type de comptage': 'Résultat Final',
+          Référence: this.extractReference(result.reference),
+          Lot: result.lot,
+          'Sous-lot': result.sousLot,
+          'Type de matière': result.typeMatiere || 'Non spécifié',
+          'Poids (g)': '-',
+          Opérateur: '-',
+          'Poids Final (g)': '-',
+          Date: result.lastUpdate.toLocaleString(),
+          Statut: this.getStatusText(result.status)
+        });
+      }
+      return rows;
+    });
+  }
+
+  // Générer Excel file
+  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+  const wb: XLSX.WorkBook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  // Définir les largeurs de colonnes
+  if (this.selectedExportType === 'comptage1') {
+    ws['!cols'] = [
+      { wch: 15 }, // Référence
+      { wch: 10 }, // Lot
+      { wch: 10 }, // Sous-lot
+      { wch: 15 }, // Type de matière
+      { wch: 20 }, // Poids Comptage 1
+      { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur Comptage 1
+      { wch: 25 }  // Date Comptage 1
+    ];
+  } else if (this.selectedExportType === 'comptage2') {
+    ws['!cols'] = [
+      { wch: 15 }, // Référence
+      { wch: 10 }, // Lot
+      { wch: 10 }, // Sous-lot
+      { wch: 15 }, // Type de matière
+      { wch: 20 }, // Poids Comptage 2
+      { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur Comptage 2
+      { wch: 25 }  // Date Comptage 2
+    ];
+  } else if (this.selectedExportType === 'comptage3') {
+    ws['!cols'] = [
+      { wch: 15 }, // Référence
+      { wch: 10 }, // Lot
+      { wch: 10 }, // Sous-lot
+      { wch: 15 }, // Type de matière
+      { wch: 20 }, // Poids Comptage 3
+      { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur Comptage 3
+      { wch: 25 }  // Date Comptage 3
+    ];
+  } else if (this.selectedExportType === 'comptageFinal') {
+    ws['!cols'] = [
+      { wch: 15 }, // Référence
+      { wch: 10 }, // Lot
+      { wch: 10 }, // Sous-lot
+      { wch: 15 }, // Type de matière
+      { wch: 20 }, // Poids Final
+      { wch: 25 }  // Dernière Mise à Jour
+    ];
+  } else {
+    ws['!cols'] = [
+      { wch: 20 }, // Type de comptage
+      { wch: 15 }, // Référence
+      { wch: 10 }, // Lot
+      { wch: 10 }, // Sous-lot
+      { wch: 15 }, // Type de matière
+      { wch: 15 }, // Poids (g)
+      { wch: this.includeOperatorNames ? 20 : 15 }, // Opérateur
+      { wch: 15 }, // Poids Final (g)
+      { wch: 25 }, // Date
+      { wch: 20 }  // Statut
+    ];
+  }
+
+  XLSX.writeFile(wb, `${filename}.xlsx`);
+  this.prevModal?.hide();
+}
 }
