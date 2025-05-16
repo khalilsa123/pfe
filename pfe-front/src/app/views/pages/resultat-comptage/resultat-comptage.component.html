@@ -453,33 +453,3 @@
 </div>
 
 <!-- Modal pour sélectionner un opérateur pour le 3e comptage -->
-<div class="modal fade" [class.show]="showOperatorsList" [style.display]="showOperatorsList ? 'block' : 'none'" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Sélection d'un opérateur pour le 3e comptage</h5>
-        <button type="button" class="btn-close" (click)="showOperatorsList = false" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Sélectionnez un opérateur pour effectuer le 3e comptage de la référence: 
-          <strong>{{ selectedResultForThirdCount?.reference }}</strong></p>
-        <div class="list-group">
-          <button *ngFor="let op of availableOperators" 
-                  type="button" class="list-group-item list-group-item-action"
-                  (click)="assignOperatorForThirdCount(op.id!)">
-            {{ op.firstname }} {{ op.lastname }}
-          </button>
-        </div>
-        <div *ngIf="availableOperators.length === 0" class="text-center p-3">
-          <p>Aucun opérateur disponible</p>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="showOperatorsList = false">Annuler</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Overlay pour le modal d'opérateurs -->
-<div class="modal-backdrop fade show" *ngIf="showOperatorsList"></div>

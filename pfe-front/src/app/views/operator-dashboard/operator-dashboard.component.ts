@@ -193,14 +193,14 @@ export class OperatorDashboardComponent implements OnInit {
     ).toUpperCase();
   }
 
-  parseReference(fullReference: string): { ref: string; qte: string; lot: string; sousLot: string } {
+  parseReference(fullReference: string): { ref: string; qte: Number; lot: string; sousLot: string } {
     if (!fullReference) {
-      return { ref: '', qte: '', lot: '', sousLot: '' };
+      return { ref: '', qte: 0, lot: '', sousLot: '' };
     }
     const parts = fullReference.split(/[$#]/);
     return {
       ref: parts[0] || '',
-      qte: parts[1] || '0',
+      qte: Number(parts[1] || '0'),
       lot: parts.length > 2 ? parts[2] : '000',
       sousLot: parts.length > 3 ? parts[3] : '001'
     };
@@ -770,7 +770,7 @@ onUsersPageChange(page: number): void {
 
     const comptage: Comptage = {
       reference: this.newComptage.reference,
-      quantiteTotale: parseInt(referenceParts.qte) || 0,
+      quantiteTotale: parseInt(referenceParts.qte.toString()) || 0,
       numLot: referenceParts.lot,
       numSousLot: referenceParts.sousLot,
       poids: Number(this.newComptage.poids),

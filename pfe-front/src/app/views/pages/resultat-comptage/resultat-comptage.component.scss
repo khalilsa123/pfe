@@ -178,12 +178,12 @@ $btn-info-bg:      #17a2b8;  // Pour le bouton de tri
   display: flex;
   min-height: 100vh;
   font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
-  background: $onetech-light-gray;
+  background: #f5f7fa;
 }
 
 /* Sidebar */
 .sidebar {
-  width: 240px;
+  width: 220px;
   background: linear-gradient(155deg, $onetech-blue, $onetech-dark-blue);
   color: $sidebar-text;
   padding: 1.5rem 1rem;
@@ -221,10 +221,12 @@ $btn-info-bg:      #17a2b8;  // Pour le bouton de tri
 /* Contenu principal */
 .main-content {
   flex: 1;
-  margin-left: 240px;
+  margin-left: 220px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
+  padding: 0;
 }
 
 /* Barre supérieure avec Avatar */
@@ -232,9 +234,10 @@ $btn-info-bg:      #17a2b8;  // Pour le bouton de tri
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.75rem;
+  padding: 1rem;
   background: $onetech-white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
   
   .app-title {
     margin: 0;
@@ -342,8 +345,10 @@ $btn-info-bg:      #17a2b8;  // Pour le bouton de tri
 
 /* Zone de contenu */
 .content-area {
-  padding: 1.75rem;
+  padding: 1rem;
   flex: 1;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Styles spécifiques à la page Résultat Comptage */
@@ -351,7 +356,11 @@ $btn-info-bg:      #17a2b8;  // Pour le bouton de tri
   background-color: $onetech-white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 20px;
+  padding: 15px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border-radius: 0;
 }
 
 // En-tête de section
@@ -505,6 +514,9 @@ $btn-info-bg:      #17a2b8;  // Pour le bouton de tri
   box-shadow: 0 2px 6px rgba(0, 83, 140, 0.12);
   overflow: hidden;
   margin-bottom: 2rem;
+  overflow-x: auto;
+  width: 100%;
+  margin: 0 0 2rem 0;
 }
 
 .table-responsive {

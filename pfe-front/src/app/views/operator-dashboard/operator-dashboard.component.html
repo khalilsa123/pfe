@@ -166,6 +166,19 @@
             </div>
 
             <div class="form-group">
+              <label class="mb-0">Type de matière*</label>
+              <select
+                name="typeMatiere"
+                class="form-control form-control-sm"
+                required
+                [(ngModel)]="newComptage.typeMatiere">
+                <option [ngValue]="null" disabled>Sélectionner...</option>
+                <option value="Cousue">Cousue</option>
+                <option value="Filée">Filée</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label class="mb-0">Poids (g)*</label>
               <input
                 type="number"
