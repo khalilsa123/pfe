@@ -1,5 +1,5 @@
+// src/main/java/com/example/loginpfe/controller/StockController.java
 package com.example.loginpfe.controller;
-
 
 import com.example.loginpfe.Service.StockService;
 import com.example.loginpfe.entity.Stock;
@@ -18,7 +18,7 @@ public class StockController {
     }
 
     /**
-     * GET /api/stocks → list all stock entries
+     * GET /api/stocks → liste tous les stocks
      */
     @GetMapping
     public List<Stock> listAll() {
@@ -26,7 +26,7 @@ public class StockController {
     }
 
     /**
-     * GET /api/stocks/{ref} → retrieve one by reference
+     * GET /api/stocks/{reference} → récupère un stock par référence
      */
     @GetMapping("/{reference}")
     public Stock getByReference(@PathVariable String reference) {

@@ -6,7 +6,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "comptage")
 public class Comptage {
+
     @ManyToOne
     @JsonIgnoreProperties("comptages")
     @JoinColumn(name = "session_id")
@@ -15,8 +17,10 @@ public class Comptage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "operateur_username")
     private String operateurUsername;
+
     // Identifiant de l'opérateur qui effectue le comptage
     private Long operateurId;
 
@@ -32,9 +36,12 @@ public class Comptage {
     // Numéro de sous-lot via QR code
     private String numSousLot;
 
-    // Type de matière (pour l'instant, à modifier ultérieurement)
+    // Type de matière (ex. "Cousue", "Filée", …)
     private String typeMatiere;
-    private String getNombreIterations;
+
+    // Nombre d'itérations réalisées sur cette référence et ce type de comptage
+    private String nombreIterations;
+
     // Mesure de la quantité (en grammes) saisie par l'opérateur
     private double poids;
 
@@ -51,7 +58,8 @@ public class Comptage {
         this.timestamp = LocalDateTime.now();
     }
 
-    // Getters et Setters
+    // ————— Getters & Setters —————
+
     public Long getId() {
         return id;
     }
@@ -66,6 +74,14 @@ public class Comptage {
 
     public void setSession(SessionInventaire session) {
         this.session = session;
+    }
+
+    public String getOperateurUsername() {
+        return operateurUsername;
+    }
+
+    public void setOperateurUsername(String operateurUsername) {
+        this.operateurUsername = operateurUsername;
     }
 
     public Long getOperateurId() {
@@ -116,6 +132,14 @@ public class Comptage {
         this.typeMatiere = typeMatiere;
     }
 
+    public String getNombreIterations() {
+        return nombreIterations;
+    }
+
+    public void setNombreIterations(String nombreIterations) {
+        this.nombreIterations = nombreIterations;
+    }
+
     public double getPoids() {
         return poids;
     }
@@ -146,17 +170,5 @@ public class Comptage {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public String getOperateurUsername() {
-        return operateurUsername;
-    }
-
-    public void setOperateurUsername(String operateurUsername) {
-        this.operateurUsername = operateurUsername;
-    }
-
-    public String getNombreIterations() {
-        return getNombreIterations;
     }
 }

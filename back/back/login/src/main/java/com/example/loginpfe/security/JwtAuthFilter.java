@@ -1,3 +1,4 @@
+// src/main/java/com/example/loginpfe/security/JwtAuthFilter.java
 package com.example.loginpfe.security;
 
 import com.example.loginpfe.Service.JwtService;
@@ -35,40 +36,27 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        // 1) Log request and header
         String authHeader = request.getHeader("Authorization");
-        logger.debug("JwtAuthFilter - {} {} - Authorization: {}",
+        logger.debug("JwtAuthFilter → {} {} → Authorization: {}",
                 request.getMethod(), request.getRequestURI(), authHeader);
 
-        // 2) Validate Bearer token presence
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             String username = jwtService.extractUsername(token);
-            logger.debug("Extracted username: {}", username);
+            logger.debug("Token extracted username: {}", username);
 
-            // 3) If not already authenticated, validate token
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                boolean isValid = jwtService.validateToken(token, userDetails);
-                logger.debug("Token valid: {}", isValid);
-
-                // 4) Build authentication and set context
-                if (isValid) {
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+                if (jwtService.validateToken(token, userDetails)) {
+                    var authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
                     authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
+                            new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
         }
 
-        // 5) Continue filter chain
         filterChain.doFilter(request, response);
     }
 }
