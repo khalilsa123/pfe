@@ -867,6 +867,61 @@ $btn-info-bg:      #17a2b8;  // Pour le bouton de tri
     color: #ef6c00;
   }
 }
+.pagination-container {
+  background-color: rgba(245, 247, 250, 0.7);
+  padding: 10px 15px;
+  border-radius: 0 0 8px 8px;
+  border: 1px solid #d8dee3;
+  border-top: none;
+  
+  .pagination-info {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+  
+  .form-select {
+    width: auto;
+    display: inline-block;
+  }
+  
+  .page-link {
+    color: $onetech-blue;
+    border-color: #e2e8f0;
+    padding: 0.375rem 0.75rem;
+    
+    &:focus {
+      box-shadow: 0 0 0 0.25rem rgba(0, 116, 181, 0.25);
+    }
+  }
+  
+  .page-item {
+    &.active .page-link {
+      background-color: $onetech-blue;
+      border-color: $onetech-blue;
+    }
+    
+    &.disabled .page-link {
+      color: #a0aec0;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .d-flex {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .pagination-info, 
+    .d-flex > div {
+      width: 100%;
+      text-align: center;
+    }
+    
+    .pagination {
+      justify-content: center;
+    }
+  }
+}
 
 /* Styles for iteration badges */
 .iteration-badge {

@@ -61,7 +61,6 @@ export class StatisticsDashboardComponent implements OnInit {
       this.isLoading = false;
       return;
     }
-
     this.loadData();
   }
 
@@ -70,18 +69,21 @@ export class StatisticsDashboardComponent implements OnInit {
       next: (stocks: Stock[]) => {
         this.stocks = stocks;
         this.totalStockItems = stocks.length;
-        this.totalStockWeight = stocks.reduce((total, stock) => total + (stock.quantiteTotale || 0), 0);
+        this.totalStockWeight = stocks.reduce((sum, s) => sum + (s.quantiteTotale || 0), 0);
 
-        stocks.forEach(stock => {
-          if (stock.reference) {
-            this.uniqueReferences.add(stock.reference);
-          }
+        // **Utiliser parseReference pour générer les mêmes clés que pour les comptages**
+        this.uniqueReferences.clear();
+        stocks.forEach(s => {
+          if (!s.reference) return;
+          const { ref, lot, sousLot } = this.parseReference(s.reference);
+          const key = `${ref}$${lot}$${sousLot}`;
+          this.uniqueReferences.add(key);
         });
 
         this.loadComptages();
       },
-      error: (err: unknown) => {
-        console.error('Erreur lors du chargement des stocks', err);
+      error: err => {
+        console.error('Erreur chargement stocks', err);
         this.isLoading = false;
       }
     });
@@ -89,27 +91,22 @@ export class StatisticsDashboardComponent implements OnInit {
 
   private loadComptages(): void {
     this.comptageService.getAllComptages().subscribe({
-      next: (comptages: Comptage[]) => {
-        this.comptages = comptages;
+      next: (c: Comptage[]) => {
+        this.comptages = c;
         this.processComptageData();
         this.isLoading = false;
       },
-      error: (err: unknown) => {
-        console.error('Erreur lors du chargement des comptages', err);
+      error: err => {
+        console.error('Erreur chargement comptages', err);
         this.isLoading = false;
       }
     });
   }
 
   private processComptageData(): void {
-    // Réinitialiser les compteurs
-    this.comptage1Count = 0;
-    this.comptage2Count = 0;
-    this.comptage3Count = 0;
-    this.userComptage1Count = 0;
-    this.userComptage2Count = 0;
-    this.userComptage3Count = 0;
-    this.userTotalCount = 0;
+    // Réinitialisation
+    this.comptage1Count = this.comptage2Count = this.comptage3Count = 0;
+    this.userComptage1Count = this.userComptage2Count = this.userComptage3Count = this.userTotalCount = 0;
     this.processedReferences.clear();
     this.validatedReferences.clear();
 
@@ -118,34 +115,34 @@ export class StatisticsDashboardComponent implements OnInit {
     this.comptages.forEach(comptage => {
       if (!comptage.reference) return;
 
-      const parts = comptage.reference.split('$');
+      const parts = comptage.reference.split(/[$#]/);
       if (parts.length < 4) return;
 
-      const ref = parts[0];
-      const lot = parts[2];
+      const ref     = parts[0];
+      const lot     = parts[2];
       const sousLot = parts[3];
-      const refKey = `${ref}$${lot}$${sousLot}`;
+      const refKey  = `${ref}$${lot}$${sousLot}`;
 
+      // Regroupe
       if (!comptagesByRef.has(refKey)) {
         comptagesByRef.set(refKey, []);
       }
       comptagesByRef.get(refKey)!.push(comptage);
 
-      if (comptage.numComptage === 1) {
-        this.comptage1Count++;
-        if (comptage.operateurId === this.user?.id) {
-          this.userComptage1Count++;
-        }
-      } else if (comptage.numComptage === 2) {
-        this.comptage2Count++;
-        if (comptage.operateurId === this.user?.id) {
-          this.userComptage2Count++;
-        }
-      } else if (comptage.numComptage === 3) {
-        this.comptage3Count++;
-        if (comptage.operateurId === this.user?.id) {
-          this.userComptage3Count++;
-        }
+      // Comptages par type
+      switch (comptage.numComptage) {
+        case 1:
+          this.comptage1Count++;
+          if (comptage.operateurId === this.user?.id) this.userComptage1Count++;
+          break;
+        case 2:
+          this.comptage2Count++;
+          if (comptage.operateurId === this.user?.id) this.userComptage2Count++;
+          break;
+        case 3:
+          this.comptage3Count++;
+          if (comptage.operateurId === this.user?.id) this.userComptage3Count++;
+          break;
       }
 
       if (comptage.operateurId === this.user?.id) {
@@ -153,36 +150,51 @@ export class StatisticsDashboardComponent implements OnInit {
       }
     });
 
-    comptagesByRef.forEach((comps, refKey) => {
+    // Validation des références
+    comptagesByRef.forEach((list, refKey) => {
       this.processedReferences.add(refKey);
+      const c1 = list.find(x => x.numComptage === 1);
+      const c2 = list.find(x => x.numComptage === 2);
+      const c3 = list.find(x => x.numComptage === 3);
 
-      const comptage1 = comps.find(c => c.numComptage === 1);
-      const comptage2 = comps.find(c => c.numComptage === 2);
-      const comptage3 = comps.find(c => c.numComptage === 3);
-
-      if (comptage1 && comptage2) {
-        const poids1 = comptage1.poids || 0;
-        const poids2 = comptage2.poids || 0;
-        const maxPoids = Math.max(poids1, poids2);
-        const difference = maxPoids === 0 ? 0 : Math.abs(poids1 - poids2) / maxPoids * 100;
-
-        if (difference < 5 || comptage3) {
+      if (c1 && c2) {
+        const diffPct = Math.abs(c1.poids - c2.poids) / Math.max(c1.poids, c2.poids) * 100;
+        if (diffPct < 5 || !!c3) {
           this.validatedReferences.add(refKey);
         }
       }
     });
 
-    this.pendingReferences = this.processedReferences.size - this.validatedReferences.size;
-    this.invalidPercentage = this.uniqueReferences.size > 0 ? (this.pendingReferences / this.uniqueReferences.size) * 100 : 0;
+    // Calcul des pourcentages
+    const totalRefs = this.uniqueReferences.size;
+    const doneRefs  = this.processedReferences.size;
+    const valRefs   = this.validatedReferences.size;
 
-    if (this.uniqueReferences.size > 0) {
-      this.completionPercentage = (this.processedReferences.size / this.uniqueReferences.size) * 100;
-      this.validatedPercentage = (this.validatedReferences.size / this.uniqueReferences.size) * 100;
-    }
+    this.pendingReferences = doneRefs - valRefs;
+    this.completionPercentage = totalRefs ? doneRefs  / totalRefs * 100 : 0;
+    this.validatedPercentage  = totalRefs ? valRefs   / totalRefs * 100 : 0;
+    this.invalidPercentage    = totalRefs ? this.pendingReferences / totalRefs * 100 : 0;
 
-    if (this.totalStockItems > 0) {
-      this.userCompletionPercentage = (this.userTotalCount / (this.totalStockItems * 2)) * 100;
-    }
+    // Progression utilisateur (2 comptages max par article)
+    this.userCompletionPercentage = this.totalStockItems
+      ? this.userTotalCount / (this.totalStockItems * 2) * 100
+      : 0;
+  }
+
+  /** Reprend le parsing pour conserver la même logique */
+  private parseReference(fullReference: string): {
+    ref: string;
+    qte: number;
+    lot: string;
+    sousLot: string;
+  } {
+    const parts = fullReference.split(/[$#]/);
+    return {
+      ref:     parts[0]          || '',
+      qte:     Number(parts[1]) || 0,
+      lot:     parts[2]          || '',
+      sousLot: parts[3]          || ''
+    };
   }
 
   exportToExcel(): void {

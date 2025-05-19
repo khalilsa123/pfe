@@ -37,6 +37,8 @@ interface ComptageWithOperator extends Comptage {
   operatorName?: string;
 }
 
+
+
 @Component({
   selector: 'app-operator-dashboard',
   standalone: true,
@@ -58,6 +60,7 @@ interface ComptageWithOperator extends Comptage {
   templateUrl: './operator-dashboard.component.html',
   styleUrls: ['./operator-dashboard.component.scss']
 })
+
 export class OperatorDashboardComponent implements OnInit {
    @ViewChild('sessionComptagesTable', { read: ElementRef }) sessionComptagesTable?: ElementRef;
   sessionSearchTerm = '';
@@ -94,7 +97,7 @@ export class OperatorDashboardComponent implements OnInit {
   newSession: Partial<SessionInventaire> = {};
   selectedSession: SessionInventaire | null = null;
   sessionComptages: ComptageWithOperator[] = [];
-  newComptage: Partial<Comptage> = {};
+  newComptage: Partial<Comptage> = { typeMatiere: '' };
   editing = false;
   selectedUserId: number | null = null;
 
@@ -770,6 +773,7 @@ onUsersPageChange(page: number): void {
 
     const comptage: Comptage = {
       reference: this.newComptage.reference,
+       typeMatiere:     this.newComptage.typeMatiere, 
       quantiteTotale: parseInt(referenceParts.qte.toString()) || 0,
       numLot: referenceParts.lot,
       numSousLot: referenceParts.sousLot,

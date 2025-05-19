@@ -172,9 +172,9 @@
                 class="form-control form-control-sm"
                 required
                 [(ngModel)]="newComptage.typeMatiere">
-                <option [ngValue]="null" disabled>Sélectionner...</option>
-                <option value="Cousue">Cousue</option>
-                <option value="Filée">Filée</option>
+                <option value="" disabled>Sélectionner...</option>
+                <option value="Cosse">Cosse</option>
+                <option value="	Fil">	Fil</option>
               </select>
             </div>
 
@@ -231,6 +231,7 @@
                   <th>Réf.</th>
                   <th>Lot</th>
                   <th>Sous-lot</th>
+                  <th>Type de matière</th>
                   <th>Qté</th>
                   <th>Empl.</th>
                   <th>Poids</th>
@@ -243,9 +244,17 @@
               </thead>
               <tbody>
   <tr *ngFor="let c of paginatedComptages">
-    <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
-    <td>{{ parseReference(c.reference).lot }}</td>
-    <td>{{ parseReference(c.reference).sousLot }}</td>
+    <td class="reference-cell">
+  {{ parseReference(c.reference).ref || c.reference }}
+</td>
+<td>
+  {{ parseReference(c.reference).lot || c.numLot }}
+</td>
+<td>
+  {{ parseReference(c.reference).sousLot || c.numSousLot }}
+</td>
+
+      <td>{{ c.typeMatiere || '–' }}</td>
     <td>{{ parseReference(c.reference).qte }}</td>
     <td>{{ c.emplacement || '–' }}</td>
     <td>{{ c.poids }} g</td>
@@ -274,7 +283,7 @@
     </td>
   </tr>
   <tr *ngIf="!paginatedComptages.length">
-    <td colspan="11" class="text-center py-3">Aucun comptage pour cet utilisateur</td>
+    <td colspan="12" class="text-center py-3">Aucun comptage pour cet utilisateur</td>
   </tr>
 </tbody>
 
@@ -401,6 +410,7 @@
                     <th>Réf.</th>
                     <th>Lot</th>
                     <th>Sous-lot</th>
+                    <th>Type de matière</th>
                     <th>Qté</th>
                     <th>Empl.</th>
                     <th>Poids</th>
@@ -412,9 +422,17 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let c of paginatedSessionComptages">
-                    <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
-                    <td>{{ parseReference(c.reference).lot }}</td>
-                    <td>{{ parseReference(c.reference).sousLot }}</td>
+                 <td class="reference-cell">
+  {{ parseReference(c.reference).ref || c.reference }}
+</td>
+<td>
+  {{ parseReference(c.reference).lot || c.numLot }}
+</td>
+<td>
+  {{ parseReference(c.reference).sousLot || c.numSousLot }}
+</td>
+
+                      <td>{{ c.typeMatiere || '–' }}</td>
                     <td>{{ parseReference(c.reference).qte }}</td>
                     <td>{{ c.emplacement || '–' }}</td>
                     <td>{{ c.poids }}</td>
@@ -468,6 +486,7 @@
                   <th>Réf.</th>
                   <th>Lot</th>
                   <th>Sous-lot</th>
+                  <th>Type de matière</th>
                   <th>Qté</th>
                   <th>Empl.</th>
                   <th>Poids</th>
@@ -479,9 +498,17 @@
               </thead>
               <tbody>
                 <tr *ngFor="let c of paginatedComptages">
-                  <td class="reference-cell">{{ parseReference(c.reference).ref }}</td>
-                  <td>{{ parseReference(c.reference).lot }}</td>
-                  <td>{{ parseReference(c.reference).sousLot }}</td>
+                <td class="reference-cell">
+  {{ parseReference(c.reference).ref || c.reference }}
+</td>
+<td>
+  {{ parseReference(c.reference).lot || c.numLot }}
+</td>
+<td>
+  {{ parseReference(c.reference).sousLot || c.numSousLot }}
+</td>
+
+                    <td>{{ c.typeMatiere || '–' }}</td>
                   <td>{{ parseReference(c.reference).qte }}</td>
                   <td>{{ c.emplacement || '–' }}</td>
                   <td>{{ c.poids }}</td>
