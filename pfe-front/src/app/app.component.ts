@@ -5,7 +5,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { delay, filter, map, tap } from 'rxjs/operators';
 import { ColorModeService } from '@coreui/angular';
 import { IconSetService } from '@coreui/icons-angular';
-import { iconSubset } from './icons/icon-subset';
+
 
 @Component({
   selector: 'app-root',
@@ -28,10 +28,8 @@ export class AppComponent implements OnInit {
     // Définir le titre de l'application au démarrage
     this.#titleService.setTitle(this.title);
     // Configurer l'ensemble des icônes
-    this.#iconSetService.icons = { ...iconSubset };
-    // Configuration de la thématique (utilisation de CoreUI)
-    this.#colorModeService.localStorageItemName.set('coreui-free-angular-admin-template-theme-default');
-    this.#colorModeService.eventName.set('ColorSchemeChange');
+  
+
   }
 
   ngOnInit(): void {

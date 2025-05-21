@@ -30,6 +30,14 @@ export class StatisticsDashboardComponent implements OnInit {
   comptage2Count = 0;
   comptage3Count = 0;
 
+  // Nouveaux compteurs Cosse vs Fil par tour
+  cosseComptage1Count = 0;
+  filComptage1Count   = 0;
+  cosseComptage2Count = 0;
+  filComptage2Count   = 0;
+  cosseComptage3Count = 0;
+  filComptage3Count   = 0;
+
   // Statistiques de progression
   completionPercentage = 0;
   validatedPercentage = 0;
@@ -102,10 +110,12 @@ export class StatisticsDashboardComponent implements OnInit {
       }
     });
   }
-
   private processComptageData(): void {
     // Réinitialisation
     this.comptage1Count = this.comptage2Count = this.comptage3Count = 0;
+    this.cosseComptage1Count = this.filComptage1Count =
+    this.cosseComptage2Count = this.filComptage2Count =
+    this.cosseComptage3Count = this.filComptage3Count = 0;
     this.userComptage1Count = this.userComptage2Count = this.userComptage3Count = this.userTotalCount = 0;
     this.processedReferences.clear();
     this.validatedReferences.clear();
@@ -123,24 +133,29 @@ export class StatisticsDashboardComponent implements OnInit {
       const sousLot = parts[3];
       const refKey  = `${ref}$${lot}$${sousLot}`;
 
-      // Regroupe
       if (!comptagesByRef.has(refKey)) {
         comptagesByRef.set(refKey, []);
       }
       comptagesByRef.get(refKey)!.push(comptage);
 
-      // Comptages par type
+      // Gestion des comptages par type
       switch (comptage.numComptage) {
         case 1:
           this.comptage1Count++;
+          if (comptage.typeMatiere?.trim() === 'Cosse') this.cosseComptage1Count++;
+          else if (comptage.typeMatiere?.trim() === 'Fil') this.filComptage1Count++;
           if (comptage.operateurId === this.user?.id) this.userComptage1Count++;
           break;
         case 2:
           this.comptage2Count++;
+          if (comptage.typeMatiere?.trim() === 'Cosse') this.cosseComptage2Count++;
+          else if (comptage.typeMatiere?.trim() === 'Fil') this.filComptage2Count++;
           if (comptage.operateurId === this.user?.id) this.userComptage2Count++;
           break;
         case 3:
           this.comptage3Count++;
+          if (comptage.typeMatiere?.trim() === 'Cosse') this.cosseComptage3Count++;
+          else if (comptage.typeMatiere?.trim() === 'Fil') this.filComptage3Count++;
           if (comptage.operateurId === this.user?.id) this.userComptage3Count++;
           break;
       }

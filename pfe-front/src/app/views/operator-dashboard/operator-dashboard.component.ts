@@ -159,11 +159,10 @@ export class OperatorDashboardComponent implements OnInit {
       const role = params['role'];
       if (role) {
         this.loadUsers(role);
-      }
-    } else {
-      // Default view - show inventory management by default
-      this.showInventoryManagement = true;
-      this.activeButton = 'inventory';
+      }    } else {
+      // Default view - no panel shown
+      this.showInventoryManagement = false;
+      this.activeButton = null;
     }
   });
 }

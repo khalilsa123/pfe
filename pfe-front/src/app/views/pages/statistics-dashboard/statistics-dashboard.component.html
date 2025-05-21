@@ -21,7 +21,7 @@
           <div class="stat-icon"><i class="fas fa-boxes"></i></div>
           <div class="stat-info">
             <span class="stat-value">{{ totalStockItems }}</span>
-            <span class="stat-label">stock Total </span>
+            <span class="stat-label">Total stock</span>
           </div>
         </div>
         <!-- Articles validés -->
@@ -96,28 +96,36 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Répartition des comptages -->
+    </div>    <!-- Répartition des comptages -->
     <div class="counting-details">
       <h3 class="stats-section-title">Répartition des comptages</h3>
-      <div class="count-chart">
-        <div class="count-block"
-             [style.height.%]="(comptage1Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
-          <span class="count-value">{{ comptage1Count }}</span>
-          <span class="count-label">1er Comptage</span>
-        </div>
-        <div class="count-block"
-             [style.height.%]="(comptage2Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
-          <span class="count-value">{{ comptage2Count }}</span>
-          <span class="count-label">2e Comptage</span>
-        </div>
-        <div class="count-block"
-             [style.height.%]="(comptage3Count / (comptage1Count + comptage2Count + comptage3Count) * 100) || 0">
-          <span class="count-value">{{ comptage3Count }}</span>
-          <span class="count-label">3e Comptage</span>
-        </div>
-      </div>
+      
+      <table class="table table-bordered text-center">
+        <thead>
+          <tr>
+            <th>Tour</th>
+            <th>Cosse</th>
+            <th>Fil</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1er Comptage</td>
+            <td>{{ cosseComptage1Count }}</td>
+            <td>{{ filComptage1Count }}</td>
+          </tr>
+          <tr>
+            <td>2e Comptage</td>
+            <td>{{ cosseComptage2Count }}</td>
+            <td>{{ filComptage2Count }}</td>
+          </tr>
+          <tr>
+            <td>3e Comptage</td>
+            <td>{{ cosseComptage3Count }}</td>
+            <td>{{ filComptage3Count }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
   </div>
