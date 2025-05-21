@@ -6,8 +6,8 @@ import { Page404Component } from './views/pages/page404/page404.component';
 import { Page500Component } from './views/pages/page500/page500.component';
 import { LoginComponent } from './views/pages/login/login.component';
 import { RegisterComponent } from './views/pages/register/register.component';
-///import { OperatorDashboardRoutingModule } from './views/operator-dashboard/operator-dashboard-routing.module';
-import { OperatorDashboardComponent } from './views/operator-dashboard/operator-dashboard.component';
+///import { OperatorDashboardRoutingModule } from './views/main-dashboard/main-dashboard-routing.module';
+import { OperatorDashboardComponent } from './views/main-dashboard/main-dashboard.component';
 
 export const routes: Routes = [
   {
@@ -42,15 +42,15 @@ export const routes: Routes = [
 },
  
   {
-    path: 'operator-dashboard',
+    path: 'main-dashboard',
     component: OperatorDashboardComponent,
-    //loadComponent: () => import('./views/operator-dashboard/operator-dashboard.component').then(m => m.OperatorDashboardComponent),
+    //loadComponent: () => import('./views/main-dashboard/main-dashboard.component').then(m => m.OperatorDashboardComponent),
     data: { title: 'Dashboard Opérateur' }
   },
   
   {
     path: 'test-operator',
-    loadComponent: () => import('./views/operator-dashboard/operator-dashboard.component').then(m => m.OperatorDashboardComponent),
+    loadComponent: () => import('./views/main-dashboard/main-dashboard.component').then(m => m.OperatorDashboardComponent),
     data: { title: 'Test Operator Dashboard' }
   },
   

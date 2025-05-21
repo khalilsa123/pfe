@@ -66,7 +66,7 @@ export class LoginComponent {
       next: (res: AuthResponse) => {
         console.log('Login réussi :', res);
         // Le token est déjà stocké par le service
-        this.router.navigate(['/operator-dashboard']);
+        this.router.navigate(['/main-dashboard']);
       },
       error: (err: any) => {
         console.error('Erreur de login :', err);

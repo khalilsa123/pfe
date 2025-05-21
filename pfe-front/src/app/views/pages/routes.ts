@@ -3,8 +3,8 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   
   {
-    path: 'operator-dashboard',
-    loadComponent: () => import('../operator-dashboard/operator-dashboard.component').then(m => m.OperatorDashboardComponent),
+    path: 'main-dashboard',
+    loadComponent: () => import('../main-dashboard/main-dashboard.component').then(m => m.OperatorDashboardComponent),
     data: { title: 'Dashboard Opérateur' }
   },
   // Ajoutez cette nouvelle route pour les résultats de comptage

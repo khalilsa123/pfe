@@ -1,7 +1,7 @@
-// src/app/views/pages/operator-dashboard/operator-dashboard-routing.module.ts
+// src/app/views/pages/main-dashboard/main-dashboard-routing.module.ts
 /**import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { OperatorDashboardComponent } from './operator-dashboard.component';
+import { OperatorDashboardComponent } from './main-dashboard.component';
 
 const routes: Routes = [
   { path: '', component: OperatorDashboardComponent, data: { title: 'Dashboard Opérateur' } }

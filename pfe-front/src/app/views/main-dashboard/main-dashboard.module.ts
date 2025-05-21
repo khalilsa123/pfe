@@ -1,8 +1,8 @@
-// src/app/views/pages/operator-dashboard/operator-dashboard.module.ts
+// src/app/views/pages/main-dashboard/main-dashboard.module.ts
 /**import { NgModule }  from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule }  from '@angular/forms';
-import { OperatorDashboardRoutingModule } from './operator-dashboard-routing.module';
+import { OperatorDashboardRoutingModule } from './main-dashboard-routing.module';
 
 @NgModule({
   imports: [

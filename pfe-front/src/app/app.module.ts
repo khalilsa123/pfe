@@ -15,20 +15,18 @@ import { AppComponent } from './app.component';
 // Pages
 import { LoginComponent } from './views/pages/login/login.component';
 import { RegisterComponent } from './views/pages/register/register.component';
-import { Page404Component } from './views/pages/page404/page404.component';
-import { Page500Component } from './views/pages/page500/page500.component';
+
 import { ResultatComptageComponent } from './views/pages/resultat-comptage/resultat-comptage.component';
 
 // Dashboard opérateur
-import { OperatorDashboardComponent } from './views/operator-dashboard/operator-dashboard.component';
+import { OperatorDashboardComponent } from './views/main-dashboard/main-dashboard.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
     RegisterComponent,
-    Page404Component,
-    Page500Component,
+  
     ResultatComptageComponent,
     OperatorDashboardComponent,
   ],

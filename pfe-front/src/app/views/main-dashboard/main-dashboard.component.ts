@@ -40,7 +40,7 @@ interface ComptageWithOperator extends Comptage {
 
 
 @Component({
-  selector: 'app-operator-dashboard',
+  selector: 'app-main-dashboard',
   standalone: true,
   imports: [
     CommonModule,
@@ -57,8 +57,8 @@ interface ComptageWithOperator extends Comptage {
     MatSelectModule,
     MatMenuModule
   ],
-  templateUrl: './operator-dashboard.component.html',
-  styleUrls: ['./operator-dashboard.component.scss']
+  templateUrl: './main-dashboard.component.html',
+  styleUrls: ['./main-dashboard.component.scss']
 })
 
 export class OperatorDashboardComponent implements OnInit {

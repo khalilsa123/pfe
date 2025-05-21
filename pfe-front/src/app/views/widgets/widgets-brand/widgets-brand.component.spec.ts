@@ -4,7 +4,7 @@ import { GridModule, WidgetModule } from '@coreui/angular';
 import { ChartjsModule } from '@coreui/angular-chartjs';
 import { IconModule } from '@coreui/icons-angular';
 import { IconSetService } from '@coreui/icons-angular';
-import { iconSubset } from '../../../icons/icon-subset';
+//mport { iconSubset } from '../../../icons/icon-subset';
 import { WidgetsBrandComponent } from './widgets-brand.component';
 
 describe('WidgetsBrandComponent', () => {
@@ -22,7 +22,7 @@ describe('WidgetsBrandComponent', () => {
 
   beforeEach(() => {
     iconSetService = TestBed.inject(IconSetService);
-    iconSetService.icons = { ...iconSubset };
+    //iconSetService.icons = { ...iconSubset };
 
     fixture = TestBed.createComponent(WidgetsBrandComponent);
     component = fixture.componentInstance;

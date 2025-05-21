@@ -97,7 +97,7 @@ export class RegisterComponent implements OnInit {
       next: (response) => {
         console.log('Registration successful:', response);
         this.isSignUpFailed = false;
-        this.router.navigate(['/operator-dashboard']);
+        this.router.navigate(['/main-dashboard']);
       },
       error: (err) => {
         console.error('Direct registration error:', err);
@@ -129,7 +129,7 @@ export class RegisterComponent implements OnInit {
         next: () => {
           console.log('Registration successful');
           this.isSignUpFailed = false;
-          this.router.navigate(['/operator-dashboard']);
+          this.router.navigate(['/main-dashboard']);
         },
         error: err => {
           console.error('Registration error:', err); // Log the full error

@@ -154,11 +154,11 @@ export class ResultatComptageComponent implements OnInit {
   }
 
   toggleInventoryManagement(): void {
-    this.router.navigate(['/operator-dashboard']);
+    this.router.navigate(['/main-dashboard']);
   }
 
   toggleSessionInventaire(): void {
-    this.router.navigate(['/operator-dashboard'], { queryParams: { view: 'session-inventaire' } });
+    this.router.navigate(['/main-dashboard'], { queryParams: { view: 'session-inventaire' } });
   }
 
   toggleCountingDropdown(): void {
@@ -180,7 +180,7 @@ export class ResultatComptageComponent implements OnInit {
   }
 
   showCountingList(type: 'all' | 1 | 2 | 3): void {
-    this.router.navigate(['/operator-dashboard'], {
+    this.router.navigate(['/main-dashboard'], {
       queryParams: { view: 'counting', type: type }
     });
   }
@@ -190,7 +190,7 @@ export class ResultatComptageComponent implements OnInit {
   }
 
   loadUsers(role: 'OPERATEUR' | 'SUPERVISEUR'): void {
-    this.router.navigate(['/operator-dashboard'], {
+    this.router.navigate(['/main-dashboard'], {
       queryParams: { view: 'users', role: role }
     });
   }
@@ -594,7 +594,7 @@ export class ResultatComptageComponent implements OnInit {
     if (!this.selectedResultForThirdCount) return;
 
     // Naviguer vers la page de comptage avec les informations pré-remplies
-    this.router.navigate(['/operator-dashboard'], {
+    this.router.navigate(['/main-dashboard'], {
       queryParams: {
         reference: this.selectedResultForThirdCount.reference,
         numComptage: 3,
