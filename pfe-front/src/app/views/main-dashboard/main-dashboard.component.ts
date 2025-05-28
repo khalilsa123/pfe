@@ -1,4 +1,4 @@
-import { Component, OnInit , ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit , ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
@@ -61,7 +61,7 @@ interface ComptageWithOperator extends Comptage {
   styleUrls: ['./main-dashboard.component.scss']
 })
 
-export class OperatorDashboardComponent implements OnInit {
+export class OperatorDashboardComponent implements OnInit, OnDestroy {
    @ViewChild('sessionComptagesTable', { read: ElementRef }) sessionComptagesTable?: ElementRef;
   sessionSearchTerm = '';
   comptageSearchTerm = '';
@@ -104,6 +104,18 @@ export class OperatorDashboardComponent implements OnInit {
 
   private apiUrl = 'http://localhost:8080/api/session-inventaire';
 
+  private handleDocumentClick = (event: Event) => {
+    const target = event.target as HTMLElement;
+    
+    if (!target.closest('.btn-group')) {
+      this.selectedUserId = null;
+    }
+    
+    if (!target.closest('.user-profile-container')) {
+      this.showProfile = false;
+    }
+  }
+
   constructor(
     private authSrv: AuthentificationnServiceService,
     private opSrv: OperatorService,
@@ -113,15 +125,13 @@ export class OperatorDashboardComponent implements OnInit {
     private http: HttpClient,
     private snackBar: MatSnackBar
   ) {
-    document.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.btn-group')) {
-        this.selectedUserId = null;
-      }
-      if (!target.closest('.user-profile-container') && this.showProfile) {
-        this.showProfile = false;
-      }
-    });
+    // Event listener pour fermer les dropdowns quand on clique ailleurs
+    document.addEventListener('click', this.handleDocumentClick);
+  }
+
+  ngOnDestroy(): void {
+    // Nettoyer les event listeners
+    document.removeEventListener('click', this.handleDocumentClick);
   }
 
   ngOnInit(): void {
@@ -622,6 +632,10 @@ onUsersPageChange(page: number): void {
   toggleProfile(event: MouseEvent): void {
     event.stopPropagation();
     this.showProfile = !this.showProfile;
+  }
+
+  onProfileDropdownClick(event: MouseEvent): void {
+    event.stopPropagation();
   }
 
   private loadOperateurNames(comptages: Comptage[]): void {

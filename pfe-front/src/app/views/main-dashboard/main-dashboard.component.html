@@ -89,8 +89,7 @@
   <!-- MAIN CONTENT -->
   <main class="main-content">
     <div class="top-bar">
-      <h2 class="app-title">Système d'Inventaire OneTech</h2>
-      <div class="user-profile-container">
+      <h2 class="app-title">Système d'Inventaire OneTech</h2>      <div class="user-profile-container">
         <button class="btn btn-profile-dropdown" 
                 [class.active]="showProfile" 
                 (click)="toggleProfile($event)">
@@ -100,7 +99,11 @@
           <span class="user-name">{{ user?.firstname }} {{ user?.lastname }}</span>
           <i class="fas fa-chevron-down ms-2"></i>
         </button>
-        <div *ngIf="showProfile" class="profile-dropdown" (click)="$event.stopPropagation()">
+        
+        <!-- Ajouter (click) pour empêcher la fermeture du dropdown -->
+        <div *ngIf="showProfile" 
+             class="profile-dropdown" 
+             (click)="onProfileDropdownClick($event)">
           <div class="profile-info">
             <p><strong>Nom :</strong> {{ user?.lastname }}</p>
             <p><strong>Prénom :</strong> {{ user?.firstname }}</p>
