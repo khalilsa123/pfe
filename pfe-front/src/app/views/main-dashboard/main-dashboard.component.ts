@@ -64,7 +64,7 @@ interface ComptageWithOperator extends Comptage {
 export class OperatorDashboardComponent implements OnInit {
    @ViewChild('sessionComptagesTable', { read: ElementRef }) sessionComptagesTable?: ElementRef;
   sessionSearchTerm = '';
-  comptageSearchTerm = ''; // Added missing property
+  comptageSearchTerm = '';
   sessionSortAscending = false;
   currentPage = 1;
   itemsPerPage = 15;
@@ -77,7 +77,7 @@ export class OperatorDashboardComponent implements OnInit {
   showProfile = false;
   showUsersMenu = false;
   originalReference?: string;
-  showInventoryManagement = false;
+  showInventoryManagement = true; // Changed from false to true
   showSessionInventaire = false;
   showCreateSessionForm = false;
   showCountingDropdown = false;
@@ -87,7 +87,7 @@ export class OperatorDashboardComponent implements OnInit {
   showCountingType3 = false;
   assignedCount = 0;
   sortAscending = false;
-  activeButton: 'inventory' | 'session-inventaire' | 'counting' | 'users' | 'results' | null = null;
+  activeButton: 'inventory' | 'session-inventaire' | 'counting' | 'users' | 'results' | null = 'inventory'; // Changed from null to 'inventory'
   currentUsersRole?: 'OPERATEUR' | 'SUPERVISEUR';
   users: User[] = [];
   comptages: Comptage[] = [];
@@ -124,22 +124,6 @@ export class OperatorDashboardComponent implements OnInit {
     });
   }
 
-  private loadComptagesForCurrentUser(): void {
-    if (!this.user?.id) return;
-    
-    this.comptageService.getComptagesByOperateur(this.user.id).subscribe({
-      next: (userComptages) => {
-        this.userComptages = userComptages.map(c => ({
-          ...c,
-          operatorId: String(c.operateurId),
-          operatorName: `${this.user!.firstname} ${this.user!.lastname}`
-        }));
-        
-        this.applyComptageFilter();
-      },
-      error: err => console.error('Erreur chargement comptages utilisateur:', err)
-    });
-  }
   ngOnInit(): void {
   this.user = this.authSrv.getCurrentUser() || undefined;
   if (!this.user) {
@@ -159,7 +143,7 @@ export class OperatorDashboardComponent implements OnInit {
     }
   }
 
-  // Load comptages based on user role
+  // Load comptages for current user by default
   this.loadComptagesForCurrentUser();
 
   // Check route params to determine initial view
@@ -176,14 +160,22 @@ export class OperatorDashboardComponent implements OnInit {
       const role = params['role'];
       if (role) {
         this.loadUsers(role);
-      }    } else {
-      // Default view - no panel shown
-      this.showInventoryManagement = false;
-      this.activeButton = null;
+      }
+    } else {
+      // Default view - show inventory management instead of nothing
+      this.loadComptages();
     }
   });
 }
   
+
+  // Method to load comptages for current user
+  private loadComptagesForCurrentUser(): void {
+    this.hideAllPanels('inventory');
+    this.showInventoryManagement = true;
+    this.activeButton = 'inventory';
+    this.loadComptages();
+  }
 
   loadAllComptages() {
     this.comptageService.getAllComptages().subscribe({
@@ -320,30 +312,22 @@ onUsersPageChange(page: number): void {
   }
 
   toggleInventoryManagement(): void {
-    if (this.activeButton === 'inventory') {
-      this.showInventoryManagement = false;
-      this.activeButton = null;
-    } else {
-      this.showInventoryManagement = true;
-      this.hideAllPanels('inventory');
-      this.activeButton = 'inventory';
-      this.loadComptages();
-    }
+    // Ne pas fermer si déjà actif, juste s'assurer qu'il est ouvert
+    this.showInventoryManagement = true;
+    this.hideAllPanels('inventory');
+    this.activeButton = 'inventory';
+    this.loadComptages();
   }
 
   toggleSessionInventaire(): void {
-    if (this.activeButton === 'session-inventaire') {
-      this.showSessionInventaire = false;
-      this.showCreateSessionForm = false;
-      this.selectedSession = null;
-      this.sessionComptages = [];
-      this.activeButton = null;
-    } else {
-      this.showSessionInventaire = true;
-      this.hideAllPanels('session-inventaire');
-      this.activeButton = 'session-inventaire';
-      this.loadSessions();
-    }
+    // Ne pas fermer si déjà actif, juste s'assurer qu'il est ouvert
+    this.showSessionInventaire = true;
+    this.showCreateSessionForm = false;
+    this.selectedSession = null;
+    this.sessionComptages = [];
+    this.hideAllPanels('session-inventaire');
+    this.activeButton = 'session-inventaire';
+    this.loadSessions();
   }
 
   toggleCreateSessionForm(): void {

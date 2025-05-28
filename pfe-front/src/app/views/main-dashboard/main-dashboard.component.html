@@ -5,9 +5,7 @@
       <img src="assets/onetech_logo.jpg" alt="OneTech Tunisia" class="logo">
     </div>
     
-    <h3>Menu</h3>
-
-    <button class="btn btn-menu mb-2 w-100"
+    <h3>Menu</h3>    <button class="btn btn-menu mb-2 w-100"
             [class.active]="activeButton === 'inventory'" 
             (click)="toggleInventoryManagement()">
       <i class="fas fa-boxes me-2"></i>
@@ -116,19 +114,7 @@
           </button>
         </div>
       </div>
-    </div>
-     <div
-    *ngIf="!showInventoryManagement 
-           && !showSessionInventaire 
-           && !showAllCounting 
-           && !showUsersMenu 
-           && !activeButton"
-    class="empty-state text-center p-5"
-  >
-    <p class="lead">Sélectionnez une option dans le menu pour afficher du contenu</p>
-  </div>
-
-    <div class="content-area">
+    </div>    <div class="content-area">
       <!-- ZONE COMPTAGES -->
       <section *ngIf="showInventoryManagement">
         <div class="section-header">
