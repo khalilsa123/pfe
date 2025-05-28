@@ -115,7 +115,6 @@ export class OperatorDashboardComponent implements OnInit, OnDestroy {
       this.showProfile = false;
     }
   }
-
   constructor(
     private authSrv: AuthentificationnServiceService,
     private opSrv: OperatorService,
@@ -126,7 +125,24 @@ export class OperatorDashboardComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar
   ) {
     // Event listener pour fermer les dropdowns quand on clique ailleurs
-    document.addEventListener('click', this.handleDocumentClick);
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      
+      // Fermer le dropdown des utilisateurs (affectation comptage)
+      if (!target.closest('.btn-group')) {
+        this.selectedUserId = null;
+      }
+      
+      // Fermer le profile dropdown
+      if (!target.closest('.user-profile-container')) {
+        this.showProfile = false;
+      }
+      
+      // Fermer le menu utilisateurs si on clique en dehors de la sidebar
+      if (!target.closest('.sidebar') && !target.closest('.main-content')) {
+        // Ne rien faire ici car on veut garder le menu ouvert
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -502,7 +518,6 @@ onUsersPageChange(page: number): void {
     if (this.showCountingType3) return 'Liste des troisièmes comptages';
     return '';
   }
-
   private hideAllPanels(exceptPanel: 'inventory' | 'session-inventaire' | 'counting' | 'users' | 'results'): void {
     if (exceptPanel !== 'inventory') this.showInventoryManagement = false;
     if (exceptPanel !== 'session-inventaire') {
@@ -513,17 +528,16 @@ onUsersPageChange(page: number): void {
     }
     if (exceptPanel !== 'counting') {
       this.closeAllCountingPanels();
+      this.showCountingDropdown = false;
     }
-    if (exceptPanel !== 'users') this.showUsersMenu = false;
+    if (exceptPanel !== 'users') {
+      this.showUsersMenu = false;
+      this.users = [];
+      this.currentUsersRole = undefined;
+    }
   }
-
   loadUsers(role: 'OPERATEUR' | 'SUPERVISEUR'): void {
-  if (this.activeButton === 'users' && this.currentUsersRole === role) {
-    this.showUsersMenu = false;
-    this.activeButton = null;
-    return;
-  }
-  
+  // Enlever la logique de fermeture - garder le menu ouvert
   this.currentUsersRole = role;
   this.hideAllPanels('users');
   this.showUsersMenu = true;
@@ -931,5 +945,10 @@ onUsersPageChange(page: number): void {
       );
     }
     this.updatePagination();
+  }
+
+  onSidebarClick(event: MouseEvent): void {
+    // Empêcher la propagation pour éviter la fermeture des menus
+    event.stopPropagation();
   }
 }

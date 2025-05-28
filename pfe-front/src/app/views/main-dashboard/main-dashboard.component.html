@@ -1,6 +1,6 @@
 <div class="wrapper">
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" (click)="onSidebarClick($event)">
     <div class="logo-container">
       <img src="assets/onetech_logo.jpg" alt="OneTech Tunisia" class="logo">
     </div>
@@ -66,9 +66,7 @@
           Troisième Comptage
         </button>
       </div>
-    </div>
-
-    <ng-container *ngIf="user?.role !== 'OPERATEUR'">
+    </div>    <ng-container *ngIf="user?.role !== 'OPERATEUR'">
       <button *ngIf="user?.role === 'SUPERVISEUR' || user?.role === 'ADMIN'"
               class="btn btn-menu mb-2 w-100"
               [class.active]="activeButton === 'users' && currentUsersRole === 'OPERATEUR'"
