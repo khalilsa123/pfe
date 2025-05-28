@@ -14,6 +14,9 @@ export class OperatorService {
   getAllOperateurs(): Observable<User[]> {
     return this.http.get<User[]>(`${BASE_API}/operateurs`);
   }
+  getUsersByRole(role: string): Observable<User[]> {
+    return this.http.get<User[]>(`${BASE_API}/users?role=${role}`);
+  }
 
   // … ici uniquement les méthodes liées aux opérateurs
 }

@@ -64,6 +64,7 @@ interface ComptageWithOperator extends Comptage {
 export class OperatorDashboardComponent implements OnInit {
    @ViewChild('sessionComptagesTable', { read: ElementRef }) sessionComptagesTable?: ElementRef;
   sessionSearchTerm = '';
+  comptageSearchTerm = ''; // Added missing property
   sessionSortAscending = false;
   currentPage = 1;
   itemsPerPage = 15;
@@ -903,5 +904,18 @@ onUsersPageChange(page: number): void {
     
     this.paginatedSessionComptages = filtered.slice(0, this.itemsPerPage);
     this.sessionComptagesCurrentPage = 1;
+  }
+  
+  filterComptages() {
+    if (!this.comptageSearchTerm) {
+      this.filteredComptages = [...this.allComptages];
+    } else {
+      const searchTerm = this.comptageSearchTerm.toLowerCase();
+      this.filteredComptages = this.allComptages.filter(comptage => 
+        comptage.reference?.toLowerCase().includes(searchTerm) ||
+        comptage.operatorName?.toLowerCase().includes(searchTerm)
+      );
+    }
+    this.updatePagination();
   }
 }

@@ -24,108 +24,78 @@
             <span class="stat-label">Total stock</span>
           </div>
         </div>
-        <!-- Articles validés -->
+        <!-- Articles complets -->
         <div class="stat-card">
-          <div class="stat-icon"><i class="fas fa-clipboard-check"></i></div>
+          <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
           <div class="stat-info">
             <span class="stat-value">{{ validatedReferences.size }}</span>
-            <span class="stat-label">Articles validés</span>
+            <span class="stat-label">Articles complets</span>
           </div>
         </div>
-        <!-- En attente -->
+        <!-- Articles en attente -->
         <div class="stat-card">
-          <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
           <div class="stat-info">
             <span class="stat-value">{{ pendingReferences }}</span>
-            <span class="stat-label">En attente</span>
+            <span class="stat-label">Articles en attente</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Avancement global -->
-    <div class="progress-chart">
-      <h3 class="stats-section-title">Avancement global</h3>
-      <div class="progress-bars">
-        <!-- Comptés -->
-        <div class="progress-item">
-          <div class="progress-label">
-            <span>Comptés</span>
-            <span>{{ completionPercentage | number:'1.0-0' }}%</span>
+    <!-- Répartition des comptages -->
+    <div class="counting-details">
+      <h3 class="stats-section-title">Répartition par équipe</h3>
+      
+      <div class="teams-container">
+        <!-- Équipe Cosse -->
+        <div class="team-card team-cosse">
+          <div class="team-header">
+            <i class="fas fa-bolt"></i>
+            <h4>Équipe Cosse</h4>
           </div>
-          <div class="progress">
-            <div class="progress-bar bg-primary"
-                 [style.width.%]="completionPercentage">
+          <div class="team-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ cosseComptage1Count + cosseComptage2Count }}</span>
+              <span class="stat-label">Total comptages</span>
+            </div>
+            <div class="count-details">
+              <div class="count-round">
+                <span class="round-label">1er comptage</span>
+                <span class="round-value">{{ cosseComptage1Count }}</span>
+              </div>
+              <div class="count-round">
+                <span class="round-label">2e comptage</span>
+                <span class="round-value">{{ cosseComptage2Count }}</span>
+              </div>
             </div>
           </div>
         </div>
-        <!-- Validés -->
-        <div class="progress-item">
-          <div class="progress-label">
-            <span>Validés</span>
-            <span>{{ validatedPercentage | number:'1.0-0' }}%</span>
+
+        <!-- Équipe Fil -->
+        <div class="team-card team-fil">
+          <div class="team-header">
+            <i class="fas fa-wire"></i>
+            <h4>Équipe Fil</h4>
           </div>
-          <div class="progress">
-            <div class="progress-bar bg-success"
-                 [style.width.%]="validatedPercentage">
+          <div class="team-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ filComptage1Count + filComptage2Count }}</span>
+              <span class="stat-label">Total comptages</span>
             </div>
-          </div>
-        </div>
-        <!-- En attente -->
-        <div class="progress-item">
-          <div class="progress-label">
-            <span>En attente</span>
-            <span>{{ invalidPercentage | number:'1.0-0' }}%</span>
-          </div>
-          <div class="progress">
-            <div class="progress-bar bg-warning"
-                 [style.width.%]="invalidPercentage">
-            </div>
-          </div>
-        </div>
-        <!-- Non comptés -->
-        <div class="progress-item">
-          <div class="progress-label">
-            <span>Non comptés</span>
-            <span>{{ (100 - completionPercentage) | number:'1.0-0' }}%</span>
-          </div>
-          <div class="progress">
-            <div class="progress-bar bg-secondary"
-                 [style.width.%]="100 - completionPercentage">
+            <div class="count-details">
+              <div class="count-round">
+                <span class="round-label">1er comptage</span>
+                <span class="round-value">{{ filComptage1Count }}</span>
+              </div>
+              <div class="count-round">
+                <span class="round-label">2e comptage</span>
+                <span class="round-value">{{ filComptage2Count }}</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>    <!-- Répartition des comptages -->
-    <div class="counting-details">
-      <h3 class="stats-section-title">Répartition des comptages</h3>
-      
-      <table class="table table-bordered text-center">
-        <thead>
-          <tr>
-            <th>Tour</th>
-            <th>Cosse</th>
-            <th>Fil</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>1er Comptage</td>
-            <td>{{ cosseComptage1Count }}</td>
-            <td>{{ filComptage1Count }}</td>
-          </tr>
-          <tr>
-            <td>2e Comptage</td>
-            <td>{{ cosseComptage2Count }}</td>
-            <td>{{ filComptage2Count }}</td>
-          </tr>
-          <tr>
-            <td>3e Comptage</td>
-            <td>{{ cosseComptage3Count }}</td>
-            <td>{{ filComptage3Count }}</td>
-          </tr>
-        </tbody>
-      </table>
     </div>
 
   </div>

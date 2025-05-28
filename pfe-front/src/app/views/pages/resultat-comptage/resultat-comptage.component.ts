@@ -109,6 +109,12 @@ export class ResultatComptageComponent implements OnInit {
   // Expose Math for template
   Math = Math;
 
+  // Pagination pour la preview
+  previewCurrentPage = 1;
+  previewItemsPerPage = 10;
+  previewTotalPages = 1;
+  paginatedPreviewResults: any[] = [];
+
   constructor(
     private comptageService: ComptageService,
     private authService: AuthentificationnServiceService,
@@ -618,6 +624,8 @@ export class ResultatComptageComponent implements OnInit {
   showPreview(exportType: string): void {
     this.selectedExportType = exportType;
     this.previewResults = this.preparePreviewData(exportType);
+    this.previewCurrentPage = 1; // Reset à la première page
+    this.updatePreviewPagination(); // Calculer la pagination
     this.prevModal?.show();
   }
 
@@ -777,171 +785,260 @@ return true;
 
     return previewData;
   }
-exportToExcel(): void {
-  if (!this.selectedExportType) return;
 
-  let data: any[] = [];
-  let filename = 'Resultats_Comptage';
-  let sheetName = 'Résultats';
-
-  // 1) On duplique la liste brute
-  let resultsToExport = [...this.comptageResults];
-
-  // 2) Filtrage par type de matière : Cosse / Fil
-  resultsToExport = resultsToExport.filter(result => {
-    const mat = (result.typeMatiere || '').trim().toLowerCase();
-    if (mat === 'cosse') {
-      return this.includeCoseMatiere;
-    }
-    if (mat === 'fil') {
-      return this.includeFileMatiere;
-    }
-    // tout autre type de matière est toujours inclus
-    return true;
-  });
-
-  // 3) Filtrage selon le type de rapport
-  switch (this.selectedExportType) {
-    case 'valid':
-      resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
-      filename += '_Valides';
-      sheetName = 'Validés';
-      break;
-    case 'needsThird':
-      resultsToExport = resultsToExport.filter(r => r.status === 'needsThird');
-      filename += '_Besoin3eComptage';
-      sheetName = 'Besoin 3e Comptage';
-      break;
-    case 'comptage1':
-      resultsToExport = resultsToExport.filter(r => !!r.comptage1);
-      filename += '_Comptage1';
-      sheetName = 'Comptage 1';
-      break;
-    case 'comptage2':
-      resultsToExport = resultsToExport.filter(r => !!r.comptage2);
-      filename += '_Comptage2';
-      sheetName = 'Comptage 2';
-      break;
-    case 'comptage3':
-      resultsToExport = resultsToExport.filter(r => !!r.comptage3);
-      filename += '_Comptage3';
-      sheetName = 'Comptage 3';
-      break;
-    case 'comptageFinal':
-      resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
-      filename += '_ComptageFinal';
-      sheetName = 'Comptage Final';
-      break;
-    case 'all':
-    default:
-      filename += '_Complet';
-      break;
+  // Méthodes pour la pagination preview
+  updatePreviewPagination(): void {
+    this.previewTotalPages = Math.ceil(this.previewResults.length / this.previewItemsPerPage);
+    if (this.previewTotalPages === 0) this.previewTotalPages = 1;
+    this.paginatePreviewResults();
   }
 
-  // 4) On ajoute un suffixe si un seul type de matière est inclus
-  if (this.includeCoseMatiere && !this.includeFileMatiere) {
-    filename += '_CoseOnly';
-  } else if (!this.includeCoseMatiere && this.includeFileMatiere) {
-    filename += '_FileOnly';
+  paginatePreviewResults(): void {
+    const startIndex = (this.previewCurrentPage - 1) * this.previewItemsPerPage;
+    const endIndex = Math.min(startIndex + this.previewItemsPerPage, this.previewResults.length);
+    this.paginatedPreviewResults = this.previewResults.slice(startIndex, endIndex);
   }
 
-  // 5) Construction des données selon le type de rapport
-  if (this.selectedExportType === 'comptage1') {
-    data = resultsToExport.map(r => ({
-      Référence: this.extractReference(r.reference),
-      Lot: r.lot,
-      'Sous-lot': r.sousLot,
-      'Type de matière': r.typeMatiere || 'Non spécifié',
-      'Poids Comptage 1 (g)': r.comptage1?.poids ?? '-',
-      'Opérateur Comptage 1': this.includeOperatorNames
-        ? r.comptage1?.operatorName ?? '-'
-        : r.comptage1?.operatorId ?? '-',
-      'Date Comptage 1': r.comptage1?.date.toLocaleString() ?? '-'
-    }));
-  } else if (this.selectedExportType === 'comptage2') {
-    data = resultsToExport.map(r => ({
-      Référence: this.extractReference(r.reference),
-      Lot: r.lot,
-      'Sous-lot': r.sousLot,
-      'Type de matière': r.typeMatiere || 'Non spécifié',
-      'Poids Comptage 2 (g)': r.comptage2?.poids ?? '-',
-      'Opérateur Comptage 2': this.includeOperatorNames
-        ? r.comptage2?.operatorName ?? '-'
-        : r.comptage2?.operatorId ?? '-',
-      'Date Comptage 2': r.comptage2?.date.toLocaleString() ?? '-'
-    }));
-  } else if (this.selectedExportType === 'comptage3') {
-    data = resultsToExport.map(r => ({
-      Référence: this.extractReference(r.reference),
-      Lot: r.lot,
-      'Sous-lot': r.sousLot,
-      'Type de matière': r.typeMatiere || 'Non spécifié',
-      'Poids Comptage 3 (g)': r.comptage3?.poids ?? '-',
-      'Opérateur Comptage 3': this.includeOperatorNames
-        ? r.comptage3?.operatorName ?? '-'
-        : r.comptage3?.operatorId ?? '-',
-      'Date Comptage 3': r.comptage3?.date.toLocaleString() ?? '-'
-    }));
-  } else if (this.selectedExportType === 'comptageFinal') {
-    data = resultsToExport.map(r => ({
-      Référence: this.extractReference(r.reference),
-      Lot: r.lot,
-      'Sous-lot': r.sousLot,
-      'Type de matière': r.typeMatiere || 'Non spécifié',
-      'Poids Final (g)': r.poidsFinal ?? '-',
-      'Dernière Mise à Jour': r.lastUpdate.toLocaleString()
-    }));
-  } else {
-    // export « Complet »
-    data = resultsToExport.flatMap(r => {
-      const rows: any[] = [];
-      if (r.comptage1) {
-        rows.push({
-          'Type de comptage': 'Premier Comptage',
-          Référence: this.extractReference(r.reference),
-          Lot: r.lot,
-          'Sous-lot': r.sousLot,
-          'Type de matière': r.typeMatiere || 'Non spécifié',
-          'Poids (g)': r.comptage1.poids,
-          Opérateur: this.includeOperatorNames
-            ? r.comptage1.operatorName
-            : r.comptage1.operatorId,
-          'Poids Final (g)': r.poidsFinal ?? '-',
-          Date: r.comptage1.date.toLocaleString(),
-          Statut: this.getStatusText(r.status)
-        });
+  goToPreviewPage(page: number): void {
+    if (page < 1) page = 1;
+    if (page > this.previewTotalPages) page = this.previewTotalPages;
+    this.previewCurrentPage = page;
+    this.paginatePreviewResults();
+  }
+
+  previewPrevPage(): void {
+    this.goToPreviewPage(this.previewCurrentPage - 1);
+  }
+
+  previewNextPage(): void {
+    this.goToPreviewPage(this.previewCurrentPage + 1);
+  }
+
+  getPreviewPaginationArray(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    
+    if (this.previewTotalPages <= 7) {
+      for (let i = 1; i <= this.previewTotalPages; i++) {
+        pages.push(i);
       }
-      if (r.comptage2) {
-        rows.push({
-          'Type de comptage': 'Deuxième Comptage',
-          /* … idem … */
-        });
+    } else {
+      pages.push(1);
+      if (this.previewCurrentPage > 3) {
+        pages.push('...');
       }
-      if (r.comptage3) {
-        rows.push({
-          'Type de comptage': 'Troisième Comptage',
-          /* … idem … */
-        });
+      const start = Math.max(2, this.previewCurrentPage - 1);
+      const end = Math.min(this.previewTotalPages - 1, this.previewCurrentPage + 1);
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
       }
-      if (!r.comptage1 && r.status === 'needsThird') {
-        rows.push({
-          'Type de comptage': 'Résultat Final',
-          /* … idem … */
-        });
+      if (this.previewCurrentPage < this.previewTotalPages - 2) {
+        pages.push('...');
       }
-      return rows;
+      pages.push(this.previewTotalPages);
+    }
+    
+    return pages;
+  }
+
+  getPreviewTableColspan(): number {
+    if (this.selectedExportType === 'comptageFinal') return 7;
+    if (this.selectedExportType === 'comptage1' || this.selectedExportType === 'comptage2' || this.selectedExportType === 'comptage3') return 8;
+    return 9;
+  }
+
+  exportToExcel(): void {
+    if (!this.selectedExportType) return;
+
+    let data: any[] = [];
+    let filename = 'Resultats_Comptage';
+    let sheetName = 'Résultats';
+
+    // 1) On duplique la liste brute
+    let resultsToExport = [...this.comptageResults];
+
+    // 2) Filtrage par type de matière : Cosse / Fil
+    resultsToExport = resultsToExport.filter(result => {
+      const mat = (result.typeMatiere || '').trim().toLowerCase();
+      if (mat === 'cosse') {
+        return this.includeCoseMatiere;
+      }
+      if (mat === 'fil') {
+        return this.includeFileMatiere;
+      }
+      // tout autre type de matière est toujours inclus
+      return true;
     });
+
+    // 3) Filtrage selon le type de rapport
+    switch (this.selectedExportType) {
+      case 'valid':
+        resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
+        filename += '_Valides';
+        sheetName = 'Validés';
+        break;
+      case 'needsThird':
+        resultsToExport = resultsToExport.filter(r => r.status === 'needsThird');
+        filename += '_Besoin3eComptage';
+        sheetName = 'Besoin 3e Comptage';
+        break;
+      case 'comptage1':
+        resultsToExport = resultsToExport.filter(r => !!r.comptage1);
+        filename += '_Comptage1';
+        sheetName = 'Comptage 1';
+        break;
+      case 'comptage2':
+        resultsToExport = resultsToExport.filter(r => !!r.comptage2);
+        filename += '_Comptage2';
+        sheetName = 'Comptage 2';
+        break;
+      case 'comptage3':
+        resultsToExport = resultsToExport.filter(r => !!r.comptage3);
+        filename += '_Comptage3';
+        sheetName = 'Comptage 3';
+        break;
+      case 'comptageFinal':
+        resultsToExport = resultsToExport.filter(r => r.status === 'valid' || r.status === 'validWithThird');
+        filename += '_ComptageFinal';
+        sheetName = 'Comptage Final';
+        break;
+      case 'all':
+      default:
+        filename += '_Complet';
+        break;
+    }
+
+    // 4) On ajoute un suffixe si un seul type de matière est inclus
+    if (this.includeCoseMatiere && !this.includeFileMatiere) {
+      filename += '_CoseOnly';
+    } else if (!this.includeCoseMatiere && this.includeFileMatiere) {
+      filename += '_FileOnly';
+    }
+
+    // 5) Construction des données selon le type de rapport
+    if (this.selectedExportType === 'comptage1') {
+      data = resultsToExport.map(r => ({
+        Référence: this.extractReference(r.reference),
+        Lot: r.lot,
+        'Sous-lot': r.sousLot,
+        'Type de matière': r.typeMatiere || 'Non spécifié',
+        'Poids Comptage 1 (g)': r.comptage1?.poids ?? '-',
+        'Opérateur Comptage 1': this.includeOperatorNames
+          ? r.comptage1?.operatorName ?? '-'
+          : r.comptage1?.operatorId ?? '-',
+        'Date Comptage 1': r.comptage1?.date.toLocaleString() ?? '-'
+      }));
+    } else if (this.selectedExportType === 'comptage2') {
+      data = resultsToExport.map(r => ({
+        Référence: this.extractReference(r.reference),
+        Lot: r.lot,
+        'Sous-lot': r.sousLot,
+        'Type de matière': r.typeMatiere || 'Non spécifié',
+        'Poids Comptage 2 (g)': r.comptage2?.poids ?? '-',
+        'Opérateur Comptage 2': this.includeOperatorNames
+          ? r.comptage2?.operatorName ?? '-'
+          : r.comptage2?.operatorId ?? '-',
+        'Date Comptage 2': r.comptage2?.date.toLocaleString() ?? '-'
+      }));
+    } else if (this.selectedExportType === 'comptage3') {
+      data = resultsToExport.map(r => ({
+        Référence: this.extractReference(r.reference),
+        Lot: r.lot,
+        'Sous-lot': r.sousLot,
+        'Type de matière': r.typeMatiere || 'Non spécifié',
+        'Poids Comptage 3 (g)': r.comptage3?.poids ?? '-',
+        'Opérateur Comptage 3': this.includeOperatorNames
+          ? r.comptage3?.operatorName ?? '-'
+          : r.comptage3?.operatorId ?? '-',
+        'Date Comptage 3': r.comptage3?.date.toLocaleString() ?? '-'
+      }));
+    } else if (this.selectedExportType === 'comptageFinal') {
+      data = resultsToExport.map(r => ({
+        Référence: this.extractReference(r.reference),
+        Lot: r.lot,
+        'Sous-lot': r.sousLot,
+        'Type de matière': r.typeMatiere || 'Non spécifié',
+        'Poids Final (g)': r.poidsFinal ?? '-',
+        'Dernière Mise à Jour': r.lastUpdate.toLocaleString()
+      }));
+    } else {
+      // export « Complet »
+      data = resultsToExport.flatMap(r => {
+        const rows: any[] = [];
+        if (r.comptage1) {
+          rows.push({
+            'Type de comptage': 'Premier Comptage',
+            Référence: this.extractReference(r.reference),
+            Lot: r.lot,
+            'Sous-lot': r.sousLot,
+            'Type de matière': r.typeMatiere || 'Non spécifié',
+            'Poids (g)': r.comptage1.poids,
+            Opérateur: this.includeOperatorNames
+              ? r.comptage1.operatorName
+              : r.comptage1.operatorId,
+            'Poids Final (g)': r.poidsFinal ?? '-',
+            Date: r.comptage1.date.toLocaleString(),
+            Statut: this.getStatusText(r.status)
+          });
+        }
+        if (r.comptage2) {
+          rows.push({
+            'Type de comptage': 'Deuxième Comptage',
+            Référence: this.extractReference(r.reference),
+            Lot: r.lot,
+            'Sous-lot': r.sousLot,
+            'Type de matière': r.typeMatiere || 'Non spécifié',
+            'Poids (g)': r.comptage2.poids,
+            Opérateur: this.includeOperatorNames
+              ? r.comptage2.operatorName
+              : r.comptage2.operatorId,
+            'Poids Final (g)': r.poidsFinal ?? '-',
+            Date: r.comptage2.date.toLocaleString(),
+            Statut: this.getStatusText(r.status)
+          });
+        }
+        if (r.comptage3) {
+          rows.push({
+            'Type de comptage': 'Troisième Comptage',
+            Référence: this.extractReference(r.reference),
+            Lot: r.lot,
+            'Sous-lot': r.sousLot,
+            'Type de matière': r.typeMatiere || 'Non spécifié',
+            'Poids (g)': r.comptage3.poids,
+            Opérateur: this.includeOperatorNames
+              ? r.comptage3.operatorName
+              : r.comptage3.operatorId,
+            'Poids Final (g)': r.poidsFinal ?? '-',
+            Date: r.comptage3.date.toLocaleString(),
+            Statut: this.getStatusText(r.status)
+          });
+        }
+        if (!r.comptage1 && r.status === 'needsThird') {
+          rows.push({
+            'Type de comptage': 'Résultat Final',
+            Référence: this.extractReference(r.reference),
+            Lot: r.lot,
+            'Sous-lot': r.sousLot,
+            'Type de matière': r.typeMatiere || 'Non spécifié',
+            'Poids (g)': '-',
+            Opérateur: '-',
+            'Poids Final (g)': '-',
+            Date: r.lastUpdate.toLocaleString(),
+            Statut: this.getStatusText(r.status)
+          });
+        }
+        return rows;
+      });
+    }
+
+    // 6) On crée et on écrit le fichier Excel
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+    // (Optionnel) Ajustement des colonnes selon selectedExportType…
+
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    this.prevModal?.hide();
   }
-
-  // 6) On crée et on écrit le fichier Excel
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
-  // (Optionnel) Ajustement des colonnes selon selectedExportType…
-
-  XLSX.writeFile(wb, `${filename}.xlsx`);
-  this.prevModal?.hide();
-}
 
 }
