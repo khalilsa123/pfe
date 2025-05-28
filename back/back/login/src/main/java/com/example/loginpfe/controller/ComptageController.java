@@ -124,6 +124,16 @@ public class ComptageController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/comptages/by-operator/{operateurId}")
+    public ResponseEntity<List<Comptage>> getComptagesByOperator(
+            @PathVariable Long operateurId) {
+
+        System.out.println("ComptageController - getComptagesByOperator ID: " + operateurId);
+        List<Comptage> comptages = comptageService.getComptagesByOperateur(operateurId);
+
+        return ResponseEntity.ok(comptages);
+    }
+
     @GetMapping("/comptages/between")
     public ResponseEntity<List<Comptage>> testBetween(
             @RequestParam String start,

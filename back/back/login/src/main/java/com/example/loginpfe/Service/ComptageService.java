@@ -73,6 +73,15 @@ public class ComptageService {
         return count;
     }
 
+    public List<Comptage> getComptagesByOperateur(Long operateurId) {
+        System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.getComptagesByOperateur - Operator ID: " + operateurId);
+
+        List<Comptage> results = comptageRepository.findByOperateurId(operateurId);
+        System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.getComptagesByOperateur - Found " + results.size() + " comptages");
+
+        return results;
+    }
+
     /**
      * Affecte un comptage existant à un opérateur
      */

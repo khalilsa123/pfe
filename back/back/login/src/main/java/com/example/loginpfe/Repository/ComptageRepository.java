@@ -11,8 +11,7 @@ public interface ComptageRepository extends JpaRepository<Comptage, Long> {
 
     List<Comptage> findByReferenceAndNumComptage(String reference, int numComptage);
 
-    // Add a debug method that verifies SQL is working
-
+   
     List<Comptage> findBySessionIsNullAndTimestampBetween(LocalDateTime start, LocalDateTime end);
 
 
