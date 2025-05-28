@@ -52,17 +52,17 @@ export class ComptageService {
   }
 
   /** Récupérer les comptages d'un opérateur donné */
-  getComptagesByOperateur(operateurId: number): Observable<Comptage[]> {
-    return this.http.get<Comptage[]>(
-      `${API_URL}/api/operateurs/${operateurId}/comptage`,
-      this.getAuthOptions()
-    ).pipe(
-      catchError(err => {
-        console.error('Erreur lors de la récupération des comptages d\'opérateur:', err);
-        return throwError(() => err);
-      })
-    );
-  }
+   getComptagesByOperateur(operateurId: number): Observable<Comptage[]> {
+        return this.http.get<Comptage[]>(
+            `${API_URL}/api/comptages/by-operator/${operateurId}`,
+            this.getAuthOptions()
+        ).pipe(
+            catchError(err => {
+                console.error('Erreur récupération comptages par opérateur:', err);
+                return throwError(() => err);
+            })
+        );
+    }
 
   /** Test d'ajout d'un comptage simple */
   testAddComptage(operateurId: number): Observable<any> {

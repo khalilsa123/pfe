@@ -124,6 +124,22 @@ export class OperatorDashboardComponent implements OnInit {
     });
   }
 
+  private loadComptagesForCurrentUser(): void {
+    if (!this.user?.id) return;
+    
+    this.comptageService.getComptagesByOperateur(this.user.id).subscribe({
+      next: (userComptages) => {
+        this.userComptages = userComptages.map(c => ({
+          ...c,
+          operatorId: String(c.operateurId),
+          operatorName: `${this.user!.firstname} ${this.user!.lastname}`
+        }));
+        
+        this.applyComptageFilter();
+      },
+      error: err => console.error('Erreur chargement comptages utilisateur:', err)
+    });
+  }
   ngOnInit(): void {
   this.user = this.authSrv.getCurrentUser() || undefined;
   if (!this.user) {
@@ -143,8 +159,8 @@ export class OperatorDashboardComponent implements OnInit {
     }
   }
 
-  // IMPORTANT: Load all comptages at startup
-  this.loadAllComptages();
+  // Load comptages based on user role
+  this.loadComptagesForCurrentUser();
 
   // Check route params to determine initial view
   this.route.queryParams.subscribe(params => {
