@@ -777,69 +777,76 @@ onUsersPageChange(page: number): void {
   }
 
   onSubmit(): void {
-    console.log('Préparation du comptage:', this.newComptage);
+  console.log('Préparation du comptage:', this.newComptage);
 
-    if (this.newComptage.reference) {
-      this.newComptage.reference = this.validateAndFormatReference(this.newComptage.reference);
-    }
-
-    if (!this.newComptage.reference) {
-      alert('La référence est obligatoire');
-      return;
-    }
-
-    if (this.newComptage.poids === undefined || this.newComptage.poids <= 0) {
-      alert('Le poids est obligatoire et doit être supérieur à 0');
-      return;
-    }
-
-    const referenceParts = this.parseReference(this.newComptage.reference);
-    if (!referenceParts.ref || !referenceParts.qte) {
-      alert('La référence doit être au format ref$qte$lot$sous_lot');
-      return;
-    }
-
-    const comptage: Comptage = {
-      reference: this.newComptage.reference,
-       typeMatiere:     this.newComptage.typeMatiere, 
-      quantiteTotale: parseInt(referenceParts.qte.toString()) || 0,
-      numLot: referenceParts.lot,
-      numSousLot: referenceParts.sousLot,
-      poids: Number(this.newComptage.poids),
-      numComptage: Number(this.newComptage.numComptage) || 1,
-      emplacement: this.newComptage.emplacement || '',
-      operateurId: this.user!.id!,
-      timestamp: new Date().toISOString(),
-      iteration: 1
-    };
-
-    console.log('Envoi du comptage:', comptage);
-    if (this.editing && this.newComptage.id) {
-      this.comptageService.updateComptage(this.newComptage.id, comptage).subscribe({
-        next: () => {
-          this.editing = false;
-          this.newComptage = { numComptage: this.user?.defaultComptageType || 1 };
-          this.loadComptages();
-        },
-        error: (err: any) => {
-          console.error('Erreur mise à jour', err);
-          alert('Erreur lors de la mise à jour du comptage: ' + (err.message || 'Erreur inconnue'));
-        }
-      });
-    } else {
-      this.comptageService.addComptage(this.user!.id!, comptage).subscribe({
-        next: () => {
-          this.newComptage = { numComptage: this.user?.defaultComptageType || 1 };
-          this.loadComptages();
-        },
-        error: (err: any) => {
-          console.error('Erreur création', err);
-          alert('Erreur lors de l\'ajout du comptage: ' + (err.message || 'Erreur inconnue'));
-        }
-      });
-    }
+  if (this.newComptage.reference) {
+    this.newComptage.reference = this.validateAndFormatReference(this.newComptage.reference);
   }
 
+  if (!this.newComptage.reference) {
+    alert('La référence est obligatoire');
+    return;
+  }
+
+  if (this.newComptage.poids === undefined || this.newComptage.poids <= 0) {
+    alert('Le poids est obligatoire et doit être supérieur à 0');
+    return;
+  }
+
+  // Vérifier le format de la référence
+  const referenceParts = this.parseReference(this.newComptage.reference);
+  if (!referenceParts.ref || !referenceParts.qte) {
+    alert('La référence doit être au format ref$qte$lot$sous_lot');
+    return;
+  }
+
+  // Préparer le comptage - IMPORTANT: envoyer la référence complète
+  // Le backend se chargera de la parser et répartir les données
+  const parsedReference = this.parseReference(this.newComptage.reference);
+  const comptage: Comptage = {
+    reference: this.newComptage.reference, // ← Référence COMPLETE (ref$qte$lot$sous_lot)
+    typeMatiere: this.newComptage.typeMatiere,
+    poids: Number(this.newComptage.poids),
+    numComptage: Number(this.newComptage.numComptage) || 1,
+    emplacement: this.newComptage.emplacement || '',
+    operateurId: this.user!.id!,
+    timestamp: new Date().toISOString(),
+    iteration: 1,
+    quantiteTotale: Number(parsedReference.qte),
+    numLot: parsedReference.lot,
+    numSousLot: parsedReference.sousLot
+  };
+
+  // NOTE: On ne définit PAS manuellement numLot, numSousLot, quantiteTotale
+  // car le backend les extraira automatiquement de la référence
+
+  console.log('Envoi du comptage:', comptage);
+  
+  if (this.editing && this.newComptage.id) {
+    this.comptageService.updateComptage(this.newComptage.id, comptage).subscribe({
+      next: () => {
+        this.editing = false;
+        this.newComptage = { numComptage: this.user?.defaultComptageType || 1 };
+        this.loadComptages();
+      },
+      error: (err: any) => {
+        console.error('Erreur mise à jour', err);
+        alert('Erreur lors de la mise à jour du comptage: ' + (err.message || 'Erreur inconnue'));
+      }
+    });
+  } else {
+    this.comptageService.addComptage(this.user!.id!, comptage).subscribe({
+      next: () => {
+        this.newComptage = { numComptage: this.user?.defaultComptageType || 1 };
+        this.loadComptages();
+      },
+      error: (err: any) => {
+        console.error('Erreur création', err);
+        alert('Erreur lors de l\'ajout du comptage: ' + (err.message || 'Erreur inconnue'));
+      }
+    });
+  }
+}
   editComptage(c: Comptage): void {
     this.editing = true;
     this.originalReference = c.reference;

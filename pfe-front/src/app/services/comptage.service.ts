@@ -70,7 +70,7 @@ export class ComptageService {
       reference: "test$100$lot1$souslot1",
       poids: 100,
       numComptage: 1,
-      typeMatiere: "Cousue"          // ← on inclut désormais le type
+      typeMatiere: "Cousue"
     };
     
     console.log('Test d\'envoi comptage:', JSON.stringify(simpleComptage));
@@ -89,19 +89,20 @@ export class ComptageService {
   
   /** Créer un nouveau comptage pour cet opérateur */
   addComptage(operateurId: number, comptage: Comptage): Observable<Comptage> {
-    const completeComptage: Comptage = {
-      reference:       comptage.reference,
-      numLot:          comptage.numLot       || '',
-      numSousLot:      comptage.numSousLot   || '',
-      poids:           comptage.poids,
-      numComptage:     comptage.numComptage  || 1,
-      quantiteTotale:  comptage.quantiteTotale || 0,
-      operateurId:     operateurId,
-      emplacement:     comptage.emplacement  || '',
-      iteration:       1,
-      timestamp:       new Date().toISOString(),
-      typeMatiere:     comptage.typeMatiere  || ''   // ← ajouté
+    // Préparation du comptage avec référence complète
+    const completeComptage: any = {
+      reference: comptage.reference, // Le backend parsera cette référence automatiquement
+      poids: comptage.poids,
+      numComptage: comptage.numComptage || 1,
+      operateurId: operateurId,
+      emplacement: comptage.emplacement || '',
+      iteration: 1,
+      timestamp: new Date().toISOString(),
+      typeMatiere: comptage.typeMatiere || ''
     };
+
+    // Note: Ne pas définir manuellement numLot, numSousLot, quantiteTotale
+    // car le backend les extraira de la référence
     
     console.log('Envoi de comptage (complet):', JSON.stringify(completeComptage));
     
@@ -119,15 +120,22 @@ export class ComptageService {
 
   /** Mettre à jour un comptage existant */
   updateComptage(id: number, comptage: Comptage): Observable<Comptage> {
-    // Garder l'itération et le type de matière
-    comptage.iteration    = comptage.iteration || 1;
-    comptage.typeMatiere  = comptage.typeMatiere || '';
+    // Préparation similaire pour la mise à jour
+    const updateData: any = {
+      reference: comptage.reference, // Le backend parsera cette référence
+      poids: comptage.poids,
+      numComptage: comptage.numComptage || 1,
+      operateurId: comptage.operateurId,
+      emplacement: comptage.emplacement || '',
+      typeMatiere: comptage.typeMatiere || '',
+      iteration: comptage.iteration || 1
+    };
 
-    console.log('Mise à jour comptage:', JSON.stringify(comptage));
+    console.log('Mise à jour comptage:', JSON.stringify(updateData));
     
     return this.http.put<Comptage>(
       `${API_URL}/api/operateurs/${comptage.operateurId}/comptage/${id}`,
-      comptage,
+      updateData,
       this.getAuthOptions()
     ).pipe(
       catchError(err => {
@@ -154,11 +162,14 @@ export class ComptageService {
 
   /** Obtenir le nombre d'itérations pour une référence et un type de comptage */
   getIterationCount(reference: string, numComptage: number): Observable<number> {
+    // Utiliser seulement la partie référence (avant le premier $)
+    const refOnly = reference.split('$')[0];
+    
     const params = new HttpParams()
-      .set('reference', reference)
+      .set('reference', refOnly)
       .set('numComptage', numComptage.toString());
     
-    console.log('Récupération itération:', reference, numComptage);
+    console.log('Récupération itération:', refOnly, numComptage);
     
     return this.http.get<number>(
       `${API_URL}/api/comptages/iteration-count`, 
