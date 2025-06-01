@@ -21,10 +21,66 @@ public class ComptageService {
     }
 
     /**
+     * Méthode utilitaire pour parser la référence complète
+     */
+    private void parseAndSetReferenceData(Comptage comptage, String fullReference) {
+        if (fullReference == null || fullReference.trim().isEmpty()) {
+            System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.parseAndSetReferenceData - WARNING: Empty reference provided");
+            return;
+        }
+
+        // Séparer par $ ou #
+        String[] parts = fullReference.split("[$#]");
+
+        if (parts.length >= 4) {
+            // Si format complet : ref$qte$lot$sous_lot
+            comptage.setReference(parts[0]);           // Juste la référence
+            comptage.setQuantiteTotale(parseDouble(parts[1])); // Quantité
+            comptage.setNumLot(parts[2]);              // Lot
+            comptage.setNumSousLot(parts[3]);          // Sous-lot
+
+            System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.parseAndSetReferenceData - Parsed: " +
+                    "ref=" + parts[0] + ", qte=" + parts[1] + ", lot=" + parts[2] + ", sous-lot=" + parts[3]);
+        } else if (parts.length >= 1) {
+            // Si seulement la référence
+            comptage.setReference(parts[0]);
+            System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.parseAndSetReferenceData - Simple reference: " + parts[0]);
+        } else {
+            System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.parseAndSetReferenceData - ERROR: Invalid reference format: " + fullReference);
+        }
+    }
+
+    /**
+     * Méthode utilitaire pour parser double de manière sécurisée
+     */
+    private double parseDouble(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.parseDouble - WARNING: Cannot parse '" + value + "' as double, defaulting to 0");
+            return 0.0;
+        }
+    }
+
+    /**
      * Crée un nouveau comptage (opérateur renseigné en amont)
      */
     public Comptage ajouterComptage(Comptage comptage) {
         comptage.setTimestamp(LocalDateTime.now());
+
+        // Parser la référence si elle contient le format complet
+        if (comptage.getReference() != null) {
+            String originalReference = comptage.getReference();
+            parseAndSetReferenceData(comptage, originalReference);
+
+            System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.ajouterComptage - Processing reference: " +
+                    "original=" + originalReference +
+                    ", parsed_ref=" + comptage.getReference() +
+                    ", lot=" + comptage.getNumLot() +
+                    ", sous_lot=" + comptage.getNumSousLot() +
+                    ", qte=" + comptage.getQuantiteTotale());
+        }
+
         System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.ajouterComptage - Adding new comptage: " +
                 "reference=" + comptage.getReference() + ", numComptage=" + comptage.getNumComptage());
 
@@ -41,14 +97,18 @@ public class ComptageService {
         return comptageRepository.findById(id)
                 .map(c -> {
                     c.setEmplacement(newData.getEmplacement());
-                    c.setReference(newData.getReference());
-                    c.setNumLot(newData.getNumLot());
-                    c.setNumSousLot(newData.getNumSousLot());
+
+                    // Parser la nouvelle référence si fournie
+                    if (newData.getReference() != null) {
+                        String originalReference = newData.getReference();
+                        parseAndSetReferenceData(c, originalReference);
+                    }
+
                     c.setTypeMatiere(newData.getTypeMatiere());
                     c.setPoids(newData.getPoids());
-                    c.setQuantiteTotale(newData.getQuantiteTotale());
                     c.setNumComptage(newData.getNumComptage());
                     c.setTimestamp(LocalDateTime.now());
+
                     Comptage updated = comptageRepository.save(c);
                     System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.modifierComptage - Successfully updated");
                     return updated;
@@ -115,6 +175,7 @@ public class ComptageService {
     }
 
     /**
+     * s
      * Tous les comptages d'un opérateur
      */
     public List<Comptage> afficherComptagesParOperateur(Long operateurId) {
@@ -154,20 +215,12 @@ public class ComptageService {
                 Comptage c = results.get(i);
                 System.out.println("  Comptage[" + i + "]: id=" + c.getId() +
                         ", ref=" + c.getReference() +
+                        ", lot=" + c.getNumLot() +
+                        ", sous_lot=" + c.getNumSousLot() +
+                        ", qte=" + c.getQuantiteTotale() +
                         ", numComptage=" + c.getNumComptage() +
                         ", operateurId=" + c.getOperateurId() +
                         ", poids=" + c.getPoids());
-
-                // Analyze reference format
-                String reference = c.getReference();
-                if (reference != null) {
-                    String[] parts = reference.split("\\$");
-                    System.out.println("    Reference analysis: parts=" + parts.length +
-                            ", format=" + (parts.length >= 4 ? "valid" : "INVALID") +
-                            ", full=" + reference);
-                } else {
-                    System.out.println("    Reference is NULL!");
-                }
             }
         } else {
             System.out.println("[" + LocalDateTime.now().format(TIME_FORMATTER) + "] ComptageService.findAll - WARNING: No comptages found in database!");
